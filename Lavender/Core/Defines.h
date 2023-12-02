@@ -33,25 +33,25 @@
 
 
 #define LAVENDER_NONCOPYABLE(ClassName)                 \
-    ClassName(ClassName const&)            = delete; \
-    ClassName& operator=(ClassName const&) = delete;
+        ClassName(ClassName const&)            = delete; \
+        ClassName& operator=(ClassName const&) = delete;
 
 #define LAVENDER_NONMOVABLE(ClassName)                      \
-    ClassName(ClassName&&) noexcept            = delete; \
-    ClassName& operator=(ClassName&&) noexcept = delete;
+        ClassName(ClassName&&) noexcept            = delete; \
+        ClassName& operator=(ClassName&&) noexcept = delete;
 
 #define LAVENDER_NONCOPYABLE_NONMOVABLE(ClassName) \
         LAVENDER_NONCOPYABLE(ClassName)                \
         LAVENDER_NONMOVABLE(ClassName)
 
 #define LAVENDER_DEFAULT_COPYABLE(ClassName)             \
-    ClassName(ClassName const&)            = default; \
-    ClassName& operator=(ClassName const&) = default;
+        ClassName(ClassName const&)            = default; \
+        ClassName& operator=(ClassName const&) = default;
 
 #define LAVENDER_DEFAULT_MOVABLE(ClassName)                  \
-    ClassName(ClassName&&) noexcept            = default; \
-    ClassName& operator=(ClassName&&) noexcept = default;
+        ClassName(ClassName&&) noexcept            = default; \
+        ClassName& operator=(ClassName&&) noexcept = default;
 
 #define LAVENDER_DEFAULT_COPYABLE_MOVABLE(ClassName) \
-    LAVENDER_DEFAULT_COPYABLE(ClassName)             \
-    LAVENDER_DEFAULT_MOVABLE(ClassName)
+        LAVENDER_DEFAULT_COPYABLE(ClassName)             \
+        LAVENDER_DEFAULT_MOVABLE(ClassName)

@@ -1,26 +1,31 @@
 #pragma once
-#include <string>
 #include "Utilities/SDLUtil.h"
+#include "Utilities/Delegate.h"
 
 namespace lavender
 {
-	struct WindowDims
+	struct WindowEventData
 	{
-		int32 x;
-		int32 y;
+		SDL_Event* event;
 	};
+	DECLARE_EVENT(WindowEvent, Window, WindowEventData const&);
 
 	class Window
 	{
+		friend class Editor;
 	public:
 		Window(uint32 w, uint32 h, char const* title = "");
 		~Window();
 
-		WindowDims GetDimensions() const;
+		uint32 Width() const;
+		uint32 Height() const;
 
-
+		bool Loop();
+		WindowEvent& GetWindowEvent() { return window_event; }
 
 	private:
-		SDLWindowPtr window = nullptr;
+		SDLWindowPtr sdl_window = nullptr;
+		uint32 width, height;
+		WindowEvent window_event;
 	};
 }

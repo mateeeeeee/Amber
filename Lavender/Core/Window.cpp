@@ -3,24 +3,40 @@
 namespace lavender
 {
 
-	Window::Window(uint32 w, uint32 h, char const* title /*= ""*/)
+	Window::Window(uint32 w, uint32 h, char const* title) : width(w), height(h)
 	{
-		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
 		SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE);
-		window.reset(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,w, h, window_flags));
-		SDLCheck(window.get());
+		sdl_window.reset(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, window_flags));
+		SDLCheck(sdl_window.get());
+	}
+	Window::~Window() = default;
+
+	uint32 Window::Width() const
+	{
+		return width;
+	}
+	uint32 Window::Height() const
+	{
+		return height;
 	}
 
-	Window::~Window()
+	bool Window::Loop()
 	{
-		SDL_Quit();
-	}
-
-	WindowDims Window::GetDimensions() const
-	{
-		int32 w, h;
-		SDL_GetWindowSize(window.get(), &w, &h);
-		return WindowDims{ w,h };
+		SDL_Event event;
+		while (SDL_PollEvent(&event))
+		{
+			if (event.type == SDL_QUIT) return false;
+			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE
+				&& event.window.windowID == SDL_GetWindowID(sdl_window.get())) return false;
+			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED
+				&& event.window.windowID == SDL_GetWindowID(sdl_window.get()))
+			{
+				width = event.window.data1;
+				height = event.window.data2;
+			}
+			window_event.Broadcast(WindowEventData{ &event });
+		}
+		return true;
 	}
 
 }

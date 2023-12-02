@@ -1,17 +1,19 @@
-#include "spdlog/spdlog.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/basic_file_sink.h"
+#include "Lavender.h"
+#include "Core/Window.h"
+#include "Editor/Editor.h"
 
-int main()
+int main(int argc, char* argv[])
 {
-	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-	console_sink->set_level(spdlog::level::trace);
-	console_sink->set_pattern("[%^%l%$] %v");
+	lavender::Initialize();
+	{
+		lavender::Window window(1080, 720, "lavender");
+		lavender::Editor editor(window);
 
-	std::shared_ptr<spdlog::logger> lavender_logger = std::make_shared<spdlog::logger>(std::string("lavender logger"), spdlog::sinks_init_list{ console_sink });
-	lavender_logger->set_level(spdlog::level::trace);
-	spdlog::set_default_logger(lavender_logger);
-
-	
+		while (window.Loop())
+		{
+			editor.Run();
+		}
+	}
+	lavender::Destroy();
 	return 0;
 }

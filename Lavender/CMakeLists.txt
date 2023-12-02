@@ -8,6 +8,8 @@ set(CORE_FILES
     Core/Logger.h
     Core/Window.h
     Core/Window.cpp
+    Core/Input.h
+    Core/Input.cpp
 )
 
 set(UTILITY_FILES
@@ -24,6 +26,7 @@ set(RENDERER_FILES
 
 set(EDITOR_FILES
     Editor/Editor.h
+    Editor/Editor.cpp
 )
 
 set(EXTERNAL_FILES
@@ -53,11 +56,17 @@ set(EXTERNAL_FILES
     External/ImGui/imstb_truetype.h
 )
 
-add_executable(Lavender main.cpp ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+set(MAIN_FILES
+    main.cpp
+    Lavender.h
+    Lavender.cpp
+)
+
+add_executable(Lavender ${MAIN_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Lavender PROPERTIES OUTPUT_NAME Lavender)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  main.cpp ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Lavender PRIVATE ${SDL2_INCLUDE_DIRS})

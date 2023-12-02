@@ -40,18 +40,6 @@ namespace lavender
 	};
 	using SDLSurfacePtr = std::unique_ptr<SDL_Surface, SDLSurfaceFreer>;
 
-	void SDLCheck(int32 r)
-	{
-		if (r != 0)
-		{
-
-		}
-	}
-	void SDLCheck(void* sdl_type)
-	{
-		if (sdl_type == nullptr)
-		{
-
-		}
-	}
+	void SDLCheck(int32 r);
+	void SDLCheck(void* sdl_type);
 }
