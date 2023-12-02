@@ -3,6 +3,39 @@
 
 namespace lavender
 {
+	static KeyCode ConvertSDLKeycode(SDL_Keycode sdl_keycode)
+	{
+		switch (sdl_keycode)
+		{
+		case SDLK_a: return KeyCode::A;
+		case SDLK_b: return KeyCode::B;
+		case SDLK_c: return KeyCode::C;
+		case SDLK_d: return KeyCode::D;
+		case SDLK_e: return KeyCode::E;
+		case SDLK_f: return KeyCode::F;
+		case SDLK_g: return KeyCode::G;
+		case SDLK_h: return KeyCode::H;
+		case SDLK_i: return KeyCode::I;
+		case SDLK_j: return KeyCode::J;
+		case SDLK_k: return KeyCode::K;
+		case SDLK_l: return KeyCode::L;
+		case SDLK_m: return KeyCode::M;
+		case SDLK_n: return KeyCode::N;
+		case SDLK_o: return KeyCode::O;
+		case SDLK_p: return KeyCode::P;
+		case SDLK_q: return KeyCode::Q;
+		case SDLK_r: return KeyCode::R;
+		case SDLK_s: return KeyCode::S;
+		case SDLK_t: return KeyCode::T;
+		case SDLK_u: return KeyCode::U;
+		case SDLK_v: return KeyCode::V;
+		case SDLK_w: return KeyCode::W;
+		case SDLK_x: return KeyCode::X;
+		case SDLK_y: return KeyCode::Y;
+		case SDLK_z: return KeyCode::Z;
+		}
+		return KeyCode::Count;
+	}
 
 	void Input::Tick() 
 	{
@@ -54,32 +87,32 @@ namespace lavender
 		keys[(uint64)Numpad7] = sdl_keys[SDL_SCANCODE_KP_7];
 		keys[(uint64)Numpad8] = sdl_keys[SDL_SCANCODE_KP_8];
 		keys[(uint64)Numpad9] = sdl_keys[SDL_SCANCODE_KP_9];
-		keys[(uint64)Q] = sdl_keys[SDLK_q];
-		keys[(uint64)W] = sdl_keys[SDLK_w];
-		keys[(uint64)E] = sdl_keys[SDLK_e];
-		keys[(uint64)R] = sdl_keys[SDLK_r];
-		keys[(uint64)T] = sdl_keys[SDLK_t];
-		keys[(uint64)Y] = sdl_keys[SDLK_y];
-		keys[(uint64)U] = sdl_keys[SDLK_u];
-		keys[(uint64)I] = sdl_keys[SDLK_i];
-		keys[(uint64)O] = sdl_keys[SDLK_o];
-		keys[(uint64)P] = sdl_keys[SDLK_p];
-		keys[(uint64)A] = sdl_keys[SDLK_a];
-		keys[(uint64)S] = sdl_keys[SDLK_s];
-		keys[(uint64)D] = sdl_keys[SDLK_d];
-		keys[(uint64)F] = sdl_keys[SDLK_f];
-		keys[(uint64)G] = sdl_keys[SDLK_g];
-		keys[(uint64)H] = sdl_keys[SDLK_h];
-		keys[(uint64)J] = sdl_keys[SDLK_j];
-		keys[(uint64)K] = sdl_keys[SDLK_k];
-		keys[(uint64)L] = sdl_keys[SDLK_l];
-		keys[(uint64)Z] = sdl_keys[SDLK_z];
-		keys[(uint64)X] = sdl_keys[SDLK_x];
-		keys[(uint64)C] = sdl_keys[SDLK_c];
-		keys[(uint64)V] = sdl_keys[SDLK_v];
-		keys[(uint64)B] = sdl_keys[SDLK_b];
-		keys[(uint64)N] = sdl_keys[SDLK_n];
-		keys[(uint64)M] = sdl_keys[SDLK_m];
+		keys[(uint64)Q] = sdl_keys[SDL_SCANCODE_Q];
+		keys[(uint64)W] = sdl_keys[SDL_SCANCODE_W];
+		keys[(uint64)E] = sdl_keys[SDL_SCANCODE_E];
+		keys[(uint64)R] = sdl_keys[SDL_SCANCODE_R];
+		keys[(uint64)T] = sdl_keys[SDL_SCANCODE_T];
+		keys[(uint64)Y] = sdl_keys[SDL_SCANCODE_Y];
+		keys[(uint64)U] = sdl_keys[SDL_SCANCODE_U];
+		keys[(uint64)I] = sdl_keys[SDL_SCANCODE_I];
+		keys[(uint64)O] = sdl_keys[SDL_SCANCODE_O];
+		keys[(uint64)P] = sdl_keys[SDL_SCANCODE_P];
+		keys[(uint64)A] = sdl_keys[SDL_SCANCODE_A];
+		keys[(uint64)S] = sdl_keys[SDL_SCANCODE_S];
+		keys[(uint64)D] = sdl_keys[SDL_SCANCODE_D];
+		keys[(uint64)F] = sdl_keys[SDL_SCANCODE_F];
+		keys[(uint64)G] = sdl_keys[SDL_SCANCODE_G];
+		keys[(uint64)H] = sdl_keys[SDL_SCANCODE_H];
+		keys[(uint64)J] = sdl_keys[SDL_SCANCODE_J];
+		keys[(uint64)K] = sdl_keys[SDL_SCANCODE_K];
+		keys[(uint64)L] = sdl_keys[SDL_SCANCODE_L];
+		keys[(uint64)Z] = sdl_keys[SDL_SCANCODE_Z];
+		keys[(uint64)X] = sdl_keys[SDL_SCANCODE_X];
+		keys[(uint64)C] = sdl_keys[SDL_SCANCODE_C];
+		keys[(uint64)V] = sdl_keys[SDL_SCANCODE_V];
+		keys[(uint64)B] = sdl_keys[SDL_SCANCODE_B];
+		keys[(uint64)N] = sdl_keys[SDL_SCANCODE_N];
+		keys[(uint64)M] = sdl_keys[SDL_SCANCODE_M];
 		keys[(uint64)Esc] = sdl_keys[SDL_SCANCODE_ESCAPE];
 		keys[(uint64)Tab] = sdl_keys[SDL_SCANCODE_TAB];
 		keys[(uint64)ShiftLeft]		= sdl_keys[SDL_SCANCODE_LSHIFT];
@@ -102,6 +135,7 @@ namespace lavender
 		keys[(uint64)Home]			= sdl_keys[SDL_SCANCODE_HOME];
 		keys[(uint64)End]			= sdl_keys[SDL_SCANCODE_END];
 		keys[(uint64)Insert]		= sdl_keys[SDL_SCANCODE_INSERT];
+
 	}
 
 	void Input::OnWindowEvent(WindowEventData const& data)
@@ -113,8 +147,13 @@ namespace lavender
 			input_events.window_resized_event.Broadcast(data.event->window.data1, data.event->window.data2);
 		}
 		break;
-		case SDL_MOUSEWHEEL: 
-		break;
+		case SDL_MOUSEWHEEL:
+			break;
+		case SDL_KEYDOWN:
+		{
+			KeyCode keycode = ConvertSDLKeycode(data.event->key.keysym.sym);
+			input_events.key_pressed.Broadcast(keycode);
+		}
 		}
 	}
 

@@ -5,6 +5,7 @@ namespace lavender
 {
 	class Window;
 	struct WindowEventData;
+	enum class KeyCode : uint32;
 
 	class Editor
 	{
@@ -28,7 +29,7 @@ namespace lavender
 	private:
 		void SetStyle();
 
-		void Update();
+		void OnKeyPressed(KeyCode keycode);
 
 		void Begin();
 		void Render();

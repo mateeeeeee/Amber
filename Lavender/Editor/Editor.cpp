@@ -12,7 +12,8 @@ namespace lavender
 	Editor::Editor(Window& window) : window(window)
 	{
 		window.GetWindowEvent().AddMember(&Editor::OnWindowEvent, *this);
-		window.GetWindowEvent().AddMember(&Input::OnWindowEvent, g_Input);
+		g_Input.GetInputEvents().key_pressed.AddMember(&Editor::OnKeyPressed, *this);
+		g_Input.GetInputEvents().window_resized_event.AddMember(&Editor::OnResize, *this);
 
 		uint32 renderer_flags = SDL_RENDERER_ACCELERATED;
 		renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
@@ -58,7 +59,6 @@ namespace lavender
 	void Editor::Run()
 	{
 		g_Input.Tick();
-		Update();
 		Begin();
 		{
 			Render();
@@ -93,6 +93,7 @@ namespace lavender
 
 	void Editor::OnWindowEvent(WindowEventData const& data)
 	{
+		g_Input.OnWindowEvent(data);
 		if (gui_enabled) ImGui_ImplSDL2_ProcessEvent(data.event);
 	}
 
@@ -158,9 +159,9 @@ namespace lavender
 		colors[ImGuiCol_NavHighlight] = ImVec4(0.53f, 0.75f, 0.82f, 0.86f);
 	}
 
-	void Editor::Update()
+	void Editor::OnKeyPressed(KeyCode keycode)
 	{
-		if (g_Input.GetKey(KeyCode::I))
+		if (keycode == KeyCode::I)
 		{
 			gui_enabled = !gui_enabled;
 			g_Input.SetMouseVisibility(gui_enabled);

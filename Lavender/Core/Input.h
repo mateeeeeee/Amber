@@ -36,11 +36,13 @@ namespace lavender
 	};
 
 	struct WindowEventData;
-	DECLARE_EVENT(WindowResizedEvent, Input, uint32, uint32);
+	DECLARE_EVENT(WindowResizedEvent, Input, int32, int32);
+	DECLARE_EVENT(KeyPressed, Input, KeyCode);
 
 	struct InputEvents
 	{
 		WindowResizedEvent window_resized_event;
+		KeyPressed		   key_pressed;
 	};
 
 	class Input : public Singleton<Input>

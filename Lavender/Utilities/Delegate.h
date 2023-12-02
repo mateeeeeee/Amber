@@ -16,7 +16,7 @@ namespace lavender
 	using name = Delegate<retval(__VA_ARGS__)>
 
 #define DECLARE_MULTICAST_DELEGATE(name, ...) \
-	using name = MultiCastDelegate<__VA_ARGS__>; \
+	using name = MultiCastDelegate<__VA_ARGS__> \
 
 #define DECLARE_EVENT(name, owner, ...) \
 	class name : public MultiCastDelegate<__VA_ARGS__> \
@@ -26,7 +26,7 @@ namespace lavender
 		using MultiCastDelegate::Broadcast; \
 		using MultiCastDelegate::RemoveAll; \
 		using MultiCastDelegate::Remove; \
-	};
+	}
 
 	template<typename...>
 	class Delegate;
