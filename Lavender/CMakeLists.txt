@@ -1,6 +1,7 @@
 
 
 find_package(SDL2 REQUIRED)
+find_package(CUDAToolkit)
 
 set(CORE_FILES
     Core/CoreTypes.h
@@ -17,7 +18,9 @@ set(UTILITY_FILES
     Utilities/Random.h
     Utilities/Delegate.h
     Utilities/SDLUtil.h
+    Utilities/SDLUtil.cpp
     Utilities/Singleton.h
+    Utilities/ThreadPool.h
 )
 
 set(RENDERER_FILES
@@ -56,19 +59,23 @@ set(EXTERNAL_FILES
     External/ImGui/imstb_truetype.h
 )
 
-set(MAIN_FILES
-    main.cpp
-    Lavender.h
-    Lavender.cpp
+set(CUDA_FILES
+    Cuda/CudaUtil.h
+    Cuda/CudaUtil.cpp
 )
 
-add_executable(Lavender ${MAIN_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+set(MAIN_FILES
+    main.cpp
+)
+
+add_executable(Lavender ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Lavender PROPERTIES OUTPUT_NAME Lavender)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Lavender PRIVATE ${CUDA_INCLUDE_DIRS})
 target_include_directories(Lavender PRIVATE ${SDL2_INCLUDE_DIRS})
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/spdlog/include)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/DirectXMath/include)
@@ -76,6 +83,9 @@ target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/CLI11/
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External/ImGui)
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External/stb)
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External/SimpleMath)
+
+target_link_libraries(Lavender PUBLIC  ${CUDA_LIBRARIES})
+target_link_libraries(Lavender PRIVATE CUDA::cudart CUDA::cuda_driver)
 target_link_libraries(Lavender PRIVATE ${SDL2_LIBRARIES})
 target_link_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/spdlog/lib/Release/)
 target_link_libraries(Lavender PRIVATE spdlog)
