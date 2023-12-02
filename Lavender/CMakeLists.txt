@@ -62,6 +62,13 @@ set(EXTERNAL_FILES
 set(CUDA_FILES
     Cuda/CudaUtil.h
     Cuda/CudaUtil.cpp
+    Cuda/CudaEvent.h
+    Cuda/CudaEvent.cpp
+    Cuda/CudaStream.h
+    Cuda/CudaStream.cpp
+    Cuda/CudaAlloc.h
+    Cuda/CudaAlloc.cpp
+    Cuda/CudaKernel.h
 )
 
 set(MAIN_FILES
