@@ -9,14 +9,17 @@
 
 #include "Core/Window.h"
 #include "Editor/Editor.h"
+#include "Editor/EditorSink.h"
 
 int main(int argc, char* argv[])
 {
 	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 	console_sink->set_level(spdlog::level::trace);
 	console_sink->set_pattern("[%^%l%$] %v");
-
-	std::shared_ptr<spdlog::logger> lavender_logger = std::make_shared<spdlog::logger>(std::string("lavender logger"), spdlog::sinks_init_list{ console_sink });
+	auto editor_sink = std::make_shared<lavender::EditorSink>();
+	editor_sink->set_level(spdlog::level::trace);
+	editor_sink->set_pattern("[%^%l%$] %v");
+	std::shared_ptr<spdlog::logger> lavender_logger = std::make_shared<spdlog::logger>(std::string("lavender logger"), spdlog::sinks_init_list{ console_sink, editor_sink });
 	lavender_logger->set_level(spdlog::level::trace);
 	spdlog::set_default_logger(lavender_logger);
 
@@ -24,7 +27,7 @@ int main(int argc, char* argv[])
 	lavender::CudaCheck(cudaSetDevice(0));
 	{
 		lavender::Window window(1080, 720, "lavender");
-		lavender::Editor editor(window);
+		lavender::Editor editor(window, editor_sink);
 
 		while (window.Loop())
 		{

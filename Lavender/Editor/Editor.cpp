@@ -1,4 +1,6 @@
 #include "Editor.h"
+#include "EditorConsole.h"
+#include "EditorSink.h"
 #include "Core/Window.h"
 #include "Core/Input.h"
 #include "Core/Logger.h"
@@ -9,11 +11,14 @@
 namespace lavender
 {
 
-	Editor::Editor(Window& window) : window(window)
+	Editor::Editor(Window& window, std::shared_ptr<EditorSink>& editor_sink) 
+		: window(window), editor_sink(editor_sink)
 	{
 		window.GetWindowEvent().AddMember(&Editor::OnWindowEvent, *this);
 		g_Input.GetInputEvents().key_pressed.AddMember(&Editor::OnKeyPressed, *this);
 		g_Input.GetInputEvents().window_resized_event.AddMember(&Editor::OnResize, *this);
+
+		editor_console = std::make_unique<EditorConsole>();
 
 		uint32 renderer_flags = SDL_RENDERER_ACCELERATED;
 		renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
@@ -208,7 +213,29 @@ namespace lavender
 
 	void Editor::GUI()
 	{
+		if (ImGui::BeginMainMenuBar())
+		{
+			if (ImGui::BeginMenu("Windows"))
+			{
+				if (ImGui::MenuItem(" Log", 0, visibility_flags[VisibilityFlag_Log]))			   
+					visibility_flags[VisibilityFlag_Log] = !visibility_flags[VisibilityFlag_Log];
+				if (ImGui::MenuItem(" Console ", 0, visibility_flags[VisibilityFlag_Console]))	   
+					visibility_flags[VisibilityFlag_Console] = !visibility_flags[VisibilityFlag_Console];
+				if (ImGui::MenuItem(" Settings", 0, visibility_flags[VisibilityFlag_Settings]))   
+					visibility_flags[VisibilityFlag_Settings] = !visibility_flags[VisibilityFlag_Settings];
 
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu(" Help"))
+			{
+				ImGui::Text("Help");
+				ImGui::Spacing();
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
+		LogWindow();
+		ConsoleWindow();
 	}
 
 	void Editor::EndGUI()
@@ -217,6 +244,18 @@ namespace lavender
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 		SDLCheck(SDL_SetRenderTarget(renderer.get(), nullptr));
 		SDLCheck(SDL_RenderCopy(renderer.get(), gui_target.get(), nullptr, nullptr));
+	}
+
+	void Editor::LogWindow()
+	{
+		if (!visibility_flags[VisibilityFlag_Log]) return;
+		editor_sink->Draw(" Log", &visibility_flags[VisibilityFlag_Log]);
+	}
+
+	void Editor::ConsoleWindow()
+	{
+		if (!visibility_flags[VisibilityFlag_Console]) return;
+		editor_console->Draw("Console ", &visibility_flags[VisibilityFlag_Console]);
 	}
 
 }
