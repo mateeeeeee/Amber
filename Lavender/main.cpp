@@ -7,12 +7,19 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
+#include "CLI/CLI.hpp"
+
 #include "Core/Window.h"
 #include "Editor/Editor.h"
 #include "Editor/EditorSink.h"
 
 int main(int argc, char* argv[])
 {
+	CLI::App cli_parser{"Lavender"};
+	std::string config_file;
+	cli_parser.add_option("--config", config_file, "Config file");
+	CLI11_PARSE(cli_parser, argc, argv);
+
 	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 	console_sink->set_level(spdlog::level::trace);
 	console_sink->set_pattern("[%^%l%$] %v");

@@ -4,6 +4,7 @@
 #include "Core/Window.h"
 #include "Core/Input.h"
 #include "Core/Logger.h"
+#include "Core/Paths.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_sdl.h"
 #include "ImGui/imgui_impl_sdlrenderer.h"
@@ -38,10 +39,12 @@ namespace lavender
 		ImGui_ImplSDLRenderer_Init(renderer.get());
 
 		ImFontConfig font_config{};
-		io.Fonts->AddFontFromFileTTF(LAVENDER_PATH"/Resources/Fonts/roboto/Roboto-Light.ttf", 16.0f, &font_config);
+		std::string font_name = paths::FontsDir() + "/roboto/Roboto-Light.ttf";
+		io.Fonts->AddFontFromFileTTF(font_name.c_str(), 16.0f, &font_config);
 		font_config.MergeMode = true;
 		ImWchar const icon_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-		io.Fonts->AddFontFromFileTTF(LAVENDER_PATH"/Resources/Fonts/FontAwesome/" FONT_ICON_FILE_NAME_FAS, 15.0f, &font_config, icon_ranges);
+		std::string icon_name = paths::FontsDir() + "/FontAwesome/" FONT_ICON_FILE_NAME_FAS;
+		io.Fonts->AddFontFromFileTTF(icon_name.c_str(), 15.0f, &font_config, icon_ranges);
 		io.Fonts->Build();
 
 		render_target.reset(SDL_CreateTexture(renderer.get(),

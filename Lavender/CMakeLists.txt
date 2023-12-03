@@ -11,6 +11,8 @@ set(CORE_FILES
     Core/Window.cpp
     Core/Input.h
     Core/Input.cpp
+    Core/Paths.h
+    Core/Paths.cpp
 
     Core/ConsoleManager.h
     Core/ConsoleManager.cpp
