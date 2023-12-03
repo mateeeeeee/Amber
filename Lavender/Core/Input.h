@@ -70,8 +70,8 @@ namespace lavender
 
 	private:
 		InputEvents input_events;
-		std::array<bool, (uint64)KeyCode::Count> keys;
-		std::array<bool, (uint64)KeyCode::Count> prev_keys;
+		std::array<bool, (uint64)KeyCode::Count> keys = {};
+		std::array<bool, (uint64)KeyCode::Count> prev_keys = {};
 		
 		int32 mouse_position_x = 0;
 		int32 mouse_position_y = 0;

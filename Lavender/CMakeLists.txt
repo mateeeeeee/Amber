@@ -11,6 +11,13 @@ set(CORE_FILES
     Core/Window.cpp
     Core/Input.h
     Core/Input.cpp
+
+    Core/ConsoleManager.h
+    Core/ConsoleManager.cpp
+    Core/ConsoleVariable.h
+    Core/ConsoleVariable.cpp
+    Core/ConsoleCommand.h
+    Core/ConsoleCommand.cpp
 )
 
 set(UTILITY_FILES
@@ -21,6 +28,9 @@ set(UTILITY_FILES
     Utilities/SDLUtil.cpp
     Utilities/Singleton.h
     Utilities/ThreadPool.h
+    Utilities/ConcurrentQueue.h
+    Utilities/StringUtil.h
+    Utilities/StringUtil.cpp
 )
 
 set(RENDERER_FILES
@@ -30,12 +40,17 @@ set(RENDERER_FILES
 set(EDITOR_FILES
     Editor/Editor.h
     Editor/Editor.cpp
+    Editor/EditorConsole.h
+    Editor/EditorConsole.cpp
+    Editor/EditorSink.h
+    Editor/EditorSink.cpp
 )
 
 set(EXTERNAL_FILES
     External/SimpleMath/SimpleMath.h
     External/SimpleMath/SimpleMath.inl
     External/SimpleMath/SimpleMath.cpp
+
     External/stb/stb_image.h
     External/stb/stb_image_resize.h
     External/stb/stb_image_write.h
@@ -45,18 +60,18 @@ set(EXTERNAL_FILES
     External/ImGui/imgui.cpp
     External/ImGui/imgui_demo.cpp
     External/ImGui/imgui_draw.cpp
-
     External/ImGui/imgui_impl_sdl.h
     External/ImGui/imgui_impl_sdl.cpp
     External/ImGui/imgui_impl_sdlrenderer.h
     External/ImGui/imgui_impl_sdlrenderer.cpp
     External/ImGui/imgui_internal.h
-
     External/ImGui/imgui_tables.cpp
     External/ImGui/imgui_widgets.cpp
     External/ImGui/imstb_rectpack.h
     External/ImGui/imstb_textedit.h
     External/ImGui/imstb_truetype.h
+
+    External/FontAwesome/IconsFontAwesome6.h
 )
 
 set(CUDA_FILES
@@ -87,9 +102,7 @@ target_include_directories(Lavender PRIVATE ${SDL2_INCLUDE_DIRS})
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/spdlog/include)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/DirectXMath/include)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/CLI11/include)
-target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External/ImGui)
-target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External/stb)
-target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External/SimpleMath)
+target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External)
 
 target_link_libraries(Lavender PUBLIC  ${CUDA_LIBRARIES})
 target_link_libraries(Lavender PRIVATE CUDA::cudart CUDA::cuda_driver)
@@ -102,6 +115,10 @@ if(MSVC)
 else()                                                   
     add_definitions(-include Core/CoreTypes.h -include Core/Defines.h)
 endif()
+
+set(LAVENDER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(Lavender PRIVATE LAVENDER_PATH="${LAVENDER_PATH}")
+
 
 install(TARGETS Lavender DESTINATION bin)
 

@@ -142,13 +142,12 @@ namespace lavender
 	{
 		switch (data.event->type)
 		{
-		case SDL_WINDOWEVENT_RESIZED:
+		case SDL_WINDOWEVENT:
 		{
-			input_events.window_resized_event.Broadcast(data.event->window.data1, data.event->window.data2);
+			if(data.event->window.event == SDL_WINDOWEVENT_RESIZED)
+				input_events.window_resized_event.Broadcast(data.event->window.data1, data.event->window.data2);
 		}
 		break;
-		case SDL_MOUSEWHEEL:
-			break;
 		case SDL_KEYDOWN:
 		{
 			KeyCode keycode = ConvertSDLKeycode(data.event->key.keysym.sym);

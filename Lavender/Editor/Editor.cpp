@@ -4,9 +4,10 @@
 #include "Core/Window.h"
 #include "Core/Input.h"
 #include "Core/Logger.h"
-#include "imgui.h"
-#include "imgui_impl_sdl.h"
-#include "imgui_impl_sdlrenderer.h"
+#include "ImGui/imgui.h"
+#include "ImGui/imgui_impl_sdl.h"
+#include "ImGui/imgui_impl_sdlrenderer.h"
+#include "FontAwesome/IconsFontAwesome6.h"
 
 namespace lavender
 {
@@ -25,10 +26,6 @@ namespace lavender
 		renderer.reset(SDL_CreateRenderer(window.sdl_window.get(), -1, renderer_flags));
 		SDLCheck(renderer.get());
 
-		SDL_RendererInfo renderer_info;
-		SDLCheck(SDL_GetRendererInfo(renderer.get(), &renderer_info));
-		LAVENDER_INFO("Renderer name: {}", renderer_info.name);
-
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -39,6 +36,13 @@ namespace lavender
 		ImGui::StyleColorsDark();
 		ImGui_ImplSDL2_InitForSDLRenderer(window.sdl_window.get(), renderer.get());
 		ImGui_ImplSDLRenderer_Init(renderer.get());
+
+		ImFontConfig font_config{};
+		io.Fonts->AddFontFromFileTTF(LAVENDER_PATH"/Resources/Fonts/roboto/Roboto-Light.ttf", 16.0f, &font_config);
+		font_config.MergeMode = true;
+		ImWchar const icon_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+		io.Fonts->AddFontFromFileTTF(LAVENDER_PATH"/Resources/Fonts/FontAwesome/" FONT_ICON_FILE_NAME_FAS, 15.0f, &font_config, icon_ranges);
+		io.Fonts->Build();
 
 		render_target.reset(SDL_CreateTexture(renderer.get(),
 			SDL_PIXELFORMAT_RGBA32,
@@ -199,7 +203,7 @@ namespace lavender
 		SDL_RenderClear(renderer.get());
 		
 		ImGuiID dockspace_id = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
-		ImGui::Begin("Lavender");
+		ImGui::Begin("Scene");
 		ImVec2 v_min = ImGui::GetWindowContentRegionMin();
 		ImVec2 v_max = ImGui::GetWindowContentRegionMax();
 		v_min.x += ImGui::GetWindowPos().x;
@@ -215,14 +219,14 @@ namespace lavender
 	{
 		if (ImGui::BeginMainMenuBar())
 		{
-			if (ImGui::BeginMenu("Windows"))
+			if (ImGui::BeginMenu(ICON_FA_WINDOW_MAXIMIZE" Windows"))
 			{
-				if (ImGui::MenuItem(" Log", 0, visibility_flags[VisibilityFlag_Log]))			   
-					visibility_flags[VisibilityFlag_Log] = !visibility_flags[VisibilityFlag_Log];
-				if (ImGui::MenuItem(" Console ", 0, visibility_flags[VisibilityFlag_Console]))	   
-					visibility_flags[VisibilityFlag_Console] = !visibility_flags[VisibilityFlag_Console];
-				if (ImGui::MenuItem(" Settings", 0, visibility_flags[VisibilityFlag_Settings]))   
-					visibility_flags[VisibilityFlag_Settings] = !visibility_flags[VisibilityFlag_Settings];
+				if (ImGui::MenuItem(ICON_FA_COMMENT" Log", 0, visibility_flags[Visibility_Log]))
+					visibility_flags[Visibility_Log] = !visibility_flags[Visibility_Log];
+				if (ImGui::MenuItem(ICON_FA_TERMINAL" Console", 0, visibility_flags[Visibility_Console]))
+					visibility_flags[Visibility_Console] = !visibility_flags[Visibility_Console];
+				if (ImGui::MenuItem(ICON_FA_GEAR" Settings", 0, visibility_flags[Visibility_Settings]))
+					visibility_flags[Visibility_Settings] = !visibility_flags[Visibility_Settings];
 
 				ImGui::EndMenu();
 			}
@@ -248,15 +252,14 @@ namespace lavender
 
 	void Editor::LogWindow()
 	{
-		if (!visibility_flags[VisibilityFlag_Log]) return;
-		editor_sink->Draw(" Log", &visibility_flags[VisibilityFlag_Log]);
+		if (!visibility_flags[Visibility_Log]) return;
+		editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Log]);
 	}
 
 	void Editor::ConsoleWindow()
 	{
-		if (!visibility_flags[VisibilityFlag_Console]) return;
-		editor_console->Draw("Console ", &visibility_flags[VisibilityFlag_Console]);
+		if (!visibility_flags[Visibility_Console]) return;
+		editor_console->Draw(ICON_FA_TERMINAL" Console ", &visibility_flags[Visibility_Console]);
 	}
-
 }
 

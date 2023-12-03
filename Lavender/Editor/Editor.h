@@ -13,10 +13,10 @@ namespace lavender
 	{
 		enum VisibilityFlag
 		{
-			VisibilityFlag_Log,
-			VisibilityFlag_Console,
-			VisibilityFlag_Settings,
-			VisibilityFlag_Count
+			Visibility_Log,
+			Visibility_Console,
+			Visibility_Settings,
+			Visibility_Count
 		};
 
 	public:
@@ -35,7 +35,7 @@ namespace lavender
 		SDLTexturePtr gui_target = nullptr;
 
 		bool gui_enabled = true;
-		bool visibility_flags[VisibilityFlag_Count] = {false};
+		bool visibility_flags[Visibility_Count] = {false};
 		std::unique_ptr<EditorConsole> editor_console;
 		std::shared_ptr<EditorSink> editor_sink;
 
