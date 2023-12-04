@@ -109,8 +109,8 @@ target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External
 target_link_libraries(Lavender PUBLIC  ${CUDA_LIBRARIES})
 target_link_libraries(Lavender PRIVATE CUDA::cudart CUDA::cuda_driver)
 target_link_libraries(Lavender PRIVATE ${SDL2_LIBRARIES})
-target_link_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/spdlog/lib/Release/)
-target_link_libraries(Lavender PRIVATE spdlog)
+#target_link_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/spdlog/lib/Release/)
+#target_link_libraries(Lavender PRIVATE spdlog)
 
 if(MSVC)
     add_definitions(/FI"Core/CoreTypes.h" /FI"Core/Defines.h")
