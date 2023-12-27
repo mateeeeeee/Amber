@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "PbrtToken.h"
+#include "PbrtFileLocation.h"
 
 namespace lavender
 {
@@ -23,6 +24,7 @@ namespace lavender
 		std::vector<PbrtToken> tokens;
 		char const* buf_ptr = nullptr;
 		char const* cur_ptr = nullptr;
+		PbrtFileLocation loc{};
 
 	private:
 		bool LexToken(PbrtToken&);
@@ -36,6 +38,7 @@ namespace lavender
 
 		void UpdatePointers()
 		{
+			loc.NewChars(static_cast<int32>(cur_ptr - buf_ptr));
 			buf_ptr = cur_ptr;
 		}
 
@@ -43,6 +46,7 @@ namespace lavender
 		{
 			t.SetKind(type);
 			t.SetData(cur_ptr, end);
+			t.SetLocation(loc);
 			cur_ptr = end;
 		}
 		template<CharPredicate P>
@@ -53,6 +57,7 @@ namespace lavender
 		template<CharPredicate P>
 		void FillToken(PbrtToken& t, PbrtTokenKind type, P&& predicate)
 		{
+			t.SetLocation(loc);
 			t.SetKind(type);
 			char const* tmp_ptr = cur_ptr;
 			Consume(tmp_ptr, std::forward<P>(predicate));

@@ -8,7 +8,7 @@ namespace lavender
 	{
 		PbrtLexer pbrt_lexer;
 		pbrt_lexer.Lex(scene_file);
-		tokens = pbrt_lexer.GetTokens();
+		tokens = pbrt_lexer.GetTokens(); 
 	}
 
 	bool PbrtParser::Consume(PbrtTokenKind k)
@@ -48,4 +48,10 @@ namespace lavender
 		}
 		return true;
 	}
+
+	void PbrtParser::ParseScene()
+	{
+
+	}
+
 }

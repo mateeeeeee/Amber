@@ -19,13 +19,14 @@ namespace lavender
 
 	private:
 
-
 		bool Consume(PbrtTokenKind k);
 		template<typename... Ts>
 		bool Consume(PbrtTokenKind k, Ts... ts);
 		bool Expect(PbrtTokenKind k);
 		template<typename... Ts>
 		bool Expect(PbrtTokenKind k, Ts... ts);
+
+		void ParseScene();
 	};
 }
 

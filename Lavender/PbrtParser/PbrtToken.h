@@ -1,5 +1,6 @@
 #pragma once
 #include <string_view>
+#include "PbrtFileLocation.h"
 
 namespace lavender
 {
@@ -16,13 +17,14 @@ namespace lavender
 	class PbrtToken
 	{
 	public:
-		PbrtToken() : kind(PbrtTokenKind::unknown), data{} {}
-		PbrtToken(PbrtTokenKind kind) : kind(kind), data{} {}
+		PbrtToken() : kind(PbrtTokenKind::unknown), data{}, loc{} {}
+		PbrtToken(PbrtTokenKind kind) : kind(kind), data{}, loc{} {}
 
 		void Reset()
 		{
 			kind = PbrtTokenKind::unknown;
 			data.clear();
+			loc = {};
 		}
 
 		bool Is(PbrtTokenKind t) const { return kind == t; }
@@ -54,8 +56,14 @@ namespace lavender
 			return data;
 		}
 
+		void SetLocation(PbrtFileLocation const& _loc)
+		{
+			loc = _loc;
+		}
+		PbrtFileLocation const& GetLocation() const { return loc; }
 	private:
 		PbrtTokenKind kind;
+		PbrtFileLocation loc;
 		std::string data;
 	};
 }

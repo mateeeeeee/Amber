@@ -20,6 +20,7 @@ namespace lavender
 
 		buf_ptr = scene_data.c_str();
 		cur_ptr = buf_ptr;
+		loc = PbrtFileLocation{ .filename = std::string(scene_file) };
 
 		PbrtToken current_token{};
 		do
@@ -49,6 +50,7 @@ namespace lavender
 		case '\n':
 		{
 			bool ret = LexNewLine(token);
+			loc.NewLine();
 			buf_ptr = cur_ptr;
 			return ret;
 		}
@@ -148,12 +150,14 @@ namespace lavender
 	bool PbrtLexer::LexEndOfFile(PbrtToken& t)
 	{
 		t.SetKind(eof);
+		t.SetLocation(loc);
 		return true;
 	}
 
 	bool PbrtLexer::LexNewLine(PbrtToken& t)
 	{
 		t.SetKind(newline);
+		t.SetLocation(loc);
 		return true;
 	}
 
@@ -176,6 +180,7 @@ namespace lavender
 			t.SetKind(right_square);
 			break;
 		}
+		t.SetLocation(loc);
 		UpdatePointers();
 		return true;
 	}
