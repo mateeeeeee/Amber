@@ -16,6 +16,7 @@ namespace lavender
 	private:
 		std::vector<PbrtToken> tokens;
 		TokenPtr current_token;
+		bool parsing_world_def = false;
 
 	private:
 
@@ -27,6 +28,8 @@ namespace lavender
 		bool Expect(PbrtTokenKind k, Ts... ts);
 
 		void ParseScene();
+
+		void ParseCamera();
 	};
 }
 

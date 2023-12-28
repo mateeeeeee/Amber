@@ -4,6 +4,8 @@
 
 namespace lavender
 {
+	using enum PbrtTokenKind;
+
 	void PbrtParser::Parse(char const* scene_file)
 	{
 		PbrtLexer pbrt_lexer;
@@ -51,7 +53,41 @@ namespace lavender
 
 	void PbrtParser::ParseScene()
 	{
+		switch (current_token->GetKind())
+		{
+		case KW_Camera:
+		case KW_LookAt:
+		case KW_Integrator:
+		case KW_Film:
+		case KW_WorldBegin:
+		case KW_AttributeBegin:
+		case KW_LightSource:
+		case KW_Sampler:
+		case KW_Material:
+		case KW_Shape:
+		case KW_Texture:
+		case KW_Translate:
+		}
+	}
 
+	void PbrtParser::ParseCamera()
+	{
+		Expect(KW_Camera);
+		if (current_token->IsNot(identifier))
+		{
+			//
+			return;
+		}
+		std::string_view data = current_token->GetData();
+		if (data == "perspective")
+		{
+
+		}
+		else
+		{
+			//not supported
+			return;
+		}
 	}
 
 }

@@ -39,4 +39,7 @@ add_compile_definitions(
   "$<$<CONFIG:RELEASE>: LAVENDER_RELEASE_BUILD>"
 )
 
+add_subdirectory(Libraries/pbrtParser) 
 add_subdirectory(Lavender)
+
+add_dependencies(Lavender pbrtParser)

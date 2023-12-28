@@ -13,6 +13,8 @@
 #include "Editor/Editor.h"
 #include "Editor/EditorSink.h"
 
+#include "pbrtParser/Scene.h"
+
 int main(int argc, char* argv[])
 {
 	CLI::App cli_parser{"Lavender"};
@@ -43,5 +45,7 @@ int main(int argc, char* argv[])
 	}
 	lavender::CudaCheck(cudaDeviceReset());
 	SDL_Quit();
+
+	pbrt::Scene::SP scene = pbrt::Scene::loadFrom("");
 	return 0;
 }

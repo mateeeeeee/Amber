@@ -27,7 +27,11 @@ namespace lavender
 		{
 			current_token.Reset();
 			bool result = LexToken(current_token);
-			if (!result) return;
+			if (!result)
+			{
+				LAVENDER_ERROR("Lexing error!");
+				return;
+			}
 			tokens.push_back(current_token);
 		} while (current_token.IsNot(eof));
 	}

@@ -88,37 +88,30 @@ set(CUDA_FILES
     Cuda/CudaKernel.h
 )
 
-set(PBRT_PARSER_FILES
-     PbrtParser/PbrtParser.h
-     PbrtParser/PbrtParser.cpp
-     PbrtParser/PbrtLexer.h
-     PbrtParser/PbrtLexer.cpp
-     PbrtParser/PbrtToken.h
-     PbrtParser/PbrtToken.cpp
-     PbrtParser/PbrtTokens.def
-)
-
 set(MAIN_FILES
     main.cpp
 )
 
-add_executable(Lavender ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${PBRT_PARSER_FILES} ${EXTERNAL_FILES})
+add_executable(Lavender ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Lavender PROPERTIES OUTPUT_NAME Lavender)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${PBRT_PARSER_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Lavender PRIVATE ${CUDA_INCLUDE_DIRS})
 target_include_directories(Lavender PRIVATE ${SDL2_INCLUDE_DIRS})
+target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/spdlog/include)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/DirectXMath/include)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/CLI11/include)
-target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/External)
+target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/pbrtParser)
+
 
 target_link_libraries(Lavender PUBLIC  ${CUDA_LIBRARIES})
 target_link_libraries(Lavender PRIVATE CUDA::cudart CUDA::cuda_driver)
 target_link_libraries(Lavender PRIVATE ${SDL2_LIBRARIES})
+target_link_libraries(Lavender PRIVATE pbrtParser)
 
 if(MSVC)
     add_definitions(/FI"Core/CoreTypes.h" /FI"Core/Defines.h")
