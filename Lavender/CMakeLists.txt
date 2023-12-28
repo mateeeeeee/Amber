@@ -7,6 +7,7 @@ set(CORE_FILES
     Core/CoreTypes.h
     Core/Defines.h
     Core/Logger.h
+    Core/Logger.cpp
     Core/Window.h
     Core/Window.cpp
     Core/Input.h
@@ -35,8 +36,9 @@ set(UTILITY_FILES
     Utilities/StringUtil.cpp
 )
 
-set(RENDERER_FILES
-    Renderer/Renderer.h
+set(SCENE_FILES
+    Scene/Scene.h
+    Scene/Scene.cpp
 )
 
 set(EDITOR_FILES
@@ -92,11 +94,11 @@ set(MAIN_FILES
     main.cpp
 )
 
-add_executable(Lavender ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+add_executable(Lavender ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Lavender PROPERTIES OUTPUT_NAME Lavender)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Lavender PRIVATE ${CUDA_INCLUDE_DIRS})

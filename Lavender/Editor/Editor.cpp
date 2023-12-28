@@ -13,7 +13,7 @@
 namespace lavender
 {
 
-	Editor::Editor(Window& window, std::shared_ptr<EditorSink>& editor_sink) 
+	Editor::Editor(Window& window, EditorSink& editor_sink)
 		: window(window), editor_sink(editor_sink)
 	{
 		window.GetWindowEvent().AddMember(&Editor::OnWindowEvent, *this);
@@ -206,7 +206,7 @@ namespace lavender
 		SDL_RenderClear(renderer.get());
 		
 		ImGuiID dockspace_id = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
-		ImGui::Begin("Scene");
+		ImGui::Begin(ICON_FA_GLOBE"Scene");
 		ImVec2 v_min = ImGui::GetWindowContentRegionMin();
 		ImVec2 v_max = ImGui::GetWindowContentRegionMax();
 		v_min.x += ImGui::GetWindowPos().x;
@@ -256,7 +256,7 @@ namespace lavender
 	void Editor::LogWindow()
 	{
 		if (!visibility_flags[Visibility_Log]) return;
-		editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Log]);
+		editor_sink.Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Log]);
 	}
 
 	void Editor::ConsoleWindow()

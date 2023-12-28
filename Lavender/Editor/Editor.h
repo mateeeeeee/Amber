@@ -20,7 +20,7 @@ namespace lavender
 		};
 
 	public:
-		Editor(Window& window, std::shared_ptr<EditorSink>& editor_sink);
+		Editor(Window& window, EditorSink& editor_sink);
 		~Editor();
 
 		void Run();
@@ -37,7 +37,7 @@ namespace lavender
 		bool gui_enabled = true;
 		bool visibility_flags[Visibility_Count] = {false};
 		std::unique_ptr<EditorConsole> editor_console;
-		std::shared_ptr<EditorSink> editor_sink;
+		EditorSink& editor_sink;
 
 	private:
 		void SetStyle();

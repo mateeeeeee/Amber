@@ -33,5 +33,10 @@ namespace lavender
 		return SavedDir() + "Screenshots/";
 	}
 
+	std::string paths::LogDir()
+	{
+		return SavedDir() + "Log/";
+	}
+
 }
 

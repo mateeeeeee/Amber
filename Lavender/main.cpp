@@ -2,42 +2,30 @@
 #include "Utilities/SDLUtil.h"
 #include "Cuda/CudaUtil.h"
 #include "cuda_runtime.h"
-
-#include "spdlog/spdlog.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/basic_file_sink.h"
-
 #include "CLI/CLI.hpp"
 
 #include "Core/Window.h"
+#include "Core/Logger.h"
 #include "Editor/Editor.h"
-#include "Editor/EditorSink.h"
 
-#include "pbrtParser/Scene.h"
 
 int main(int argc, char* argv[])
 {
-	CLI::App cli_parser{"Lavender"};
-	std::string config_file;
-	cli_parser.add_option("--config", config_file, "Config file");
-	CLI11_PARSE(cli_parser, argc, argv);
+	std::string scene_file, log_file;
+	{
+		CLI::App cli_parser{ "Lavender" };
+		cli_parser.add_option("--scene", scene_file, "Scene file");
+		cli_parser.add_option("--log-file", log_file, "Log file");
+		CLI11_PARSE(cli_parser, argc, argv);
+		if (log_file.empty()) log_file = "lavender.log";
+	}
 
-	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-	console_sink->set_level(spdlog::level::trace);
-	console_sink->set_pattern("[%^%l%$] %v");
-	auto editor_sink = std::make_shared<lavender::EditorSink>();
-	editor_sink->set_level(spdlog::level::trace);
-	editor_sink->set_pattern("[%^%l%$] %v");
-	std::shared_ptr<spdlog::logger> lavender_logger = std::make_shared<spdlog::logger>(std::string("lavender logger"), spdlog::sinks_init_list{ console_sink, editor_sink });
-	lavender_logger->set_level(spdlog::level::trace);
-	spdlog::set_default_logger(lavender_logger);
-
+	g_LogManager.Initialize(log_file.c_str(), lavender::LogLevel::Debug);
 	lavender::SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
 	lavender::CudaCheck(cudaSetDevice(0));
 	{
 		lavender::Window window(1080, 720, "lavender");
-		lavender::Editor editor(window, editor_sink);
-
+		lavender::Editor editor(window, *g_LogManager.GetEditorSink());
 		while (window.Loop())
 		{
 			editor.Run();
@@ -45,7 +33,7 @@ int main(int argc, char* argv[])
 	}
 	lavender::CudaCheck(cudaDeviceReset());
 	SDL_Quit();
+	g_LogManager.Destroy();
 
-	pbrt::Scene::SP scene = pbrt::Scene::loadFrom("");
 	return 0;
 }
