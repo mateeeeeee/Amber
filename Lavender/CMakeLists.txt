@@ -34,11 +34,13 @@ set(UTILITY_FILES
     Utilities/ConcurrentQueue.h
     Utilities/StringUtil.h
     Utilities/StringUtil.cpp
+    Utilities/JsonUtil.h
 )
 
 set(SCENE_FILES
     Scene/Scene.h
     Scene/Scene.cpp
+    Scene/Camera.h
 )
 
 set(EDITOR_FILES
@@ -76,6 +78,7 @@ set(EXTERNAL_FILES
     External/ImGui/imstb_truetype.h
 
     External/FontAwesome/IconsFontAwesome6.h
+    External/json/json.hpp
 )
 
 set(CUDA_FILES

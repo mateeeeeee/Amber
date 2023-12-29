@@ -1,10 +1,13 @@
 #pragma once
+#include <memory>
+#include <optional>
 
 namespace lavender
 {
+	class Camera;
 	struct Scene
 	{
-
+		std::unique_ptr<Camera> camera;
 	};
-	Scene LoadScene(char const* scene_file);
+	std::optional<Scene> LoadScene(char const* scene_file);
 }

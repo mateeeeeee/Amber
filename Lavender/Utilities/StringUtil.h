@@ -18,4 +18,6 @@ namespace lavender
 	std::string BoolToString(bool val);
 
 	std::vector<std::string> SplitString(std::string const& text, char delimeter);
+
+
 }
