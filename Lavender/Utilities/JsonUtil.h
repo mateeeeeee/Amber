@@ -11,11 +11,11 @@ namespace lavender
 	public:
 		JsonParams(json const& json_object) : _json(json_object)
 		{
-			LAVENDER_ASSERT(!_json.is_null());
+			LAV_ASSERT(!_json.is_null());
 		}
 		JsonParams(json&& json_object) : _json(std::move(json_object))
 		{
-			LAVENDER_ASSERT(!_json.is_null());
+			LAV_ASSERT(!_json.is_null());
 		}
 
 		json FindJson(std::string const& name)
@@ -104,7 +104,7 @@ namespace lavender
 		template<typename T>
 		static constexpr bool CheckValueTypeAndAssign(json const& key_value_json, T& return_value)
 		{
-			LAVENDER_ASSERT(!key_value_json.is_null());
+			LAV_ASSERT(!key_value_json.is_null());
 			if (key_value_json.is_string())
 			{
 				if constexpr (std::is_same_v<std::decay_t<T>, std::string>)

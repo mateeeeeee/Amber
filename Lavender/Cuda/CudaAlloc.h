@@ -8,7 +8,7 @@ namespace lavender
 	{
 	public:
 		explicit CudaAlloc(uint64 alloc_in_bytes);
-		LAVENDER_NONCOPYABLE_NONMOVABLE(CudaAlloc)
+		LAV_NONCOPYABLE_NONMOVABLE(CudaAlloc)
 		~CudaAlloc();
 
 		uint64 GetAllocSize() const { return alloc_size; }

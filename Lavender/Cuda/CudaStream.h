@@ -8,7 +8,7 @@ namespace lavender
 	public:
 		CudaStream();
 		explicit CudaStream(uint32 flags);
-		LAVENDER_NONCOPYABLE_NONMOVABLE(CudaStream)
+		LAV_NONCOPYABLE_NONMOVABLE(CudaStream)
 		~CudaStream();
 
 		void Synchronize() const;

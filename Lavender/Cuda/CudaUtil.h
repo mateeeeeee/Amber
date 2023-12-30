@@ -3,14 +3,14 @@
 namespace lavender
 {
 #ifdef __CUDACC__
-	#define CUDA_CALLABLE __host__ __device__
-	#define CUDA_KERNEL __global__
+	#define LAV_CUDA_CALLABLE __host__ __device__
+	#define LAV_CUDA_KERNEL __global__
 #else
-	#define CUDA_CALLABLE
-	#define CUDA_KERNEL 
+	#define LAV_CUDA_CALLABLE
+	#define LAV_CUDA_KERNEL 
 #endif
 
-	#define CUDA_ASSERT(code) assert(code == cudaError::cudaSuccess)
+	#define LAV_CUDA_ASSERT(code) assert(code == cudaError::cudaSuccess)
 
 
 	void CudaCheck(cudaError_t code);

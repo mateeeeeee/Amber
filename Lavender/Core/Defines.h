@@ -1,57 +1,57 @@
 #pragma once
 #include <cassert>
 
-#define _LAVENDER_STRINGIFY_IMPL(a) #a
-#define _LAVENDER_CONCAT_IMPL(x, y) x##y
+#define _LAV_STRINGIFY_IMPL(a) #a
+#define _LAV_CONCAT_IMPL(x, y) x##y
 
-#define LAVENDER_STRINGIFY(a) _LAVENDER_STRINGIFY_IMPL(a)
-#define LAVENDER_CONCAT(x, y) _LAVENDER_CONCAT_IMPL( x, y )
+#define LAV_STRINGIFY(a) _LAV_STRINGIFY_IMPL(a)
+#define LAV_CONCAT(x, y) _LAV_CONCAT_IMPL( x, y )
 
-#define LAVENDER_ASSERT(expr)			assert(expr)
-#define LAVENDER_ASSERT_MSG(expr, msg)  assert(expr && msg)
-#define LAVENDER_OPTIMIZE_ON			pragma optimize("", on)
-#define LAVENDER_OPTIMIZE_OFF			pragma optimize("", off)
-#define LAVENDER_WARNINGS_OFF			pragma(warning(push, 0))
-#define LAVENDER_WARNINGS_ON			pragma(warning(pop))
-#define LAVENDER_DEBUGBREAK()			__debugbreak()
-#define LAVENDER_FORCEINLINE			__forceinline
-#define LAVENDER_INLINE				    inline
-#define LAVENDER_NODISCARD				[[nodiscard]]
-#define LAVENDER_NORETURN				[[noreturn]]
-#define LAVENDER_DEPRECATED			    [[deprecated]]
-#define LAVENDER_DEPRECATED_MSG(msg)	[[deprecated(#msg)]]
-#define LAVENDER_ALIGN(align)           alignas(align) 
+#define LAV_ASSERT(expr)			assert(expr)
+#define LAV_ASSERT_MSG(expr, msg)   assert(expr && msg)
+#define LAV_OPTIMIZE_ON			    pragma optimize("", on)
+#define LAV_OPTIMIZE_OFF			pragma optimize("", off)
+#define LAV_WARNINGS_OFF			pragma(warning(push, 0))
+#define LAV_WARNINGS_ON			    pragma(warning(pop))
+#define LAV_DEBUGBREAK()			__debugbreak()
+#define LAV_FORCEINLINE			    __forceinline
+#define LAV_INLINE				    inline
+#define LAV_NODISCARD				[[nodiscard]]
+#define LAV_NORETURN				[[noreturn]]
+#define LAV_DEPRECATED			    [[deprecated]]
+#define LAV_DEPRECATED_MSG(msg)	    [[deprecated(#msg)]]
+#define LAV_ALIGN(align)           alignas(align) 
 
 #ifdef __GNUC__ 
-#define LAVENDER_UNREACHABLE()			___builtin_unreachable();
+#define LAV_UNREACHABLE()			___builtin_unreachable();
 #elifdef _MSC_VER
-#define LAVENDER_UNREACHABLE()			___assume(false);
+#define LAV_UNREACHABLE()			___assume(false);
 #else
-#define LAVENDER_UNREACHABLE()	
+#define LAV_UNREACHABLE()	
 #endif
 
 
 
-#define LAVENDER_NONCOPYABLE(ClassName)                 \
+#define LAV_NONCOPYABLE(ClassName)                 \
         ClassName(ClassName const&)            = delete; \
         ClassName& operator=(ClassName const&) = delete;
 
-#define LAVENDER_NONMOVABLE(ClassName)                      \
+#define LAV_NONMOVABLE(ClassName)                      \
         ClassName(ClassName&&) noexcept            = delete; \
         ClassName& operator=(ClassName&&) noexcept = delete;
 
-#define LAVENDER_NONCOPYABLE_NONMOVABLE(ClassName) \
-        LAVENDER_NONCOPYABLE(ClassName)                \
-        LAVENDER_NONMOVABLE(ClassName)
+#define LAV_NONCOPYABLE_NONMOVABLE(ClassName) \
+        LAV_NONCOPYABLE(ClassName)                \
+        LAV_NONMOVABLE(ClassName)
 
-#define LAVENDER_DEFAULT_COPYABLE(ClassName)             \
+#define LAV_DEFAULT_COPYABLE(ClassName)             \
         ClassName(ClassName const&)            = default; \
         ClassName& operator=(ClassName const&) = default;
 
-#define LAVENDER_DEFAULT_MOVABLE(ClassName)                  \
+#define LAV_DEFAULT_MOVABLE(ClassName)                  \
         ClassName(ClassName&&) noexcept            = default; \
         ClassName& operator=(ClassName&&) noexcept = default;
 
-#define LAVENDER_DEFAULT_COPYABLE_MOVABLE(ClassName) \
-        LAVENDER_DEFAULT_COPYABLE(ClassName)             \
-        LAVENDER_DEFAULT_MOVABLE(ClassName)
+#define LAV_DEFAULT_COPYABLE_MOVABLE(ClassName) \
+        LAV_DEFAULT_COPYABLE(ClassName)             \
+        LAV_DEFAULT_MOVABLE(ClassName)

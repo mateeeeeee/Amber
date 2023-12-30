@@ -49,13 +49,13 @@ int main(int argc, char* argv[])
 		scene = LoadScene(cfg.scene_file.c_str());
 		if (!scene)
 		{
-			LAVENDER_ERROR("Scene loading failed!");
+			LAV_ERROR("Scene loading failed!");
 			return EXIT_FAILURE;
 		}
 	}
 	catch (std::runtime_error const& e)
 	{
-		LAVENDER_ERROR("{}", e.what());
+		LAV_ERROR("{}", e.what());
 		return EXIT_FAILURE;
 	}
 	Renderer renderer(std::move(scene));
@@ -87,7 +87,7 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	}
 	catch (json::parse_error const& e)
 	{
-		LAVENDER_ERROR("JSON parsing error: {}! ", e.what());
+		LAV_ERROR("JSON parsing error: {}! ", e.what());
 		return false;
 	}
 	JsonParams scene_params(json_scene);
@@ -96,7 +96,7 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	bool scene_file_found = scene_params.Find<std::string>("scene file", scene_file);
 	if (!scene_file_found)
 	{
-		LAVENDER_ERROR("Scene file not specified in config file!");
+		LAV_ERROR("Scene file not specified in config file!");
 		return false;
 	}
 	cfg.scene_file = paths::SceneDir() + scene_file;

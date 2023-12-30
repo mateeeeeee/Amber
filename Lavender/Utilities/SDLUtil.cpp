@@ -7,7 +7,7 @@ namespace lavender
 	{
 		if (r != 0)
 		{
-			LAVENDER_ERROR("{}", SDL_GetError());
+			LAV_ERROR("{}", SDL_GetError());
 			std::exit(1);
 		}
 	}
@@ -15,7 +15,7 @@ namespace lavender
 	{
 		if (sdl_type == nullptr)
 		{
-			LAVENDER_ERROR("{}", SDL_GetError());
+			LAV_ERROR("{}", SDL_GetError());
 			std::exit(1);
 		}
 	}

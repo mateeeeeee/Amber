@@ -41,8 +41,8 @@ namespace lavender
 	};
 	#define g_LogManager lavender::LogManager::Get() 
 
-	#define LAVENDER_DEBUG(fmt, ...)  g_LogManager.Log(lavender::LogLevel::Debug, fmt,  __VA_ARGS__)
-	#define LAVENDER_INFO(fmt, ...)   g_LogManager.Log(lavender::LogLevel::Info, fmt,  __VA_ARGS__)
-	#define LAVENDER_WARN(fmt, ...)   g_LogManager.Log(lavender::LogLevel::Warning, fmt,  __VA_ARGS__)
-	#define LAVENDER_ERROR(fmt, ...)  g_LogManager.Log(lavender::LogLevel::Error, fmt,  __VA_ARGS__)
+	#define LAV_DEBUG(fmt, ...)  g_LogManager.Log(lavender::LogLevel::Debug, fmt,  __VA_ARGS__)
+	#define LAV_INFO(fmt, ...)   g_LogManager.Log(lavender::LogLevel::Info, fmt,  __VA_ARGS__)
+	#define LAV_WARN(fmt, ...)   g_LogManager.Log(lavender::LogLevel::Warning, fmt,  __VA_ARGS__)
+	#define LAV_ERROR(fmt, ...)  g_LogManager.Log(lavender::LogLevel::Error, fmt,  __VA_ARGS__)
 }

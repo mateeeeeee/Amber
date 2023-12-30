@@ -9,7 +9,7 @@ namespace lavender
 	public:
 		CudaEvent();
 		explicit CudaEvent(uint32 flags);
-		LAVENDER_NONCOPYABLE_NONMOVABLE(CudaEvent)
+		LAV_NONCOPYABLE_NONMOVABLE(CudaEvent)
 		~CudaEvent();
 
 		void RecordOnStream(CudaStream& stream);

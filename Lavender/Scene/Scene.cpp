@@ -45,7 +45,7 @@ namespace lavender
 		break;
 		case SceneFormat::Unknown: 
 		default:
-			LAVENDER_ERROR("Invalid scene format: {}", scene_file);
+			LAV_ERROR("Invalid scene format: {}", scene_file);
 		}
 		return nullptr;
 	}

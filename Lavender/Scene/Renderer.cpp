@@ -13,7 +13,7 @@ namespace lavender
 		CudaCheck(cudaSetDevice(device));
 		cudaDeviceProp props{};
 		CudaCheck(cudaGetDeviceProperties(&props, device));
-		LAVENDER_INFO("Device: {}\n", props.name);
+		LAV_INFO("Device: {}\n", props.name);
 	}
 
 	Renderer::~Renderer()

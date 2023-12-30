@@ -46,7 +46,7 @@ namespace lavender
 		{
 			if (auto editor_sink = dynamic_pointer_cast<EditorSink>(sink)) return editor_sink.get();
 		}
-		LAVENDER_ASSERT(false);
+		LAV_ASSERT(false);
 		return nullptr;
 	}
 
