@@ -1,9 +1,8 @@
 #pragma once
 
-
 namespace lavender
 {
-	class Camera
+	class PinholeCamera
 	{
 	public:
 

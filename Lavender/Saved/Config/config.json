@@ -1,0 +1,9 @@
+{
+  "scene": "scene.pbrt",
+  
+  "camera": 
+  {
+    "fov": 60.0,
+    "aspect ratio": 1.777
+  }
+}

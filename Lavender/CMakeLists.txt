@@ -40,7 +40,9 @@ set(UTILITY_FILES
 set(SCENE_FILES
     Scene/Scene.h
     Scene/Scene.cpp
-    Scene/Camera.h
+    Scene/PinholeCamera.h
+    Scene/Renderer.h
+    Scene/Renderer.cpp
 )
 
 set(EDITOR_FILES
@@ -93,15 +95,19 @@ set(CUDA_FILES
     Cuda/CudaKernel.h
 )
 
+set(MATH_FILES
+    Math/MathTypes.h
+)
+
 set(MAIN_FILES
     main.cpp
 )
 
-add_executable(Lavender ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+add_executable(Lavender ${MAIN_FILES} ${MATH_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Lavender PROPERTIES OUTPUT_NAME Lavender)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${MATH_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Lavender PRIVATE ${CUDA_INCLUDE_DIRS})
@@ -119,9 +125,9 @@ target_link_libraries(Lavender PRIVATE ${SDL2_LIBRARIES})
 target_link_libraries(Lavender PRIVATE pbrtParser)
 
 if(MSVC)
-    add_definitions(/FI"Core/CoreTypes.h" /FI"Core/Defines.h")
+    add_definitions(/FI"Core/CoreTypes.h" /FI"Core/Defines.h" /FI"Math/MathTypes.h")
 else()                                                   
-    add_definitions(-include Core/CoreTypes.h -include Core/Defines.h)
+    add_definitions(-include Core/CoreTypes.h -include Core/Defines.h -include Math/MathTypes.h)
 endif()
 
 set(LAVENDER_PATH ${CMAKE_CURRENT_SOURCE_DIR})

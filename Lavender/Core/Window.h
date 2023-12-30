@@ -8,7 +8,7 @@ namespace lavender
 	{
 		SDL_Event* event;
 	};
-	DECLARE_EVENT(WindowEvent, Window, WindowEventData const&);
+	DECLARE_EVENT(WindowEvent, Window, WindowEventData const&)
 
 	class Window
 	{

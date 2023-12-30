@@ -26,7 +26,7 @@ namespace lavender
 		using MultiCastDelegate::Broadcast; \
 		using MultiCastDelegate::RemoveAll; \
 		using MultiCastDelegate::Remove; \
-	}
+	};
 
 	template<typename...>
 	class Delegate;

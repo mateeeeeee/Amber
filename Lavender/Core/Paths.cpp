@@ -38,5 +38,10 @@ namespace lavender
 		return SavedDir() + "Log/";
 	}
 
+	std::string paths::ConfigDir()
+	{
+		return SavedDir() + "Config/";
+	}
+
 }
 

@@ -63,7 +63,7 @@ namespace lavender
 			else if constexpr (std::is_same_v<CVarType, const char*>)
 			{
 				int out;
-				ADRIA_ASSERT(FromCString(value, out));
+				LAVENDER_ASSERT(FromCString(value, out));
 				return out;
 			}
 		}

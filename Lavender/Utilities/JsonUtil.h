@@ -104,7 +104,7 @@ namespace lavender
 		template<typename T>
 		static constexpr bool CheckValueTypeAndAssign(json const& key_value_json, T& return_value)
 		{
-			ADRIA_ASSERT(!key_value_json.is_null());
+			LAVENDER_ASSERT(!key_value_json.is_null());
 			if (key_value_json.is_string())
 			{
 				if constexpr (std::is_same_v<std::decay_t<T>, std::string>)

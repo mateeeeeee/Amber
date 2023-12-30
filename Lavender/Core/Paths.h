@@ -10,4 +10,5 @@ namespace lavender::paths
 	std::string IconsDir();
 	std::string ScreenshotsDir();
 	std::string LogDir();
+	std::string ConfigDir();
 }
