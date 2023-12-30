@@ -2,6 +2,16 @@
   "scene": 
    {
 		"scene file" : "simple/teapot-metal.pbrt",
+		"width" : 1080,
+		"height" : 720,
+		"max depth" : 4,
+		"samples per pixel" : 32,
+		"filter": 
+		{
+			"type": "box",
+			"width": 1.0,
+			"fallout": 2.0,
+		},
         "camera": 
 		{
 			"position": [
@@ -15,10 +25,10 @@
 				 0.1
 			],
 			"fov": 45.0,
-			"near": 1.0,
-			"far": 700.0,
-			"speed": 50.0,
-			"sensitivity" : 0.3
+			"shutter open" : 0.0,
+			"shutter close" : 1.0,
+			"lens radius" : 0.0,
+			"focal distance" : 1.0,
 		}
     }
 }

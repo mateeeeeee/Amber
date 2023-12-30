@@ -153,6 +153,5 @@ namespace lavender
 			}
 			else return false;
 		}
-
 	};
 }

@@ -3,6 +3,7 @@
 
 namespace lavender
 {
+
 	struct Scene
 	{
 	};

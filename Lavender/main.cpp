@@ -15,13 +15,17 @@ using namespace lavender;
 struct Config
 {
 	std::string scene_file;
+	uint32 width;
+	uint32 height;
+	uint32 max_depth;
+	uint32 samples_per_pixel;
 };
 bool ParseConfig(char const* config_file, Config& cfg);
 
 int main(int argc, char* argv[])
 {
 	std::string config_file, log_file;
-	bool use_editor = false, maximize_window = false;
+	bool use_editor = false, maximize_window = false, bool stats_enabled = false;
 	{
 		CLI::App cli_parser{ "Lavender" };
 		cli_parser.add_option("--config-file", config_file, "Config file");
@@ -70,7 +74,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-
+		renderer.Render();
 	}
 	g_LogManager.Destroy();
 
@@ -99,7 +103,12 @@ bool ParseConfig(char const* config_file, Config& cfg)
 		LAV_ERROR("Scene file not specified in config file!");
 		return false;
 	}
+
 	cfg.scene_file = paths::SceneDir() + scene_file;
+	cfg.width = scene_params.FindOr<uint32>("width", 1080);
+	cfg.height = scene_params.FindOr<uint32>("height", 720);
+	cfg.max_depth = scene_params.FindOr<uint32>("max depth", 4);
+	cfg.samples_per_pixel = scene_params.FindOr<uint32>("samples per pixel", 16);
 
 	return true;
 }
