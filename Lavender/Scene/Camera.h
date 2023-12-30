@@ -2,11 +2,9 @@
 
 namespace lavender
 {
-	class PinholeCamera
+	class Camera
 	{
 	public:
-
-
-	private:
+		
 	};
 }

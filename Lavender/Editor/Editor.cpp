@@ -16,6 +16,7 @@ namespace lavender
 	Editor::Editor(Window& window, EditorSink& editor_sink)
 		: window(window), editor_sink(editor_sink)
 	{
+		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
 		window.GetWindowEvent().AddMember(&Editor::OnWindowEvent, *this);
 		g_Input.GetInputEvents().key_pressed.AddMember(&Editor::OnKeyPressed, *this);
 		g_Input.GetInputEvents().window_resized_event.AddMember(&Editor::OnResize, *this);
@@ -66,6 +67,7 @@ namespace lavender
 		ImGui_ImplSDLRenderer_Shutdown();
 		ImGui_ImplSDL2_Shutdown();
 		ImGui::DestroyContext();
+		SDL_Quit();
 	}
 
 	void Editor::Run()

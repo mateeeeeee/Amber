@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "Camera.h"
 #include "Core/Logger.h"
 #include "pbrtParser/Scene.h"
 
@@ -18,14 +19,13 @@ namespace lavender
 			else if (scene_file.ends_with(".pbrt")) return SceneFormat::PBF;
 			else return SceneFormat::Unknown;
 		}
-		std::optional<Scene> ConvertPBRTScene(std::shared_ptr<pbrt::Scene> const& pbrt_scene)
+		std::unique_ptr<Scene> ConvertPBRTScene(std::shared_ptr<pbrt::Scene> const& pbrt_scene)
 		{
-			
-			return std::nullopt;
+			return nullptr;
 		}
 	}
-	
-	std::optional<Scene> LoadScene(char const* _scene_file)
+
+	std::unique_ptr<Scene> LoadScene(char const* _scene_file)
 	{
 		std::string_view scene_file(_scene_file);
 		SceneFormat scene_format = GetSceneFormat(scene_file);
@@ -47,7 +47,7 @@ namespace lavender
 		default:
 			LAVENDER_ERROR("Invalid scene format: {}", scene_file);
 		}
-		return std::nullopt;
+		return nullptr;
 	}
 
 }

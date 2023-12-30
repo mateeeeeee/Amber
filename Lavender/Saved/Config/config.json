@@ -1,9 +1,24 @@
 {
-  "scene": "scene.pbrt",
-  
-  "camera": 
+  "scene": 
   {
-    "fov": 60.0,
-    "aspect ratio": 1.777
-  }
+		"scene file" : "test_scene.pbrt",
+        "camera": 
+		{
+			"position": [
+				108.0,
+				17.0,
+				1.0
+			],
+			"look_at": [
+				-1.0,
+				 0.0,
+				 0.1
+			],
+			"fov": 45.0,
+			"near": 1.0,
+			"far": 700.0,
+			"speed": 50.0,
+			"sensitivity" : 0.3
+		},
+    },
 }

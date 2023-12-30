@@ -43,5 +43,10 @@ namespace lavender
 		return SavedDir() + "Config/";
 	}
 
+	std::string paths::SceneDir()
+	{
+		return ResourcesDir() + "Scenes/";
+	}
+
 }
 

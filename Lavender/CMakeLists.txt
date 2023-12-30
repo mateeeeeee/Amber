@@ -40,7 +40,7 @@ set(UTILITY_FILES
 set(SCENE_FILES
     Scene/Scene.h
     Scene/Scene.cpp
-    Scene/PinholeCamera.h
+    Scene/Camera.h
     Scene/Renderer.h
     Scene/Renderer.cpp
 )
@@ -132,6 +132,10 @@ endif()
 
 set(LAVENDER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Lavender PRIVATE LAVENDER_PATH="${LAVENDER_PATH}")
+
+if(WIN32)
+    target_compile_definitions(Lavender PRIVATE NOMINMAX)
+endif()
 
 
 install(TARGETS Lavender DESTINATION bin)
