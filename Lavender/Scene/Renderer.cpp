@@ -7,10 +7,13 @@
 
 namespace lavender
 {
-
 	Renderer::Renderer(std::unique_ptr<Scene>&& scene) : scene(std::move(scene))
 	{
-		CudaCheck(cudaSetDevice(0));
+		int const device = 0;
+		CudaCheck(cudaSetDevice(device));
+		cudaDeviceProp props{};
+		CudaCheck(cudaGetDeviceProperties(&props, device));
+		LAVENDER_INFO("Device: {}\n", props.name);
 	}
 
 	Renderer::~Renderer()

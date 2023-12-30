@@ -1,7 +1,7 @@
 {
   "scene": 
-  {
-		"scene file" : "test_scene.pbrt",
+   {
+		"scene file" : "simple/teapot-metal.pbrt",
         "camera": 
 		{
 			"position": [
@@ -19,6 +19,6 @@
 			"far": 700.0,
 			"speed": 50.0,
 			"sensitivity" : 0.3
-		},
-    },
+		}
+    }
 }

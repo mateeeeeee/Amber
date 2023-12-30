@@ -2,9 +2,8 @@
 
 namespace lavender
 {
-	class Camera
+	struct Camera
 	{
-	public:
 		
 	};
 }

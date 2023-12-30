@@ -21,7 +21,7 @@ namespace lavender
 		}
 		std::unique_ptr<Scene> ConvertPBRTScene(std::shared_ptr<pbrt::Scene> const& pbrt_scene)
 		{
-			return nullptr;
+			return std::make_unique<Scene>();
 		}
 	}
 

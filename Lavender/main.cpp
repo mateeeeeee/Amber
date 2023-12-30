@@ -30,6 +30,7 @@ int main(int argc, char* argv[])
 		CLI::Option* max_window_opt = cli_parser.add_flag("--max", "Maximize editor window");
 		CLI11_PARSE(cli_parser, argc, argv);
 		if (log_file.empty()) log_file = "lavender.log";
+		if (config_file.empty()) config_file = "config.json";
 		use_editor = (bool)*use_editor_opt;
 		maximize_window = (bool)*max_window_opt;
 	}
@@ -57,7 +58,7 @@ int main(int argc, char* argv[])
 		LAVENDER_ERROR("{}", e.what());
 		return EXIT_FAILURE;
 	}
-	Renderer renderer(nullptr);
+	Renderer renderer(std::move(scene));
 	if(use_editor)
 	{
 		Window window(1080, 720, "lavender");
