@@ -2,8 +2,11 @@
 
 namespace lavender
 {
-	class Camera
+	class Filter
 	{
-		float fov;
+	public:
+
+
+	private:
 	};
 }

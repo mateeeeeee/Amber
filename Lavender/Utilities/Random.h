@@ -12,7 +12,6 @@ namespace lavender
     >
     class RealRandomGenerator
     {
-
     public:
         using ResultType = FloatType;
         using GeneratorType = Generator;

@@ -6,12 +6,6 @@
 		"height" : 720,
 		"max depth" : 4,
 		"samples per pixel" : 32,
-		"filter": 
-		{
-			"type": "box",
-			"width": 1.0,
-			"fallout": 2.0,
-		},
         "camera": 
 		{
 			"position": [
@@ -28,7 +22,7 @@
 			"shutter open" : 0.0,
 			"shutter close" : 1.0,
 			"lens radius" : 0.0,
-			"focal distance" : 1.0,
+			"focal distance" : 1.0
 		}
     }
 }

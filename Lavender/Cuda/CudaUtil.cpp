@@ -8,7 +8,7 @@ namespace lavender
 	{
 		if (code != cudaError::cudaSuccess)
 		{
-			LAVENDER_ERROR("{}", cudaGetErrorString(code));
+			LAV_ERROR("{}", cudaGetErrorString(code));
 			std::exit(EXIT_FAILURE);
 		} 
 	}
@@ -17,7 +17,7 @@ namespace lavender
 		cudaError_t code = cudaDeviceSynchronize();
 		if (code != cudaError::cudaSuccess)
 		{
-			LAVENDER_ERROR("Kernel launch failed: {}", cudaGetErrorString(code));
+			LAV_ERROR("Kernel launch failed: {}", cudaGetErrorString(code));
 			std::exit(EXIT_FAILURE);
 		}
 	}

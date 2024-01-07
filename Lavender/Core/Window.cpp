@@ -20,6 +20,11 @@ namespace lavender
 		return height;
 	}
 
+	void Window::Maximize()
+	{
+		SDL_MaximizeWindow(sdl_window.get());
+	}
+
 	bool Window::Loop()
 	{
 		SDL_Event event;

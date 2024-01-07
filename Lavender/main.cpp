@@ -8,6 +8,8 @@
 #include "Editor/Editor.h"
 #include "Scene/Scene.h"
 #include "Scene/Renderer.h"
+#include "Scene/Camera.h"
+#include "Utilities/Buffer2D.h"
 #include "Utilities/JsonUtil.h"
 
 using namespace lavender;
@@ -22,10 +24,13 @@ struct Config
 };
 bool ParseConfig(char const* config_file, Config& cfg);
 
+
+
+
 int main(int argc, char* argv[])
 {
 	std::string config_file, log_file;
-	bool use_editor = false, maximize_window = false, bool stats_enabled = false;
+	bool use_editor = false, maximize_window = false, stats_enabled = false;
 	{
 		CLI::App cli_parser{ "Lavender" };
 		cli_parser.add_option("--config-file", config_file, "Config file");
@@ -62,10 +67,13 @@ int main(int argc, char* argv[])
 		LAV_ERROR("{}", e.what());
 		return EXIT_FAILURE;
 	}
-	Renderer renderer(std::move(scene));
+
+	Camera camera{};
+	Renderer renderer(cfg.width, cfg.height, std::move(scene));
 	if(use_editor)
 	{
-		Window window(1080, 720, "lavender");
+		Window window(cfg.width, cfg.height, "lavender");
+		if (maximize_window) window.Maximize();
 		Editor editor(window, *g_LogManager.GetEditorSink());
 		while (window.Loop())
 		{
@@ -74,7 +82,8 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		renderer.Render();
+		renderer.Render(camera);
+		renderer.WriteFramebuffer("test.hdr");
 	}
 	g_LogManager.Destroy();
 

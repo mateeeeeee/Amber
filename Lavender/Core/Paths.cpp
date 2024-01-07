@@ -28,9 +28,9 @@ namespace lavender
 		return ResourcesDir() + "Icons/";
 	}
 
-	std::string paths::ScreenshotsDir()
+	std::string paths::ResultDir()
 	{
-		return SavedDir() + "Screenshots/";
+		return SavedDir() + "Result/";
 	}
 
 	std::string paths::LogDir()

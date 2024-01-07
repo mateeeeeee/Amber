@@ -20,6 +20,7 @@ namespace lavender
 		uint32 Width() const;
 		uint32 Height() const;
 
+		void Maximize();
 		bool Loop();
 		WindowEvent& GetWindowEvent() { return window_event; }
 

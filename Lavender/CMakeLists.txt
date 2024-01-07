@@ -35,6 +35,7 @@ set(UTILITY_FILES
     Utilities/StringUtil.h
     Utilities/StringUtil.cpp
     Utilities/JsonUtil.h
+    Utilities/Buffer2D.h
 )
 
 set(SCENE_FILES
