@@ -5,6 +5,8 @@
 #include "Core/Input.h"
 #include "Core/Logger.h"
 #include "Core/Paths.h"
+#include "Scene/Camera.h"
+#include "Scene/Renderer.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_sdl.h"
 #include "ImGui/imgui_impl_sdlrenderer.h"
@@ -13,8 +15,8 @@
 namespace lavender
 {
 
-	Editor::Editor(Window& window, EditorSink& editor_sink)
-		: window(window), editor_sink(editor_sink)
+	Editor::Editor(Window& window,Renderer& renderer, EditorSink& editor_sink)
+		: window(window), renderer(renderer), editor_sink(editor_sink)
 	{
 		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
 		window.GetWindowEvent().AddMember(&Editor::OnWindowEvent, *this);
@@ -25,8 +27,8 @@ namespace lavender
 
 		uint32 renderer_flags = SDL_RENDERER_ACCELERATED;
 		renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
-		renderer.reset(SDL_CreateRenderer(window.sdl_window.get(), -1, renderer_flags));
-		SDLCheck(renderer.get());
+		sdl_renderer.reset(SDL_CreateRenderer(window.sdl_window.get(), -1, renderer_flags));
+		SDLCheck(sdl_renderer.get());
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -36,8 +38,8 @@ namespace lavender
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		io.ConfigWindowsResizeFromEdges = true;
 		ImGui::StyleColorsDark();
-		ImGui_ImplSDL2_InitForSDLRenderer(window.sdl_window.get(), renderer.get());
-		ImGui_ImplSDLRenderer_Init(renderer.get());
+		ImGui_ImplSDL2_InitForSDLRenderer(window.sdl_window.get(), sdl_renderer.get());
+		ImGui_ImplSDLRenderer_Init(sdl_renderer.get());
 
 		ImFontConfig font_config{};
 		std::string font_name = paths::FontsDir() + "roboto/Roboto-Light.ttf";
@@ -48,14 +50,14 @@ namespace lavender
 		io.Fonts->AddFontFromFileTTF(icon_name.c_str(), 15.0f, &font_config, icon_ranges);
 		io.Fonts->Build();
 
-		render_target.reset(SDL_CreateTexture(renderer.get(),
+		render_target.reset(SDL_CreateTexture(sdl_renderer.get(),
 			SDL_PIXELFORMAT_RGBA32,
 			SDL_TEXTUREACCESS_STREAMING,
 			window.Width(), window.Height()));
 		SDLCheck(render_target.get());
 
 		gui_target.reset(SDL_CreateTexture(
-						 renderer.get(), 
+						 sdl_renderer.get(), 
 						 SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
 						 window.Width(), window.Height()));
 		SDLCheck(gui_target.get());
@@ -73,6 +75,7 @@ namespace lavender
 	void Editor::Run()
 	{
 		g_Input.Tick();
+		renderer.Update(ImGui::GetIO().DeltaTime);
 		Begin();
 		{
 			Render();
@@ -84,7 +87,7 @@ namespace lavender
 			}
 			else
 			{
-				SDLCheck(SDL_RenderCopy(renderer.get(), render_target.get(), nullptr, nullptr));
+				SDLCheck(SDL_RenderCopy(sdl_renderer.get(), render_target.get(), nullptr, nullptr));
 			}
 		}
 		End();
@@ -92,17 +95,19 @@ namespace lavender
 
 	void Editor::OnResize(int32 w, int32 h)
 	{
-		render_target.reset(SDL_CreateTexture(renderer.get(),
+		render_target.reset(SDL_CreateTexture(sdl_renderer.get(),
 			SDL_PIXELFORMAT_RGBA32,
 			SDL_TEXTUREACCESS_STREAMING,
 			window.Width(), window.Height()));
 		SDLCheck(render_target.get());
 
-		gui_target.reset(SDL_CreateTexture(renderer.get(),
+		gui_target.reset(SDL_CreateTexture(sdl_renderer.get(),
 			SDL_PIXELFORMAT_RGBA8888,
 			SDL_TEXTUREACCESS_TARGET,
 			w, h));
 		SDLCheck(gui_target.get());
+
+		renderer.OnResize(w, h);
 	}
 
 	void Editor::OnWindowEvent(WindowEventData const& data)
@@ -184,18 +189,25 @@ namespace lavender
 
 	void Editor::Begin()
 	{
-		SDL_SetRenderDrawColor(renderer.get(), 0, 0, 0, SDL_ALPHA_OPAQUE);
-		SDL_RenderClear(renderer.get());
+		SDL_SetRenderDrawColor(sdl_renderer.get(), 0, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_RenderClear(sdl_renderer.get());
 	}
 
 	void Editor::Render()
 	{
+		Camera camera;
+		renderer.Render(camera);
 
+		Framebuffer const& fb = renderer.GetFramebuffer();
+		int pitch = -1; void* data = nullptr;
+		SDLCheck(SDL_LockTexture(render_target.get(), nullptr, (void**)&data, &pitch));
+		memcpy(data, fb.Data(), pitch * fb.Rows());
+		SDL_UnlockTexture(render_target.get());
 	}
 
 	void Editor::End()
 	{
-		SDL_RenderPresent(renderer.get());
+		SDL_RenderPresent(sdl_renderer.get());
 	}
 
 	void Editor::BeginGUI()
@@ -204,8 +216,8 @@ namespace lavender
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
-		SDLCheck(SDL_SetRenderTarget(renderer.get(), gui_target.get()));
-		SDL_RenderClear(renderer.get());
+		SDLCheck(SDL_SetRenderTarget(sdl_renderer.get(), gui_target.get()));
+		SDL_RenderClear(sdl_renderer.get());
 		
 		ImGuiID dockspace_id = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 		ImGui::Begin(ICON_FA_GLOBE"Scene");
@@ -232,7 +244,8 @@ namespace lavender
 					visibility_flags[Visibility_Console] = !visibility_flags[Visibility_Console];
 				if (ImGui::MenuItem(ICON_FA_GEAR" Settings", 0, visibility_flags[Visibility_Settings]))
 					visibility_flags[Visibility_Settings] = !visibility_flags[Visibility_Settings];
-
+				if (ImGui::MenuItem(ICON_FA_CLOCK" Stats", 0, visibility_flags[Visibility_Stats]))
+					visibility_flags[Visibility_Stats] = !visibility_flags[Visibility_Stats];
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu(" Help"))
@@ -245,14 +258,15 @@ namespace lavender
 		}
 		LogWindow();
 		ConsoleWindow();
+		StatsWindow();
 	}
 
 	void Editor::EndGUI()
 	{
 		ImGui::Render();
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
-		SDLCheck(SDL_SetRenderTarget(renderer.get(), nullptr));
-		SDLCheck(SDL_RenderCopy(renderer.get(), gui_target.get(), nullptr, nullptr));
+		SDLCheck(SDL_SetRenderTarget(sdl_renderer.get(), nullptr));
+		SDLCheck(SDL_RenderCopy(sdl_renderer.get(), gui_target.get(), nullptr, nullptr));
 	}
 
 	void Editor::LogWindow()
@@ -266,5 +280,18 @@ namespace lavender
 		if (!visibility_flags[Visibility_Console]) return;
 		editor_console->Draw(ICON_FA_TERMINAL" Console ", &visibility_flags[Visibility_Console]);
 	}
+
+	void Editor::StatsWindow()
+	{
+		if (!visibility_flags[Visibility_Stats]) return;
+		ImGui::Begin(ICON_FA_CLOCK" Stats");
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			ImGui::Text("FPS: %.1f ms", io.Framerate);
+			ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
+		}
+		ImGui::End();
+	}
+
 }
 

@@ -39,6 +39,12 @@ namespace lavender
 				width = event.window.data1;
 				height = event.window.data2;
 			}
+			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_MAXIMIZED
+				&& event.window.windowID == SDL_GetWindowID(sdl_window.get()))
+			{
+				width = event.window.data1;
+				height = event.window.data2;
+			}
 			window_event.Broadcast(WindowEventData{ &event });
 		}
 		return true;

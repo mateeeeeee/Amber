@@ -3,11 +3,12 @@
 
 namespace lavender
 {
+	enum class KeyCode : uint32;
 	class Window;
 	struct WindowEventData;
-	enum class KeyCode : uint32;
 	class EditorSink;
 	class EditorConsole;
+	class Renderer;
 
 	class Editor
 	{
@@ -16,11 +17,12 @@ namespace lavender
 			Visibility_Log,
 			Visibility_Console,
 			Visibility_Settings,
+			Visibility_Stats,
 			Visibility_Count
 		};
 
 	public:
-		Editor(Window& window, EditorSink& editor_sink);
+		Editor(Window& window, Renderer& renderer, EditorSink& editor_sink);
 		~Editor();
 
 		void Run();
@@ -30,7 +32,8 @@ namespace lavender
 
 	private:
 		Window& window;
-		SDLRendererPtr renderer;
+		Renderer& renderer;
+		SDLRendererPtr sdl_renderer;
 		SDLTexturePtr render_target = nullptr;
 		SDLTexturePtr gui_target = nullptr;
 
@@ -54,5 +57,6 @@ namespace lavender
 
 		void LogWindow();
 		void ConsoleWindow();
+		void StatsWindow();
 	};
 }

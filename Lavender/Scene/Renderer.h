@@ -6,10 +6,10 @@ namespace lavender
 {
 	class Scene;
 	class Camera;
+	using Framebuffer = Buffer2D<Vector4>;
 
 	class Renderer
 	{
-		using Framebuffer = Buffer2D<Vector4>;
 	public:
 		explicit Renderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene);
 		~Renderer();
@@ -18,8 +18,9 @@ namespace lavender
 		void Render(Camera const& camera);
 
 		void OnResize(uint32 w, uint32 h);
-
 		void WriteFramebuffer(char const* outfile);
+		
+		Framebuffer const& GetFramebuffer() const { return framebuffer; }
 
 	private:
 		Framebuffer framebuffer;

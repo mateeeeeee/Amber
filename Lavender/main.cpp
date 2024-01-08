@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 	{
 		Window window(cfg.width, cfg.height, "lavender");
 		if (maximize_window) window.Maximize();
-		Editor editor(window, *g_LogManager.GetEditorSink());
+		Editor editor(window, renderer, *g_LogManager.GetEditorSink());
 		while (window.Loop())
 		{
 			editor.Run();
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 	else
 	{
 		renderer.Render(camera);
-		renderer.WriteFramebuffer("test.hdr");
+		renderer.WriteFramebuffer("test.hdr"); 
 	}
 	g_LogManager.Destroy();
 
@@ -118,6 +118,5 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	cfg.height = scene_params.FindOr<uint32>("height", 720);
 	cfg.max_depth = scene_params.FindOr<uint32>("max depth", 4);
 	cfg.samples_per_pixel = scene_params.FindOr<uint32>("samples per pixel", 16);
-
 	return true;
 }
