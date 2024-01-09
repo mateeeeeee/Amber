@@ -21,10 +21,9 @@ struct Config
 	uint32 height;
 	uint32 max_depth;
 	uint32 samples_per_pixel;
+	Camera camera;
 };
 bool ParseConfig(char const* config_file, Config& cfg);
-
-
 
 
 int main(int argc, char* argv[])
@@ -118,5 +117,33 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	cfg.height = scene_params.FindOr<uint32>("height", 720);
 	cfg.max_depth = scene_params.FindOr<uint32>("max depth", 4);
 	cfg.samples_per_pixel = scene_params.FindOr<uint32>("samples per pixel", 16);
+
+	json camera_json = scene_params.FindJson("camera");
+	if (camera_json.is_null())
+	{
+		LAV_ERROR("Missing camera parameters in config file!");
+		return false;
+	}
+
+	JsonParams camera_params(camera_json);
+
+	float camera_position[3] = { 0.0f, 0.0f, 0.0f };
+	camera_params.FindArray("position", camera_position);
+	cfg.camera.position = Vector3(camera_position);
+
+	float camera_up[3] = { 0.0f, 1.0f, 0.0f };
+	camera_params.FindArray("up", camera_up);
+
+	float look_at[3] = { 0.0f, 0.0f, 1.0f };
+	camera_params.FindArray("look_at", look_at);
+
+	Matrix look_at_matrix = Matrix::CreateLookAt(cfg.camera.position, Vector3(look_at), Vector3(camera_up));
+	cfg.camera.rotation = Quaternion::CreateFromRotationMatrix(look_at_matrix);
+
+	cfg.camera.fov = camera_params.FindOr<float>("fov", 45.0f);
+	cfg.camera.lens_radius = camera_params.FindOr<float>("lens radius", 0.0f);
+	cfg.camera.focal_distance = camera_params.FindOr<float>("focal distance", 1.0f);
+	cfg.camera.shutter_start = camera_params.FindOr<float>("shutter open", 0.0f);
+	cfg.camera.shutter_end = camera_params.FindOr<float>("shutter close", 1.0f);
 	return true;
 }

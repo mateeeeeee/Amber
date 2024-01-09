@@ -1,9 +1,18 @@
 #pragma once
+#include "Cuda/CudaUtil.h"
 
 namespace lavender
 {
-	class Camera
+	struct Camera
 	{
+		Vector3		position;
+		Quaternion	rotation;
 		float fov;
+
+		float lens_radius;
+		float focal_distance;
+
+		float shutter_start;
+		float shutter_end;
 	};
 }

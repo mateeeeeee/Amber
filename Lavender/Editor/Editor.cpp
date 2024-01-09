@@ -5,8 +5,8 @@
 #include "Core/Input.h"
 #include "Core/Logger.h"
 #include "Core/Paths.h"
-#include "Scene/Camera.h"
 #include "Scene/Renderer.h"
+#include "Scene/Camera.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_sdl.h"
 #include "ImGui/imgui_impl_sdlrenderer.h"
@@ -195,13 +195,12 @@ namespace lavender
 
 	void Editor::Render()
 	{
-		Camera camera;
+		Camera camera{};
 		renderer.Render(camera);
-
 		Framebuffer const& fb = renderer.GetFramebuffer();
 		int pitch = -1; void* data = nullptr;
 		SDLCheck(SDL_LockTexture(render_target.get(), nullptr, (void**)&data, &pitch));
-		memcpy(data, fb.Data(), pitch * fb.Rows());
+		memcpy(data, fb, pitch * fb.Rows());
 		SDL_UnlockTexture(render_target.get());
 	}
 
