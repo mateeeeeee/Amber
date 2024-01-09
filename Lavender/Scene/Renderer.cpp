@@ -21,15 +21,6 @@ namespace lavender
 		cudaDeviceProp props{};
 		CudaCheck(cudaGetDeviceProperties(&props, device));
 		LAV_INFO("Device: {}\n", props.name);
-
-		RealRandomGenerator rng(0.0f, 1.0f);
-		for (uint32 i = 0; i < framebuffer.Rows(); ++i)
-		{
-			for (uint32 j = 0; j < framebuffer.Cols(); ++j)
-			{
-				framebuffer(i, j) = Vector4(rng(), rng(), rng(), 1.0f);
-			}
-		}
 	}
 
 	Renderer::~Renderer()
@@ -44,7 +35,14 @@ namespace lavender
 
 	void Renderer::Render(Camera const& camera)
 	{
-
+		static RealRandomGenerator rng(0.0f, 1.0f);
+		for (uint32 i = 0; i < framebuffer.Rows(); ++i)
+		{
+			for (uint32 j = 0; j < framebuffer.Cols(); ++j)
+			{
+				framebuffer(i, j) = Vector4(rng(), rng(), rng(), 1.0f);
+			}
+		}
 	}
 
 	void Renderer::OnResize(uint32 w, uint32 h)
@@ -56,9 +54,9 @@ namespace lavender
 	{
 		std::string output_path = paths::ResultDir() + outfile;
 		if(output_path.ends_with("hdr")) stbi_write_hdr(output_path.c_str(), framebuffer.Cols(), framebuffer.Rows(), 4, (float*)framebuffer.Data());
-		else
+		else if(output_path.ends_with("png"))
 		{
-
+			//do tonemapping first
 		}
 	}
 
