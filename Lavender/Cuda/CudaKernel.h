@@ -19,6 +19,6 @@ namespace lavender
 		}
 	};
 
-	#define LAUNCH_KERNEL(kernel, grid, block, ...) lavender::CudaKernelLauncher{}(kernel, grid, block, __VA_ARGS__)
-	#define LAUNCH_KERNEL_SHARED(kernel, grid, block, shared, ...) lavender::CudaKernelLauncher{}(kernel, grid, block, shared, __VA_ARGS__)
+	#define CUDA_LAUNCH(kernel, grid, block, ...) lavender::CudaKernelLauncher{}(kernel, grid, block, __VA_ARGS__)
+	#define CUDA_LAUNCH_SHARED(kernel, grid, block, shared, ...) lavender::CudaKernelLauncher{}(kernel, grid, block, shared, __VA_ARGS__)
 }

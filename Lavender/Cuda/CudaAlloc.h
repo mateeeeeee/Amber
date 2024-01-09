@@ -1,6 +1,8 @@
 #pragma once
 #include <type_traits>
 #include "driver_types.h"
+#include "Core/Defines.h"
+#include "Core/CoreTypes.h"
 
 namespace lavender
 {
@@ -45,16 +47,14 @@ namespace lavender
 		explicit TypedCudaAlloc(uint64 count) : CudaAlloc(count * sizeof(T)) {}
 		uint64 GetCount() const { return GetAllocSize() / sizeof(T); }
 
-		template<typename U>
+		template<typename U = T>
 		U* As()
 		{
-			static_assert(std::is_same_v<T,U>);
 			return reinterpret_cast<U*>(dev_alloc);
 		}
-		template<typename U>
+		template<typename U = T>
 		U const* As() const
 		{
-			static_assert(std::is_same_v<T, U>);
 			return reinterpret_cast<U*>(dev_alloc);
 		}
 	};

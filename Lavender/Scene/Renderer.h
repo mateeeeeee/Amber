@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "Cuda/CudaAlloc.h"
 #include "Utilities/Buffer2D.h"
 
 namespace lavender
@@ -7,6 +8,7 @@ namespace lavender
 	class Scene;
 	class Camera;
 	using Framebuffer = Buffer2D<Vector4>;
+	using DeviceMemory = TypedCudaAlloc<Vector4>;
 
 	class Renderer
 	{
@@ -24,5 +26,6 @@ namespace lavender
 
 	private:
 		Framebuffer framebuffer;
+		DeviceMemory dev_memory;
 	};
 }
