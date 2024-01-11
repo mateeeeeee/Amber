@@ -33,6 +33,7 @@ namespace lavender
 			return buffer[row * cols + col];
 		}
 
+#ifndef __CUDACC__
 		std::span<T> operator[](uint64 i)
 		{
 			return std::span{ buffer }.subspan(i * cols, cols);
@@ -41,7 +42,7 @@ namespace lavender
 		{
 			return std::span{ buffer }.subspan(i * cols, cols);
 		}
-
+#endif 
 		operator T* ()
 		{
 			return buffer.data();

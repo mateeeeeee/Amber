@@ -1,8 +1,10 @@
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/basic_file_sink.h"
 #include "Logger.h"
 #include "Core/Paths.h"
 #include "Editor/EditorSink.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/basic_file_sink.h"
+
 
 namespace lavender
 {
@@ -38,6 +40,23 @@ namespace lavender
 	void LogManager::Destroy()
 	{
 		spdlog::set_default_logger(nullptr);
+	}
+
+	void LogManager::Log(LogLevel level, std::string_view fmt, ...)
+	{
+		va_list args;
+		va_start(args, fmt);
+		size_t size = std::vsnprintf(nullptr, 0, fmt.data(), args) + 1;
+		std::string msg(size, '\0');
+		std::vsnprintf(&msg[0], size, fmt.data(), args);
+		va_end(args);
+		switch (level)
+		{
+		case LogLevel::Debug:	return spdlog::debug(msg);
+		case LogLevel::Info:	return spdlog::info(msg);
+		case LogLevel::Warning:	return spdlog::warn(msg);
+		case LogLevel::Error:	return spdlog::error(msg);
+		}
 	}
 
 	EditorSink* LogManager::GetEditorSink()

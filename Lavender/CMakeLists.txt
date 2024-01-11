@@ -43,7 +43,7 @@ set(SCENE_FILES
     Scene/Scene.cpp
     Scene/Camera.h
     Scene/Renderer.h
-    Scene/Renderer.cpp
+    Scene/Renderer.cu
 )
 
 set(EDITOR_FILES
@@ -125,11 +125,41 @@ target_link_libraries(Lavender PRIVATE CUDA::cudart CUDA::cuda_driver)
 target_link_libraries(Lavender PRIVATE ${SDL2_LIBRARIES})
 target_link_libraries(Lavender PRIVATE pbrtParser)
 
+
+set(DISABLED_WARNINGS
+	/wd4996
+)
+
 if(MSVC)
-    add_definitions(/FI"Core/CoreTypes.h" /FI"Core/Defines.h" /FI"Math/MathTypes.h")
-else()                                                   
-    add_definitions(-include Core/CoreTypes.h -include Core/Defines.h -include Math/MathTypes.h)
+    target_compile_options(Lavender
+        PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:
+            ${DISABLED_WARNINGS}
+            /FI"Core/CoreTypes.h"
+            /FI"Core/Defines.h"
+            /FI"Math/MathTypes.h"
+        >
+    )
+else()
+    target_compile_options(Lavender
+        PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:
+            ${DISABLED_WARNINGS}
+            -include Core/CoreTypes.h
+            -include Core/Defines.h
+            -include Math/MathTypes.h
+        >
+    )
 endif()
+
+target_compile_options(Lavender
+    PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:
+            -include Core/CoreTypes.h
+            #-include Core/Defines.h
+            #-include Math/MathTypes.h
+        >
+)
 
 set(LAVENDER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Lavender PRIVATE LAVENDER_PATH="${LAVENDER_PATH}")

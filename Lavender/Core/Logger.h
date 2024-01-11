@@ -1,6 +1,6 @@
 #pragma once
+#include <string_view>
 #include "Utilities/Singleton.h"
-#include "spdlog/spdlog.h"
 
 namespace lavender
 {
@@ -22,16 +22,19 @@ namespace lavender
 		void Initialize(char const* log_file, LogLevel level);
 		void Destroy();
 
+
+		void Log(LogLevel level, std::string_view fmt, ...);
+
 		template<typename... Args>
 		void Log(LogLevel level, std::string_view fmt, Args&&... args)
 		{
-			std::string msg = std::vformat(fmt, std::make_format_args(args...));
+			//std::string msg = std::vformat(fmt, std::make_format_args(args...));
 			switch (level)
 			{
-			case LogLevel::Debug:	return spdlog::debug(msg);
-			case LogLevel::Info:	return spdlog::info(msg);
-			case LogLevel::Warning:	return spdlog::warn(msg);
-			case LogLevel::Error:	return spdlog::error(msg);
+			case LogLevel::Debug:	break; //return spdlog::debug(msg);
+			case LogLevel::Info:	break; //return spdlog::info(msg);
+			case LogLevel::Warning:	break; //return spdlog::warn(msg);
+			case LogLevel::Error:	break; //return spdlog::error(msg);
 			}
 		}
 		EditorSink* GetEditorSink();

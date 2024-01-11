@@ -12,24 +12,26 @@
 #include "External/stb/stb_image_write.h"
 
 
+
+
 namespace lavender
 {
 	namespace
 	{
 		LAV_CUDA_KERNEL void render_kernel(Vector4* output, uint64 width, uint64 height, Camera const& camera)
 		{
-			//uint64 globalRow = blockIdx.y * blockDim.y + threadIdx.y;
-			//uint64 globalCol = blockIdx.x * blockDim.x + threadIdx.x;
-			//
-			//if (globalRow < height && globalCol < width) 
-			//{
-			//	uint64 globalIndex = globalRow * width + globalCol;
-			//
-			//	output[globalIndex].x = 1.0f;
-			//	output[globalIndex].y = 0.0f;
-			//	output[globalIndex].z = 0.0f;
-			//	output[globalIndex].w = 1.0f;
-			//}
+			uint64 globalRow = blockIdx.y * blockDim.y + threadIdx.y;
+			uint64 globalCol = blockIdx.x * blockDim.x + threadIdx.x;
+			
+			if (globalRow < height && globalCol < width) 
+			{
+				uint64 globalIndex = globalRow * width + globalCol;
+			
+				output[globalIndex].x = 1.0f;
+				output[globalIndex].y = 0.0f;
+				output[globalIndex].z = 0.0f;
+				output[globalIndex].w = 1.0f;
+			}
 		}
 	}
 

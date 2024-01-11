@@ -1,7 +1,11 @@
 #pragma once
 #include <memory>
 #include "Cuda/CudaAlloc.h"
+#include "Cuda/CudaEvent.h"
 #include "Utilities/Buffer2D.h"
+
+#include "Core/Defines.h"
+#include "Math/MathTypes.h"
 
 namespace lavender
 {
@@ -27,5 +31,6 @@ namespace lavender
 	private:
 		Framebuffer framebuffer;
 		DeviceMemory dev_memory;
+		CudaEvent render_start, render_end;
 	};
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "spdlog/spdlog.h"
 #include "Core/Logger.h"
 
 namespace lavender

@@ -35,7 +35,7 @@ namespace lavender
 			return reinterpret_cast<U*>(dev_alloc);
 		}
 
-	private:
+	protected:
 		void* dev_alloc = nullptr;
 		uint64 const alloc_size = 0;
 	};
