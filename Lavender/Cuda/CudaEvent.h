@@ -12,6 +12,8 @@ namespace lavender
 		LAV_NONCOPYABLE_NONMOVABLE(CudaEvent)
 		~CudaEvent();
 
+
+		void RecordOnStream();
 		void RecordOnStream(CudaStream& stream);
 		void Synchronize();
 		bool IsDone() const;

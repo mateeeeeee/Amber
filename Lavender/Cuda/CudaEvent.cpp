@@ -19,10 +19,16 @@ namespace lavender
 		CudaCheck(cudaEventDestroy(event));
 	}
 
+	void CudaEvent::RecordOnStream()
+	{
+		CudaCheck(cudaEventRecord(event));
+	}
+
 	void CudaEvent::RecordOnStream(CudaStream& stream)
 	{
 		CudaCheck(cudaEventRecord(event, stream));
 	}
+
 	void CudaEvent::Synchronize()
 	{
 		CudaCheck(cudaEventSynchronize(event));

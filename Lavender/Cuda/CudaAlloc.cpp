@@ -15,4 +15,14 @@ namespace lavender
 		CudaCheck(cudaFree(dev_alloc));
 	}
 
+	void CudaAlloc::Realloc(uint64 _alloc_size)
+	{
+		if (alloc_size != _alloc_size)
+		{
+			CudaCheck(cudaFree(dev_alloc));
+			CudaCheck(cudaMalloc(&dev_alloc, _alloc_size));
+			alloc_size = _alloc_size;
+		}
+	}
+
 }

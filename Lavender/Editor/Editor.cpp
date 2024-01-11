@@ -51,7 +51,7 @@ namespace lavender
 		io.Fonts->Build();
 
 		render_target.reset(SDL_CreateTexture(sdl_renderer.get(),
-			SDL_PIXELFORMAT_RGBA32,
+			SDL_PIXELFORMAT_RGBA8888,
 			SDL_TEXTUREACCESS_STREAMING,
 			window.Width(), window.Height()));
 		SDLCheck(render_target.get());
@@ -198,9 +198,11 @@ namespace lavender
 		Camera camera{};
 		renderer.Render(camera);
 		Framebuffer const& fb = renderer.GetFramebuffer();
-		int pitch = -1; void* data = nullptr;
+
+		int width, height, pitch = -1; void* data = nullptr;
+		SDL_QueryTexture(render_target.get(), nullptr, nullptr, &width, &height);
 		SDLCheck(SDL_LockTexture(render_target.get(), nullptr, (void**)&data, &pitch));
-		memcpy(data, fb, pitch * fb.Rows());
+		memcpy(data, fb, pitch * height);
 		SDL_UnlockTexture(render_target.get());
 	}
 

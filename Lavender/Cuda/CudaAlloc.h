@@ -35,9 +35,11 @@ namespace lavender
 			return reinterpret_cast<U*>(dev_alloc);
 		}
 
+		void Realloc(uint64 _alloc_size);
+
 	protected:
 		void* dev_alloc = nullptr;
-		uint64 const alloc_size = 0;
+		uint64 alloc_size = 0;
 	};
 
 	template<typename T>
@@ -56,6 +58,11 @@ namespace lavender
 		U const* As() const
 		{
 			return reinterpret_cast<U*>(dev_alloc);
+		}
+
+		void Realloc(uint64 _alloc_size)
+		{
+			CudaAlloc::Realloc(_alloc_size * sizeof(T));
 		}
 	};
 }

@@ -52,11 +52,11 @@ namespace lavender
 			return buffer.data();
 		}
 
-		void const* Data() const 
+		T const* Data() const 
 		{
 			return buffer.data();
 		}
-		void* Data()
+		T* Data()
 		{
 			return buffer.data();
 		}
