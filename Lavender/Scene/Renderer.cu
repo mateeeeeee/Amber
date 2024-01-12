@@ -1,5 +1,6 @@
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#include <cuda_runtime.h>
+#include <curand_kernel.h>
+#include <device_launch_parameters.h>
 #include "Scene.h"
 #include "Renderer.h"
 #include "Camera.h"
@@ -18,7 +19,23 @@ namespace lavender
 {
 	static constexpr uint64 BLOCK_DIM = 16;
 
-	__global__ void render_kernel(Pixel* output, uint64 width, uint64 height, Camera const& camera, float t)
+	//LAV_DEVICE static float ColorToLuminance(Vector3 color)
+	//{
+	//	return color.x * 0.2126f + color.y * 0.7152f + color.z * 0.0722f;
+	//}
+	//LAV_DEVICE static Vector3 ReinhardToneMapping(Vector3 color)
+	//{
+	//	float luma = ColorToLuminance(color);
+	//	float toneMappedLuma = luma / (1. + luma);
+	//	if (luma > 1e-6) color = color * toneMappedLuma / luma;
+	//	static constexpr float gamma = 2.2;
+	//	color.x = pow(color.x, 1.0f / gamma);
+	//	color.y = pow(color.y, 1.0f / gamma);
+	//	color.z = pow(color.z, 1.0f / gamma);
+	//	return color;
+	//}
+
+	LAV_KERNEL void render_kernel(Pixel* output, uint64 width, uint64 height, Camera const& camera, float t)
 	{
 		uint64 const col = blockIdx.x * blockDim.x + threadIdx.x;
 		uint64 const row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -26,9 +43,10 @@ namespace lavender
 		if (col >= width || row >= height) return;
 
 		uint64 j = row * width + col;
-		output[j].r = sin(t); // uint8(sin(t) * 0xff);
-		output[j].g = 0;
-		output[j].b = 0;
+
+		output[j].r = static_cast<uint8>(sin(t) * 0xff);
+		output[j].g = static_cast<uint8>(0 * 0xff);
+		output[j].b = static_cast<uint8>(0 * 0xff);
 		output[j].a = 0xff;
 	}
 
