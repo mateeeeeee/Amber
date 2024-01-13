@@ -11,12 +11,14 @@
 #include "Utilities/Random.h"
 
 //move to some utility file : ImageWrite
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "External/stb/stb_image_write.h"
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
+//#include "External/stb/stb_image_write.h"
 
 
 namespace lavender
 {
+
+
 	static constexpr uint64 BLOCK_DIM = 16;
 
 	namespace
@@ -84,7 +86,6 @@ namespace lavender
 		dim3 const grid_dim(grid_width, grid_height);
 
 		CudaLaunchKernel(RenderKernel, grid_dim, block_dim, device_memory, device_rand, width, height, camera);
-		CudaCheck(cudaDeviceSynchronize());
 		cudaMemcpy(framebuffer, device_memory, device_memory.GetAllocSize(), cudaMemcpyDeviceToHost);
 	}
 
@@ -98,17 +99,11 @@ namespace lavender
 		dim3 block(BLOCK_DIM, 1, 1);
 		dim3 grid((uint32)std::ceil(device_rand.GetCount() / BLOCK_DIM), 1, 1);
 		CudaLaunchKernel(DeviceRandInit, grid, block, device_rand, device_rand.GetCount());
-		CudaCheck(cudaDeviceSynchronize());
 	}
 
 	void CudaRenderer::WriteFramebuffer(char const* outfile)
 	{
 		std::string output_path = paths::ResultDir() + outfile;
-		//if(output_path.ends_with("hdr")) stbi_write_hdr(output_path.c_str(), framebuffer.Cols(), framebuffer.Rows(), 4, (float*)framebuffer.Data());
-		//else if(output_path.ends_with("png"))
-		//{
-		//	//do tonemapping first
-		//}
 	}
 
 }

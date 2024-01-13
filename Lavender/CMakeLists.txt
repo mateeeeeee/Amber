@@ -42,6 +42,9 @@ set(RENDERER_FILES
     Renderer/Scene.h
     Renderer/Scene.cpp
     Renderer/Camera.h
+    Renderer/Geometry.h
+    Renderer/Material.h
+    Renderer/Primitive.h
     Renderer/CudaRenderer.h
     Renderer/CudaRenderer.cu
 )

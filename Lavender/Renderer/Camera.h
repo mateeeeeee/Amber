@@ -1,5 +1,4 @@
 #pragma once
-#include "Cuda/CudaCore.h"
 
 namespace lavender
 {
@@ -7,12 +6,12 @@ namespace lavender
 	{
 		Vector3		position;
 		Quaternion	rotation;
-		float fov;
+		float		fov;
 
-		float lens_radius;
-		float focal_distance;
+		float		lens_radius;
+		float		focal_distance;
 
-		float shutter_start;
-		float shutter_end;
+		float		shutter_start;
+		float		shutter_end;
 	};
 }
