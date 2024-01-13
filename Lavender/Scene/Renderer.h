@@ -42,6 +42,7 @@ namespace lavender
 	private:
 		Framebuffer   framebuffer;
 		DeviceMemory  device_memory;
-		float time = 0.0f;
+
+	private:
 	};
 }

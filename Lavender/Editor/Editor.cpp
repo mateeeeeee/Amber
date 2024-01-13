@@ -51,14 +51,14 @@ namespace lavender
 		io.Fonts->Build();
 
 		render_target.reset(SDL_CreateTexture(sdl_renderer.get(),
-			SDL_PIXELFORMAT_RGBA8888,
+			SDL_PIXELFORMAT_RGBA32,
 			SDL_TEXTUREACCESS_STREAMING,
 			window.Width(), window.Height()));
 		SDLCheck(render_target.get());
 
 		gui_target.reset(SDL_CreateTexture(
 						 sdl_renderer.get(), 
-						 SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+			SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET,
 						 window.Width(), window.Height()));
 		SDLCheck(gui_target.get());
 		SetStyle();
@@ -102,7 +102,7 @@ namespace lavender
 		SDLCheck(render_target.get());
 
 		gui_target.reset(SDL_CreateTexture(sdl_renderer.get(),
-			SDL_PIXELFORMAT_RGBA8888,
+			SDL_PIXELFORMAT_RGBA32,
 			SDL_TEXTUREACCESS_TARGET,
 			w, h));
 		SDLCheck(gui_target.get());

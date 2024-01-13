@@ -94,6 +94,7 @@ set(CUDA_FILES
     Cuda/CudaAlloc.h
     Cuda/CudaAlloc.cpp
     Cuda/CudaKernel.h
+    Cuda/CudaMath.h
 )
 
 set(MATH_FILES

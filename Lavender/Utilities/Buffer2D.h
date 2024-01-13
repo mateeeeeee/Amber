@@ -18,10 +18,13 @@ namespace lavender
 		}
 		void Resize(uint32 r, uint32 c)
 		{
-			buffer.clear();
-			buffer.resize(r * c);
-			rows = r;
-			cols = c;
+			if (rows != r || cols != c)
+			{
+				buffer.clear();
+				buffer.resize(r * c);
+				rows = r;
+				cols = c;
+			}
 		}
 
 		T& operator()(uint64 row, uint64 col) 
@@ -63,6 +66,7 @@ namespace lavender
 
 		uint64 Rows() const { return rows; }
 		uint64 Cols() const { return cols; }
+		uint64 Size() const { return buffer.size(); }
 
 	private:
 		std::vector<T> buffer;
