@@ -1,5 +1,4 @@
 #include <cuda_runtime.h>
-#include <curand_kernel.h>
 #include <device_launch_parameters.h>
 #include "Scene.h"
 #include "CudaRenderer.h"
@@ -22,8 +21,12 @@ namespace lavender
 
 	namespace
 	{
-		LAV_DEVICE curandState* gpu_rand_state;
-
+		LAV_KERNEL void DeviceRandInit(curandState* rand_state, uint64 size)
+		{
+			uint64 j = blockIdx.x * blockDim.x + threadIdx.x;
+			if (j >= size) return;
+			curand_init(1984, j, 0, &rand_state[j]);
+		}
 		LAV_KERNEL void RenderKernel(Pixel* output, curandState* rand, uint64 width, uint64 height, Camera const& camera)
 		{
 			uint64 const col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -31,10 +34,7 @@ namespace lavender
 
 			if (col >= width || row >= height) return;
 
-			//gpu_rand_state = rand->As();
-
 			uint64 j = row * width + col;
-
 			Vec3 pixel_color(curand_uniform(&rand[j]), curand_uniform(&rand[j]), curand_uniform(&rand[j]));
 
 			output[j].r = static_cast<uint8>(pixel_color.x * 0xff);
@@ -60,7 +60,7 @@ namespace lavender
 
 
 	CudaRenderer::CudaRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene)  : CudaInitializer(), 
-		framebuffer(height, width), device_memory(width * height), cuda_rand(width * height)
+		framebuffer(height, width), device_memory(width * height), device_rand(width * height)
 	{
 		OnResize(width, height);
 	}
@@ -83,7 +83,7 @@ namespace lavender
 		dim3 const block_dim(BLOCK_DIM, BLOCK_DIM);
 		dim3 const grid_dim(grid_width, grid_height);
 
-		CudaLaunchKernel(RenderKernel, grid_dim, block_dim, device_memory, cuda_rand, width, height, camera);
+		CudaLaunchKernel(RenderKernel, grid_dim, block_dim, device_memory, device_rand, width, height, camera);
 		CudaCheck(cudaDeviceSynchronize());
 		cudaMemcpy(framebuffer, device_memory, device_memory.GetAllocSize(), cudaMemcpyDeviceToHost);
 	}
@@ -92,8 +92,13 @@ namespace lavender
 	{
 		framebuffer.Resize(h, w);
 		device_memory.Realloc(h * w);
-		cuda_rand.Realloc(h * w);
+		device_rand.Realloc(h * w);
 		cudaMemset(device_memory, 0, device_memory.GetAllocSize());
+
+		dim3 block(BLOCK_DIM, 1, 1);
+		dim3 grid((uint32)std::ceil(device_rand.GetCount() / BLOCK_DIM), 1, 1);
+		CudaLaunchKernel(DeviceRandInit, grid, block, device_rand, device_rand.GetCount());
+		CudaCheck(cudaDeviceSynchronize());
 	}
 
 	void CudaRenderer::WriteFramebuffer(char const* outfile)

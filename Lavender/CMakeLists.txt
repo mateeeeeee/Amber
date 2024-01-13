@@ -95,8 +95,6 @@ set(CUDA_FILES
     Cuda/CudaAlloc.cpp
     Cuda/CudaKernel.h
     Cuda/CudaMath.h
-    Cuda/CudaRand.h
-    Cuda/CudaRand.cu
 )
 
 set(MATH_FILES

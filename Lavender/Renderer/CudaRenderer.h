@@ -1,8 +1,8 @@
 #pragma once
 #include <memory>
+#include <curand_kernel.h>
 #include "Cuda/CudaAlloc.h"
 #include "Cuda/CudaEvent.h"
-#include "Cuda/CudaRand.h"
 #include "Utilities/Buffer2D.h"
 #include "Core/Defines.h"
 #include "Math/MathTypes.h"
@@ -18,6 +18,7 @@ namespace lavender
 	class Camera;
 	using Framebuffer = Buffer2D<Pixel>;
 	using DeviceMemory = TypedCudaAlloc<Pixel>;
+	using DeviceRand = TypedCudaAlloc<curandState>;
 
 	class CudaInitializer
 	{
@@ -43,6 +44,6 @@ namespace lavender
 	private:
 		Framebuffer   framebuffer;
 		DeviceMemory  device_memory;
-		CudaRand	  cuda_rand;
+		DeviceRand	  device_rand;
 	};
 }
