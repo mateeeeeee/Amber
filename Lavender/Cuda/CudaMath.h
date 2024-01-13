@@ -1,21 +1,21 @@
 #pragma once
 #include <cuda_runtime.h>
-#include "CudaUtil.h"
+#include "CudaCore.h"
 
 namespace lavender
 {
 	template<typename T>
-	static LAV_DEVICE [[nodiscard]] T const& Clamp(T const& val, T const& min, T const& max)
+	LAV_INLINE LAV_DEVICE [[nodiscard]] T const& Clamp(T const& val, T const& min, T const& max)
 	{
 		return val < min ? min : (val > max ? max : val);
 	}
 	template<typename T>
-	static LAV_DEVICE [[nodiscard]] T const& Min(T const& val1, T const& val2)
+	LAV_INLINE LAV_DEVICE [[nodiscard]] T const& Min(T const& val1, T const& val2)
 	{
 		return val1 < val2 ? val1 : val2;
 	}
 	template<typename T>
-	static LAV_DEVICE [[nodiscard]] T const& Max(T const& val1, T const& val2)
+	LAV_INLINE LAV_DEVICE [[nodiscard]] T const& Max(T const& val1, T const& val2)
 	{
 		return val1 < val2 ? val2 : val1;
 	}

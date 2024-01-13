@@ -1,6 +1,6 @@
 #include "cuda_runtime.h"
 #include "CudaStream.h"
-#include "CudaUtil.h"
+#include "CudaCore.h"
 
 namespace lavender
 {

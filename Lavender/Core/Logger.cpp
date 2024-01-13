@@ -35,6 +35,11 @@ namespace lavender
 		std::shared_ptr<spdlog::logger> lavender_logger = std::make_shared<spdlog::logger>(std::string("lavender logger"), spdlog::sinks_init_list{ console_sink, editor_sink, file_sink });
 		lavender_logger->set_level(spdlog_level);
 		spdlog::set_default_logger(lavender_logger);
+
+		SetLogCallback(LogLevel::Debug, spdlog::debug<std::string>);
+		SetLogCallback(LogLevel::Info, spdlog::info<std::string>);
+		SetLogCallback(LogLevel::Warning, spdlog::warn<std::string>);
+		SetLogCallback(LogLevel::Error, spdlog::error<std::string>);
 	}
 
 	void LogManager::Destroy()
@@ -42,7 +47,7 @@ namespace lavender
 		spdlog::set_default_logger(nullptr);
 	}
 
-	void LogManager::Log(LogLevel level, std::string_view fmt, ...)
+	void LogManager::CLog(LogLevel level, std::string_view fmt, ...)
 	{
 		va_list args;
 		va_start(args, fmt);
@@ -50,13 +55,9 @@ namespace lavender
 		std::string msg(size, '\0');
 		std::vsnprintf(&msg[0], size, fmt.data(), args);
 		va_end(args);
-		switch (level)
-		{
-		case LogLevel::Debug:	return spdlog::debug(msg);
-		case LogLevel::Info:	return spdlog::info(msg);
-		case LogLevel::Warning:	return spdlog::warn(msg);
-		case LogLevel::Error:	return spdlog::error(msg);
-		}
+		uint32 i = (uint32)level;
+		LAV_ASSERT(callbacks[i]);
+		callbacks[i](msg);
 	}
 
 	EditorSink* LogManager::GetEditorSink()

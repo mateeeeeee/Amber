@@ -38,12 +38,12 @@ set(UTILITY_FILES
     Utilities/Buffer2D.h
 )
 
-set(SCENE_FILES
-    Scene/Scene.h
-    Scene/Scene.cpp
-    Scene/Camera.h
-    Scene/Renderer.h
-    Scene/Renderer.cu
+set(RENDERER_FILES
+    Renderer/Scene.h
+    Renderer/Scene.cpp
+    Renderer/Camera.h
+    Renderer/CudaRenderer.h
+    Renderer/CudaRenderer.cu
 )
 
 set(EDITOR_FILES
@@ -85,8 +85,8 @@ set(EXTERNAL_FILES
 )
 
 set(CUDA_FILES
-    Cuda/CudaUtil.h
-    Cuda/CudaUtil.cpp
+    Cuda/CudaCore.h
+    Cuda/CudaCore.cpp
     Cuda/CudaEvent.h
     Cuda/CudaEvent.cpp
     Cuda/CudaStream.h
@@ -95,6 +95,8 @@ set(CUDA_FILES
     Cuda/CudaAlloc.cpp
     Cuda/CudaKernel.h
     Cuda/CudaMath.h
+    Cuda/CudaRand.h
+    Cuda/CudaRand.cu
 )
 
 set(MATH_FILES
@@ -105,11 +107,11 @@ set(MAIN_FILES
     main.cpp
 )
 
-add_executable(Lavender ${MAIN_FILES} ${MATH_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+add_executable(Lavender ${MAIN_FILES} ${MATH_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Lavender PROPERTIES OUTPUT_NAME Lavender)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${MATH_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${MATH_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Lavender PRIVATE ${CUDA_INCLUDE_DIRS})

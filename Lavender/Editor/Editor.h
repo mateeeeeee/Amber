@@ -8,7 +8,7 @@ namespace lavender
 	struct WindowEventData;
 	class EditorSink;
 	class EditorConsole;
-	class Renderer;
+	class CudaRenderer;
 
 	class Editor
 	{
@@ -22,7 +22,7 @@ namespace lavender
 		};
 
 	public:
-		Editor(Window& window, Renderer& renderer, EditorSink& editor_sink);
+		Editor(Window& window, CudaRenderer& renderer, EditorSink& editor_sink);
 		~Editor();
 
 		void Run();
@@ -32,7 +32,7 @@ namespace lavender
 
 	private:
 		Window& window;
-		Renderer& renderer;
+		CudaRenderer& renderer;
 		SDLRendererPtr sdl_renderer;
 		SDLTexturePtr render_target = nullptr;
 		SDLTexturePtr gui_target = nullptr;

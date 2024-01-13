@@ -1,5 +1,5 @@
 #pragma once
-#include "Cuda/CudaUtil.h"
+#include "Cuda/CudaCore.h"
 
 namespace lavender
 {

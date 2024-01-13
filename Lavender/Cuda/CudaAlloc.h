@@ -1,6 +1,7 @@
 #pragma once
 #include <type_traits>
 #include "driver_types.h"
+#include "CudaCore.h"
 #include "Core/Defines.h"
 #include "Core/CoreTypes.h"
 
@@ -25,12 +26,12 @@ namespace lavender
 		}
 
 		template<typename U>
-		U* As()
+		LAV_HOST_DEVICE U* As()
 		{
 			return reinterpret_cast<U*>(dev_alloc);
 		}
 		template<typename U>
-		U const* As() const
+		LAV_HOST_DEVICE U const* As() const
 		{
 			return reinterpret_cast<U*>(dev_alloc);
 		}
@@ -50,14 +51,23 @@ namespace lavender
 		uint64 GetCount() const { return GetAllocSize() / sizeof(T); }
 
 		template<typename U = T>
-		U* As()
+		LAV_HOST_DEVICE U* As()
 		{
 			return reinterpret_cast<U*>(dev_alloc);
 		}
 		template<typename U = T>
-		U const* As() const
+		LAV_HOST_DEVICE U const* As() const
 		{
 			return reinterpret_cast<U*>(dev_alloc);
+		}
+
+		operator T* () 
+		{
+			return reinterpret_cast<T*>(dev_alloc);
+		}
+		operator T const* ()
+		{
+			return reinterpret_cast<T const*>(dev_alloc);
 		}
 
 		void Realloc(uint64 _alloc_size)

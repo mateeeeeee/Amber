@@ -6,9 +6,9 @@
 #include "Core/Logger.h"
 #include "Core/Paths.h"
 #include "Editor/Editor.h"
-#include "Scene/Scene.h"
-#include "Scene/Renderer.h"
-#include "Scene/Camera.h"
+#include "Renderer/Scene.h"
+#include "Renderer/CudaRenderer.h"
+#include "Renderer/Camera.h"
 #include "Utilities/Buffer2D.h"
 #include "Utilities/JsonUtil.h"
 
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 		use_editor = (bool)*use_editor_opt;
 		maximize_window = (bool)*max_window_opt;
 	}
-	g_LogManager.Initialize(log_file.c_str(), lavender::LogLevel::Debug);
+	g_LogManager.Initialize(log_file.c_str(), LogLevel::Debug);
 
 	Config cfg{};
 	bool config_parsed = ParseConfig(config_file.c_str(), cfg);
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 	}
 
 	Camera camera{};
-	Renderer renderer(cfg.width, cfg.height, std::move(scene));
+	CudaRenderer renderer(cfg.width, cfg.height, std::move(scene));
 	if(use_editor)
 	{
 		Window window(cfg.width, cfg.height, "lavender");

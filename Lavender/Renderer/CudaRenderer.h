@@ -2,6 +2,7 @@
 #include <memory>
 #include "Cuda/CudaAlloc.h"
 #include "Cuda/CudaEvent.h"
+#include "Cuda/CudaRand.h"
 #include "Utilities/Buffer2D.h"
 #include "Core/Defines.h"
 #include "Math/MathTypes.h"
@@ -25,11 +26,11 @@ namespace lavender
 		~CudaInitializer();
 	};
 
-	class Renderer : public CudaInitializer
+	class CudaRenderer : public CudaInitializer
 	{
 	public:
-		explicit Renderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene);
-		~Renderer();
+		explicit CudaRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene);
+		~CudaRenderer();
 
 		void Update(float dt);
 		void Render(Camera const& camera);
@@ -42,7 +43,6 @@ namespace lavender
 	private:
 		Framebuffer   framebuffer;
 		DeviceMemory  device_memory;
-
-	private:
+		CudaRand	  cuda_rand;
 	};
 }

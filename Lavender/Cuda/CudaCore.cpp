@@ -1,5 +1,5 @@
 #include "cuda_runtime.h"
-#include "CudaUtil.h"
+#include "CudaCore.h"
 #include "Core/Logger.h"
 
 namespace lavender
