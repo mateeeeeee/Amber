@@ -4,8 +4,6 @@
 #include "Cuda/CudaAlloc.h"
 #include "Cuda/CudaEvent.h"
 #include "Utilities/Buffer2D.h"
-#include "Core/Defines.h"
-#include "Math/MathTypes.h"
 
 namespace lavender
 {

@@ -87,7 +87,7 @@ set(EXTERNAL_FILES
     External/json/json.hpp
 )
 
-set(CUDA_FILES
+set(CUDA_UTIL_FILES
     Cuda/CudaCore.h
     Cuda/CudaCore.cpp
     Cuda/CudaEvent.h
@@ -108,11 +108,11 @@ set(MAIN_FILES
     main.cpp
 )
 
-add_executable(Lavender ${MAIN_FILES} ${MATH_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+add_executable(Lavender ${MAIN_FILES} ${MATH_FILES} ${CUDA_UTIL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Lavender PROPERTIES OUTPUT_NAME Lavender)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${MATH_FILES} ${CUDA_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${MATH_FILES} ${CUDA_UTIL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Lavender PRIVATE ${CUDA_INCLUDE_DIRS})
@@ -156,14 +156,29 @@ else()
     )
 endif()
 
-target_compile_options(Lavender
-    PRIVATE
-    $<$<COMPILE_LANGUAGE:CUDA>:
-            -include Core/CoreTypes.h
-            #-include Core/Defines.h
-            #-include Math/MathTypes.h
-        >
+#this causes nvcc fatal error 
+#target_compile_options(Lavender
+#    PRIVATE
+#    $<$<COMPILE_LANGUAGE:CUDA>:
+#            -include Core/CoreTypes.h
+#            -include Core/Defines.h
+#            -include Math/MathTypes.h
+#        >
+#)
+
+
+set(CUDA_COMPILED_FILES
+    Renderer/CudaRenderer.cu
 )
+
+if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+    set_source_files_properties(
+        ${CUDA_COMPILED_FILES}
+        PROPERTIES
+        LANGUAGE CUDA
+        COMPILE_OPTIONS "-include;Core/CoreTypes.h;-include;Core/Defines.h;-include;Math/MathTypes.h"
+    )
+endif()
 
 set(LAVENDER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Lavender PRIVATE LAVENDER_PATH="${LAVENDER_PATH}")
