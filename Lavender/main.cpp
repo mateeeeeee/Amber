@@ -6,9 +6,9 @@
 #include "Core/Logger.h"
 #include "Core/Paths.h"
 #include "Editor/Editor.h"
-#include "Renderer/Scene.h"
+#include "Scene/Scene.h"
+#include "Scene/Camera.h"
 #include "Renderer/CudaRenderer.h"
-#include "Renderer/Camera.h"
 #include "Utilities/Buffer2D.h"
 #include "Utilities/JsonUtil.h"
 

@@ -16,7 +16,7 @@ namespace lavender
 		SceneFormat GetSceneFormat(std::string_view scene_file)
 		{
 			if (scene_file.ends_with(".pbrt")) return SceneFormat::PBRT;
-			else if (scene_file.ends_with(".pbrt")) return SceneFormat::PBF;
+			else if (scene_file.ends_with(".pbf")) return SceneFormat::PBF;
 			else return SceneFormat::Unknown;
 		}
 		std::unique_ptr<Scene> ConvertPBRTScene(std::shared_ptr<pbrt::Scene> const& pbrt_scene)

@@ -1,24 +1,19 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-#include "Scene.h"
+#include "Scene/Scene.h"
+#include "Scene/Camera.h"
 #include "CudaRenderer.h"
-#include "Camera.h"
 #include "Core/Logger.h"
 #include "Core/Paths.h"
 #include "Cuda/CudaCore.h"
 #include "Cuda/CudaKernel.h"
 #include "Cuda/CudaMath.h"
 #include "Utilities/Random.h"
-
-//move to some utility file : ImageWrite
-//#define STB_IMAGE_WRITE_IMPLEMENTATION
-//#include "External/stb/stb_image_write.h"
+#include "Utilities/ImageUtil.h"
 
 
 namespace lavender
 {
-
-
 	static constexpr uint64 BLOCK_DIM = 16;
 
 	namespace
@@ -104,6 +99,7 @@ namespace lavender
 	void CudaRenderer::WriteFramebuffer(char const* outfile)
 	{
 		std::string output_path = paths::ResultDir() + outfile;
+		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), sizeof(Pixel));
 	}
 
 }
