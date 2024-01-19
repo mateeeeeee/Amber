@@ -49,9 +49,9 @@ set(SCENE_FILES
     Scene/Scene.h
     Scene/Scene.cpp
     Scene/Camera.h
-    Scene/Geometry.h
     Scene/Material.h
     Scene/Primitive.h
+    Scene/Light.h
 )
 
 set(EDITOR_FILES

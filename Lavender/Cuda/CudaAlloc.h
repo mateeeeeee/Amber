@@ -14,7 +14,7 @@ namespace lavender
 		LAV_NONCOPYABLE_NONMOVABLE(CudaAlloc)
 		~CudaAlloc();
 
-		uint64 GetAllocSize() const { return alloc_size; }
+		LAV_HOST_DEVICE uint64 GetAllocSize() const { return alloc_size; }
 
 		operator void const* () const
 		{
@@ -48,7 +48,7 @@ namespace lavender
 	{
 	public:
 		explicit TypedCudaAlloc(uint64 count) : CudaAlloc(count * sizeof(T)) {}
-		uint64 GetCount() const { return GetAllocSize() / sizeof(T); }
+		LAV_HOST_DEVICE uint64 GetCount() const { return GetAllocSize() / sizeof(T); }
 
 		template<typename U = T>
 		LAV_HOST_DEVICE U* As()
