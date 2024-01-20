@@ -12,18 +12,19 @@ namespace lavender
 	{
 		LightType type;
 		Vector3 color;
+
+		struct Directional
+		{
+			Vector3 direction;
+		};
+		struct Point
+		{
+			Vector3 position;
+		};
 		union 
 		{
-			struct Directional
-			{
-				Vector3 direction;
-			} directional;
-
-			struct Point
-			{
-				Vector3 position;
-				float   range;
-			} point;
+			Directional directional;
+			Point point;
 		};
 	};
 
@@ -33,11 +34,11 @@ namespace lavender
 		Light l{ type };
 		if constexpr (type == LightType::Directional)
 		{
-			l.directional = Directional(std::forward<Args>(args)...);
+			l.directional = Light::Directional(std::forward<Args>(args)...);
 		}
 		else if constexpr (type == LightType::Point)
 		{
-			l.point = Point(std::forward<Args>(args)...);
+			l.point = Light::Point(std::forward<Args>(args)...);
 		}
 		return l;
 	}
