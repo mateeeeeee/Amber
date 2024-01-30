@@ -1,44 +1,39 @@
 #pragma once
-#include "Cuda/CudaCore.h"
+#include <string>
 
 namespace lavender
 {
-	enum class MaterialType
+
+	struct Image 
 	{
-		Lambertian,
-		Mirror
+		std::string name;
+		uint32 width;
+		uint32 height;
+		uint32 channels;
+		std::vector<uint8> img;
+
+		Image(std::string_view file, std::string_view name);
+		Image(uint8_t const* buf,
+			int width, int height, int channels,
+			std::string_view name);
 	};
 
-	struct Material
+	struct Material 
 	{
-		MaterialType type;
-		union
-		{
-			struct Lambertian
-			{
-				Vector3 albedo;
-			} lambertian;
+		Vector3 base_color = Vector3(0.9f, 0.9f, 0.9f);
+		float metallic = 0.0f;
 
-			struct Mirror
-			{
-				Vector3 albedo;
-				float fuzz;
-			} mirror;
-		};
+		float specular = 0.0f;
+		float roughness = 1.0f;
+		float specular_tint = 0.0f;
+		float anisotropy = 0.0f;
+
+		float sheen = 0.0f;
+		float sheen_tint = 0.0f;
+		float clearcoat = 0.0f;
+		float clearcoat_gloss = 0.0f;
+
+		float ior = 1.5f;
+		float specular_transmission = 0.0f;
 	};
-
-	template<MaterialType type, typename... Args>
-	inline Material MakeMaterial(Args&&... args)
-	{
-		Material m{ type };
-		if constexpr (type == MaterialType::Lambertian)
-		{
-			m.lambertian = Lambertian(std::forward<Args>(args)...);
-		}
-		else if constexpr (type == MaterialType::Mirror)
-		{
-			m.mirror = Mirror(std::forward<Args>(args)...);
-		}
-		return m;
-	}
 }

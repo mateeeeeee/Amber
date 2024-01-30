@@ -1,5 +1,5 @@
+#include <unordered_map>
 #include "Scene.h"
-#include "Camera.h"
 #include "Core/Logger.h"
 #include "pbrtParser/Scene.h"
 
@@ -36,6 +36,8 @@ namespace lavender
 
 		std::unique_ptr<Scene> ConvertPBRTScene(std::shared_ptr<pbrt::Scene> const& pbrt_scene)
 		{
+			pbrt_scene->makeSingleLevel();
+
 			std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
 			auto const& pbrt_world = pbrt_scene->world;
@@ -53,27 +55,11 @@ namespace lavender
 			{
 				if (auto pbrt_distant_light = pbrt_light->as<pbrt::DistantLightSource>())
 				{
-					pbrt::vec3f pbrt_dir = pbrt_distant_light->to - pbrt_distant_light->from;
-					pbrt::vec3f pbrt_spectrum = pbrt_distant_light->L * pbrt_distant_light->scale;
-					pbrt::affine3f pbrt_transform = pbrt_distant_light->transform;
 					
-					Vector3 dir(&pbrt_dir.x); //multiply by transform?
-					Vector3 spectrum(&pbrt_spectrum.x);
-					Light light = MakeLight<LightType::Directional>(dir);
-					light.color = spectrum;
-					scene->lights.push_back(light);
 				}
 				else if (auto pbrt_point_light = pbrt_light->as<pbrt::PointLightSource>())
 				{
-					pbrt::vec3f pbrt_pos = pbrt_point_light->from;
-					pbrt::vec3f pbrt_spectrum = pbrt_point_light->I * pbrt_point_light->scale;
-
-					Vector3 pos(&pbrt_pos.x);
-					Vector3 spectrum(&pbrt_spectrum.x);
-					Light light = MakeLight<LightType::Point>(pos);
-					scene->lights.push_back(light);
-					light.color = spectrum;
-					scene->lights.push_back(light);
+					
 				}
 				else
 				{
@@ -81,12 +67,10 @@ namespace lavender
 				}
 			}
 
-			for (auto const& pbrt_shape : pbrt_world->shapes)
-			{
-
-			}
-
-			for (auto const& pbrt_instance : pbrt_world->instances)
+			std::unordered_map<pbrt::Material::SP, uint64>	pbrt_materials;
+			std::unordered_map<pbrt::Texture::SP, uint64>	pbrt_textures;
+			std::unordered_map<std::string, uint64>			pbrt_objects;
+			for (auto const& instance : pbrt_world->instances)
 			{
 
 			}

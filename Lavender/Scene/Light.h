@@ -2,26 +2,27 @@
 
 namespace lavender
 {
-	enum class LightType
+	enum class LightType : uint8
 	{
 		Directional,
 		Point
 	};
 
-	struct Light 
+	struct Directional
+	{
+		Vector3 direction;
+	};
+
+	struct Point
+	{
+		Vector3 position;
+	};
+
+	struct Light
 	{
 		LightType type;
 		Vector3 color;
-
-		struct Directional
-		{
-			Vector3 direction;
-		};
-		struct Point
-		{
-			Vector3 position;
-		};
-		union 
+		union
 		{
 			Directional directional;
 			Point point;
@@ -34,11 +35,11 @@ namespace lavender
 		Light l{ type };
 		if constexpr (type == LightType::Directional)
 		{
-			l.directional = Light::Directional(std::forward<Args>(args)...);
+			l.directional = Directional(std::forward<Args>(args)...);
 		}
 		else if constexpr (type == LightType::Point)
 		{
-			l.point = Light::Point(std::forward<Args>(args)...);
+			l.point = Point(std::forward<Args>(args)...);
 		}
 		return l;
 	}
