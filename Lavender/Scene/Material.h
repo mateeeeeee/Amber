@@ -12,8 +12,8 @@ namespace lavender
 		uint32 channels;
 		std::vector<uint8> img;
 
-		Image(std::string_view file, std::string_view name);
-		Image(uint8_t const* buf,
+		explicit Image(std::string_view file);
+		Image(uint8 const* buf,
 			int width, int height, int channels,
 			std::string_view name);
 	};
