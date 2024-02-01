@@ -36,6 +36,8 @@ set(UTILITY_FILES
     Utilities/StringUtil.cpp
     Utilities/ImageUtil.h
     Utilities/ImageUtil.cpp
+    Utilities/FilesUtil.h
+    Utilities/FilesUtil.cpp
     Utilities/JsonUtil.h
     Utilities/Buffer2D.h
 )
