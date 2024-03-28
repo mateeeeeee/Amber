@@ -18,10 +18,6 @@ set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif()
-
 if(CMAKE_CONFIGURATION_TYPES)
 	message("Multi-configuration generator")
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
