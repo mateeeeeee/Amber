@@ -1,6 +1,3 @@
-
-
-find_package(SDL2 REQUIRED)
 find_package(CUDAToolkit)
 
 set(CORE_FILES
@@ -130,13 +127,12 @@ target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/spdlog
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/DirectXMath/include)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/CLI11/include)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/pbrtParser)
-
+target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/SDL2/include)
 
 target_link_libraries(Lavender PUBLIC  ${CUDA_LIBRARIES})
 target_link_libraries(Lavender PRIVATE CUDA::cudart CUDA::cuda_driver)
-target_link_libraries(Lavender PRIVATE ${SDL2_LIBRARIES})
+target_link_libraries(Lavender PRIVATE SDL2)
 target_link_libraries(Lavender PRIVATE pbrtParser)
-
 
 set(DISABLED_WARNINGS
 	/wd4996
@@ -209,9 +205,17 @@ else()
     endif()
 endif()
 
-add_custom_command(TARGET Lavender POST_BUILD
+add_custom_command(TARGET Lavender PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${SDL2_DIR}/../bin/${SDL2_DLL_NAME}"
+        "${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.dll"
         "$<TARGET_FILE_DIR:Lavender>"
 )
+
+add_custom_command(
+    TARGET Lavender PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.lib"
+        "$<TARGET_FILE_DIR:Lavender>"
+)
+
 

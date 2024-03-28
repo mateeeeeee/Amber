@@ -63,8 +63,8 @@ int main(int argc, char* argv[])
 	}
 	catch (std::runtime_error const& e)
 	{
-		LAV_ERROR("{}", e.what());
-		return EXIT_FAILURE;
+		//LAV_ERROR("{}", e.what());
+		//return EXIT_FAILURE;
 	}
 
 	Camera camera{};
