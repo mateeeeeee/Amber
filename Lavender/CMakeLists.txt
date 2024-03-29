@@ -131,7 +131,7 @@ target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/SDL2/i
 
 target_link_libraries(Lavender PUBLIC  ${CUDA_LIBRARIES})
 target_link_libraries(Lavender PRIVATE CUDA::cudart CUDA::cuda_driver)
-target_link_libraries(Lavender PRIVATE SDL2)
+target_link_libraries(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.lib)
 target_link_libraries(Lavender PRIVATE pbrtParser)
 
 set(DISABLED_WARNINGS
@@ -211,11 +211,11 @@ add_custom_command(TARGET Lavender PRE_BUILD
         "$<TARGET_FILE_DIR:Lavender>"
 )
 
-add_custom_command(
-    TARGET Lavender PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.lib"
-        "$<TARGET_FILE_DIR:Lavender>"
-)
+#add_custom_command(
+#    TARGET Lavender PRE_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#        "${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.lib"
+#        "$<TARGET_FILE_DIR:Lavender>"
+#)
 
 
