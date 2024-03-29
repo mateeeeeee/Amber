@@ -3,11 +3,11 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "CudaRenderer.h"
-#include "Core/Logger.h"
-#include "Core/Paths.h"
 #include "Cuda/CudaCore.h"
 #include "Cuda/CudaKernel.h"
 #include "Cuda/CudaMath.h"
+#include "Core/Logger.h"
+#include "Core/Paths.h"
 #include "Utilities/Random.h"
 #include "Utilities/ImageUtil.h"
 

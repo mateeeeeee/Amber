@@ -2,8 +2,6 @@
 #include <type_traits>
 #include "driver_types.h"
 #include "CudaCore.h"
-#include "Core/Defines.h"
-#include "Core/CoreTypes.h"
 
 namespace lavender
 {
