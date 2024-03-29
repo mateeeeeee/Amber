@@ -1,4 +1,10 @@
-find_package(CUDAToolkit)
+
+find_package(CUDA REQUIRED)
+find_package(CUDAToolkit REQUIRED)
+
+set(OPTIX_INSTALL_DIR "C:\\ProgramData\\NVIDIA Corporation\\OptiX SDK 8.0.0")
+#dont hardcode values
+
 
 set(CORE_FILES
     Core/CoreTypes.h
@@ -40,8 +46,6 @@ set(UTILITY_FILES
 )
 
 set(RENDERER_FILES
-    Renderer/CudaRenderer.h
-    Renderer/CudaRenderer.cu
 )
 
 set(SCENE_FILES
@@ -92,17 +96,19 @@ set(EXTERNAL_FILES
     External/json/json.hpp
 )
 
-set(CUDA_UTIL_FILES
-    Cuda/CudaCore.h
-    Cuda/CudaCore.cpp
-    Cuda/CudaEvent.h
-    Cuda/CudaEvent.cpp
-    Cuda/CudaStream.h
-    Cuda/CudaStream.cpp
-    Cuda/CudaAlloc.h
-    Cuda/CudaAlloc.cpp
-    Cuda/CudaKernel.h
-    Cuda/CudaMath.h
+set(OPTIX_BACKEND_FILES
+    Optix/Cuda/CudaCore.h
+    Optix/Cuda/CudaCore.cpp
+    Optix/Cuda/CudaEvent.h
+    Optix/Cuda/CudaEvent.cpp
+    Optix/Cuda/CudaStream.h
+    Optix/Cuda/CudaStream.cpp
+    Optix/Cuda/CudaAlloc.h
+    Optix/Cuda/CudaAlloc.cpp
+    Optix/Cuda/CudaKernel.h
+    Optix/Cuda/CudaMath.h
+    Optix/CudaRenderer.h
+    Optix/CudaRenderer.cu
 )
 
 set(MATH_FILES
@@ -113,11 +119,11 @@ set(MAIN_FILES
     main.cpp
 )
 
-add_executable(Lavender ${MAIN_FILES} ${MATH_FILES} ${CUDA_UTIL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+add_executable(Lavender ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Lavender PROPERTIES OUTPUT_NAME Lavender)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES  ${MAIN_FILES} ${MATH_FILES} ${CUDA_UTIL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 
 target_include_directories(Lavender PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Lavender PRIVATE ${CUDA_INCLUDE_DIRS})
@@ -128,6 +134,8 @@ target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/Direct
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/CLI11/include)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/pbrtParser)
 target_include_directories(Lavender PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/SDL2/include)
+target_include_directories(Lavender PRIVATE ${OPTIX_INSTALL_DIR}/include)
+
 
 target_link_libraries(Lavender PUBLIC  ${CUDA_LIBRARIES})
 target_link_libraries(Lavender PRIVATE CUDA::cudart CUDA::cuda_driver)
@@ -161,28 +169,15 @@ else()
 endif()
 
 #this causes nvcc fatal error 
-#target_compile_options(Lavender
-#    PRIVATE
-#    $<$<COMPILE_LANGUAGE:CUDA>:
-#            -include Core/CoreTypes.h
-#            -include Core/Defines.h
-#            -include Math/MathTypes.h
-#        >
-#)
-
-
-set(CUDA_COMPILED_FILES
-    Renderer/CudaRenderer.cu
+target_compile_options(Lavender
+    PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:
+        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Core/CoreTypes.h
+        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Core/Defines.h
+        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Math/MathTypes.h
+    >
 )
 
-if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
-    set_source_files_properties(
-        ${CUDA_COMPILED_FILES}
-        PROPERTIES
-        LANGUAGE CUDA
-        COMPILE_OPTIONS "-include;Core/CoreTypes.h;-include;Core/Defines.h;-include;Math/MathTypes.h"
-    )
-endif()
 
 set(LAVENDER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Lavender PRIVATE LAVENDER_PATH="${LAVENDER_PATH}")
@@ -210,12 +205,3 @@ add_custom_command(TARGET Lavender PRE_BUILD
         "${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.dll"
         "$<TARGET_FILE_DIR:Lavender>"
 )
-
-#add_custom_command(
-#    TARGET Lavender PRE_BUILD
-#    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#        "${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.lib"
-#        "$<TARGET_FILE_DIR:Lavender>"
-#)
-
-

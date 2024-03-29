@@ -5,18 +5,29 @@
 #include "pbrtParser/Scene.h"
 
 
-#define TEXTURED_PARAM_MASK 0x80000000
-#define IS_TEXTURED_PARAM(x) ((x) & 0x80000000)
-
-#define GET_TEXTURE_CHANNEL(x) (((x) >> 29) & 0x3)
-#define SET_TEXTURE_CHANNEL(x, c) x |= (c & 0x3) << 29
-
-#define GET_TEXTURE_ID(x) ((x) & 0x1fffffff)
-#define SET_TEXTURE_ID(x, i) (x |= i & 0x1fffffff)
-
-
 namespace lavender
 {
+	inline constexpr uint32 TEXTURED_PARAM_MASK = 0x80000000;
+	inline constexpr bool   IS_TEXTURED_PARAM(uint32 x)
+	{
+		return (x) & 0x80000000;
+	}
+	inline constexpr uint32 GET_TEXTURE_CHANNEL(uint32 x)
+	{
+		return ((x) >> 29) & 0x3;
+	}
+	inline constexpr void   SET_TEXTURE_CHANNEL(uint32& x, uint32 c)
+	{
+		x |= (c & 0x3) << 29;
+	}
+	inline constexpr uint32 GET_TEXTURE_ID(uint32 x)
+	{
+		return (x) & 0x1fffffff;
+	}
+	inline constexpr void   SET_TEXTURE_ID(uint32& x, uint32 i)
+	{
+		x |= i & 0x1fffffff;
+	}
 	
 	namespace
 	{
@@ -47,13 +58,11 @@ namespace lavender
 
 			if (auto t = texture->as<pbrt::ImageTexture>())
 			{
-				std::string path = t->fileName;
-
-				Image img(pbrt_base_dir.data());
+				std::string path = std::string(pbrt_base_dir) + t->fileName;
 				const uint32 id = scene.textures.size();
 				pbrt_textures[texture] = id;
-				scene.textures.push_back(img);
-				std::cout << "Loaded image texture: " << t->fileName << "\n";
+				scene.textures.emplace_back(path.c_str());
+				LAV_INFO("Loaded image texture: %s\n", t->fileName);
 				return id;
 			}
 			else if (auto t = texture->as<pbrt::ConstantTexture>())
@@ -198,7 +207,6 @@ namespace lavender
 				}
 				else if (auto pbrt_point_light = pbrt_light->as<pbrt::PointLightSource>())
 				{
-
 				}
 				else
 				{
@@ -284,6 +292,8 @@ namespace lavender
 
 				return scene;
 			}
+
+			return scene;
 		}
 	}
 

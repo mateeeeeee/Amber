@@ -6,7 +6,7 @@
 #include "Core/Logger.h"
 #include "Core/Paths.h"
 #include "Scene/Camera.h"
-#include "Renderer/CudaRenderer.h"
+#include "Optix/CudaRenderer.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_sdl.h"
 #include "ImGui/imgui_impl_sdlrenderer.h"
