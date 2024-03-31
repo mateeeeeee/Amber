@@ -5,17 +5,17 @@
 namespace lavender::optix
 {
 	template<typename T>
-	LAV_NODISCARD LAV_INLINE LAV_DEVICE T const& Clamp(T const& val, T const& min, T const& max)
+	[[nodiscard]] inline LAV_DEVICE T const& Clamp(T const& val, T const& min, T const& max)
 	{
 		return val < min ? min : (val > max ? max : val);
 	}
 	template<typename T>
-	LAV_NODISCARD LAV_INLINE LAV_DEVICE T const& Min(T const& val1, T const& val2)
+	[[nodiscard]] inline LAV_DEVICE T const& Min(T const& val1, T const& val2)
 	{
 		return val1 < val2 ? val1 : val2;
 	}
 	template<typename T>
-	LAV_NODISCARD LAV_INLINE LAV_DEVICE T const& Max(T const& val1, T const& val2)
+	[[nodiscard]] inline LAV_DEVICE T const& Max(T const& val1, T const& val2)
 	{
 		return val1 < val2 ? val2 : val1;
 	}

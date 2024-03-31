@@ -74,11 +74,47 @@ namespace lavender::optix
 		}
 	};
 
-	
 	class Texture2D
 	{
 	public:
-		
+		template<typename Format>
+		Texture2D(uint32 w, uint32 h, bool srgb = false) : Texture2D(w,h, cudaCreateChannelDesc<Format>(), srgb)
+		{}
+
+		LAV_NONCOPYABLE(Texture2D)
+		Texture2D(Texture2D&& t) noexcept;
+		Texture2D& operator=(Texture2D&& t) noexcept;
+		~Texture2D();
+
+		uint32 GetWidth() const { return width; }
+		uint32 GetHeight() const { return height; }
+		auto   GetHandle() const { return texture_handle; }
+
+		void Update(void const* data);
+
+	private:
+		uint32 width;
+		uint32 height;
+		cudaChannelFormatDesc format;
+		cudaArray_t data = 0;
+		cudaTextureObject_t texture_handle = 0;
+
+	private:
+		Texture2D(uint32 w, uint32 h, cudaChannelFormatDesc format, bool srgb);
+	};
+
+
+	template <typename T>
+	struct ShaderRecord
+	{
+		alignas(OPTIX_SBT_RECORD_ALIGNMENT) uint8 header[OPTIX_SBT_RECORD_HEADER_SIZE];
+		T data;
+	};
+
+	class Module
+	{
+	public:
+
 
 	private:
 	};

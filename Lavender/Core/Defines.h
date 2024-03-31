@@ -9,18 +9,6 @@
 
 #define LAV_ASSERT(expr)			assert(expr)
 #define LAV_ASSERT_MSG(expr, msg)   assert(expr && msg)
-#define LAV_OPTIMIZE_ON			    pragma optimize("", on)
-#define LAV_OPTIMIZE_OFF			pragma optimize("", off)
-#define LAV_WARNINGS_OFF			pragma(warning(push, 0))
-#define LAV_WARNINGS_ON			    pragma(warning(pop))
-#define LAV_DEBUGBREAK()			__debugbreak()
-#define LAV_FORCEINLINE			    __forceinline
-#define LAV_INLINE				    inline
-#define LAV_NODISCARD				[[nodiscard]]
-#define LAV_NORETURN				[[noreturn]]
-#define LAV_DEPRECATED			    [[deprecated]]
-#define LAV_DEPRECATED_MSG(msg)	    [[deprecated(#msg)]]
-#define LAV_ALIGN(align)           alignas(align) 
 
 #ifdef __GNUC__ 
 #define LAV_UNREACHABLE()			___builtin_unreachable();
