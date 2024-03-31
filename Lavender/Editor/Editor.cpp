@@ -6,7 +6,7 @@
 #include "Core/Logger.h"
 #include "Core/Paths.h"
 #include "Scene/Camera.h"
-#include "Optix/CudaRenderer.h"
+#include "Optix/OptixRenderer.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_sdl.h"
 #include "ImGui/imgui_impl_sdlrenderer.h"
@@ -15,7 +15,7 @@
 namespace lavender
 {
 
-	Editor::Editor(Window& window, CudaRenderer& renderer, EditorSink& editor_sink)
+	Editor::Editor(Window& window, optix::OptixRenderer& renderer, EditorSink& editor_sink)
 		: window(window), renderer(renderer), editor_sink(editor_sink)
 	{
 		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);

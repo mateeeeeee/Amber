@@ -5,12 +5,12 @@
 namespace lavender
 {
 	template<typename T>
-	class Buffer2D
+	class CpuBuffer2D
 	{
 	public:
-		Buffer2D(uint32 rows, uint32 cols) : buffer(rows * cols), rows(rows), cols(cols) {}
-		LAV_DEFAULT_COPYABLE_MOVABLE(Buffer2D)
-		~Buffer2D() = default;
+		CpuBuffer2D(uint32 rows, uint32 cols) : buffer(rows * cols), rows(rows), cols(cols) {}
+		LAV_DEFAULT_COPYABLE_MOVABLE(CpuBuffer2D)
+		~CpuBuffer2D() = default;
 
 		void Clear(T clear = T{})
 		{

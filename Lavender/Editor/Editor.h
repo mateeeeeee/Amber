@@ -8,7 +8,11 @@ namespace lavender
 	struct WindowEventData;
 	class EditorSink;
 	class EditorConsole;
-	class CudaRenderer;
+
+	namespace optix
+	{
+		class OptixRenderer;
+	}
 
 	class Editor
 	{
@@ -22,7 +26,7 @@ namespace lavender
 		};
 
 	public:
-		Editor(Window& window, CudaRenderer& renderer, EditorSink& editor_sink);
+		Editor(Window& window, optix::OptixRenderer& renderer, EditorSink& editor_sink);
 		~Editor();
 
 		void Run();
@@ -32,7 +36,7 @@ namespace lavender
 
 	private:
 		Window& window;
-		CudaRenderer& renderer;
+		optix::OptixRenderer& renderer;
 		SDLRendererPtr sdl_renderer;
 		SDLTexturePtr render_target = nullptr;
 		SDLTexturePtr gui_target = nullptr;

@@ -8,15 +8,9 @@
 #include "Editor/Editor.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
-#include "Optix/CudaRenderer.h"
-#include "Utilities/Buffer2D.h"
+#include "Optix/OptixRenderer.h"
+#include "Utilities/CpuBuffer2D.h"
 #include "Utilities/JsonUtil.h"
-
-
-#include <optix.h>
-#include <optix_function_table_definition.h>
-#include <optix_stack_size.h>
-#include <optix_stubs.h>
 
 
 using namespace lavender;
@@ -74,31 +68,9 @@ int main(int argc, char* argv[])
 		//return EXIT_FAILURE;
 	}
 
-	OptixDeviceContext context = nullptr;
-	
-		// Initialize CUDA
-		CudaCheck(cudaFree(0));
-
-		// Initialize the OptiX API, loading all API entry points
-		OptixResult res = optixInit();
-
-		// Specify context options
-		OptixDeviceContextOptions options = {};
-		options.logCallbackFunction = nullptr;
-		options.logCallbackLevel = 4;
-#ifdef DEBUG
-		// This may incur significant performance cost and should only be done during development.
-		options.validationMode = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
-#endif
-
-		// Associate a CUDA context (and therefore a specific GPU) with this
-		// device context
-		CUcontext cuCtx = 0;  // zero means take the current context
-		res = optixDeviceContextCreate(cuCtx, &options, &context);
-
 
 	Camera camera{};
-	CudaRenderer renderer(cfg.width, cfg.height, std::move(scene));
+	optix::OptixRenderer renderer(cfg.width, cfg.height, std::move(scene));
 	if(use_editor)
 	{
 		Window window(cfg.width, cfg.height, "lavender");

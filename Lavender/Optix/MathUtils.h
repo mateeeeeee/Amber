@@ -1,8 +1,8 @@
 #pragma once
 #include <cuda_runtime.h>
-#include "CudaCore.h"
+#include "CudaUtils.h"
 
-namespace lavender
+namespace lavender::optix
 {
 	template<typename T>
 	LAV_NODISCARD LAV_INLINE LAV_DEVICE T const& Clamp(T const& val, T const& min, T const& max)
@@ -26,21 +26,21 @@ namespace lavender
 		LAV_HOST_DEVICE Vec3() : x{}, y{}, z{} {}
 		LAV_HOST_DEVICE Vec3(float e0, float e1, float e2) { e[0] = e0; e[1] = e1; e[2] = e2; }
 
-		LAV_HOST_DEVICE inline const Vec3& operator+() const { return *this; }
-		LAV_HOST_DEVICE inline Vec3 operator-() const { return Vec3(-e[0], -e[1], -e[2]); }
-		LAV_HOST_DEVICE inline float operator[](int i) const { return e[i]; }
-		LAV_HOST_DEVICE inline float& operator[](int i) { return e[i]; };
+		LAV_HOST_DEVICE const Vec3& operator+() const { return *this; }
+		LAV_HOST_DEVICE Vec3 operator-() const { return Vec3(-e[0], -e[1], -e[2]); }
+		LAV_HOST_DEVICE float operator[](int i) const { return e[i]; }
+		LAV_HOST_DEVICE float& operator[](int i) { return e[i]; };
 
-		LAV_HOST_DEVICE inline Vec3& operator+=(Vec3 const& v2);
-		LAV_HOST_DEVICE inline Vec3& operator-=(Vec3 const& v2);
-		LAV_HOST_DEVICE inline Vec3& operator*=(Vec3 const& v2);
-		LAV_HOST_DEVICE inline Vec3& operator/=(Vec3 const& v2);
-		LAV_HOST_DEVICE inline Vec3& operator*=(float t);
-		LAV_HOST_DEVICE inline Vec3& operator/=(float t);
+		LAV_HOST_DEVICE Vec3& operator+=(Vec3 const& v2);
+		LAV_HOST_DEVICE Vec3& operator-=(Vec3 const& v2);
+		LAV_HOST_DEVICE Vec3& operator*=(Vec3 const& v2);
+		LAV_HOST_DEVICE Vec3& operator/=(Vec3 const& v2);
+		LAV_HOST_DEVICE Vec3& operator*=(float t);
+		LAV_HOST_DEVICE Vec3& operator/=(float t);
 
-		LAV_HOST_DEVICE inline float Length() const { return sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]); }
-		LAV_HOST_DEVICE inline float LengthSq() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
-		LAV_HOST_DEVICE inline void  Normalize();
+		LAV_HOST_DEVICE float Length() const { return sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]); }
+		LAV_HOST_DEVICE float LengthSq() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
+		LAV_HOST_DEVICE void  Normalize();
 
 		union
 		{
