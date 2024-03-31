@@ -42,7 +42,7 @@ set(UTILITY_FILES
     Utilities/FilesUtil.h
     Utilities/FilesUtil.cpp
     Utilities/JsonUtil.h
-    Utilities/Buffer2D.h
+    Utilities/CpuBuffer2D.h
 )
 
 set(RENDERER_FILES
@@ -97,18 +97,13 @@ set(EXTERNAL_FILES
 )
 
 set(OPTIX_BACKEND_FILES
-    Optix/Cuda/CudaCore.h
-    Optix/Cuda/CudaCore.cpp
-    Optix/Cuda/CudaEvent.h
-    Optix/Cuda/CudaEvent.cpp
-    Optix/Cuda/CudaStream.h
-    Optix/Cuda/CudaStream.cpp
-    Optix/Cuda/CudaAlloc.h
-    Optix/Cuda/CudaAlloc.cpp
-    Optix/Cuda/CudaKernel.h
-    Optix/Cuda/CudaMath.h
-    Optix/CudaRenderer.h
-    Optix/CudaRenderer.cu
+    Optix/MathUtils.h
+    Optix/CudaUtils.h
+    Optix/CudaUtils.cpp
+    Optix/OptixUtils.h
+    Optix/OptixUtils.cpp
+    Optix/OptixRenderer.h
+    Optix/OptixRenderer.cu
 )
 
 set(MATH_FILES

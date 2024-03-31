@@ -2,8 +2,9 @@
 #include <type_traits>
 #include "driver_types.h"
 
-namespace lavender
+namespace lavender::optix
 {
+
 	template<typename KernelType, typename... Args, typename = std::enable_if_t<std::is_invocable_v<KernelType, Args...>, void>>
 	void CudaLaunchKernel(KernelType&& kernel, dim3 grid, dim3 block, Args&&... args)
 	{
