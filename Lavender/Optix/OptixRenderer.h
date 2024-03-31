@@ -45,7 +45,6 @@ namespace lavender::optix
 		Framebuffer const& GetFramebuffer() const { return framebuffer; }
 
 	private:
-
 		Framebuffer   framebuffer;
 		DeviceMemory  device_memory;
 	};

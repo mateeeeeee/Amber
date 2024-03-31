@@ -123,6 +123,8 @@ namespace lavender::optix
 		char const* input_file_name;
 	};
 
+	using ProgramGroupHandle = OptixProgramGroup&;
+
 	//#todo support pipeline with multiple modules -> hash map of modules?
 	class Pipeline
 	{
@@ -130,9 +132,9 @@ namespace lavender::optix
 		Pipeline(OptixDeviceContext optix_ctx, CompileOptions const& options);
 		~Pipeline();
 
-		OptixProgramGroup& AddRaygenGroup(char const* entry);
-		OptixProgramGroup& AddMissGroup(char const* entry);
-		OptixProgramGroup& AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry);
+		ProgramGroupHandle AddRaygenGroup(char const* entry);
+		ProgramGroupHandle AddMissGroup(char const* entry);
+		ProgramGroupHandle AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry);
 
 		void Create(uint32 max_depth = 3);
 
@@ -149,7 +151,7 @@ namespace lavender::optix
 	{
 		friend class ShaderBindingTable;
 	public:
-		ShaderRecord(std::string_view name, uint64 size, OptixProgramGroup program_group)
+		ShaderRecord(std::string_view name, uint64 size, ProgramGroupHandle program_group)
 			: name(name), size(size), program_group(program_group)
 		{
 		}
@@ -210,19 +212,19 @@ namespace lavender::optix
 		~ShaderBindingTableBuilder() = default;
 
 		template<typename T>
-		ShaderBindingTableBuilder& SetRaygen(std::string_view name, OptixProgramGroup& group)
+		ShaderBindingTableBuilder& SetRaygen(std::string_view name, ProgramGroupHandle group)
 		{
 			raygen_record = ShaderRecord(name, sizeof(T), group);
 			return *this;
 		}
 		template<typename T>
-		ShaderBindingTableBuilder& AddMiss(std::string_view name, OptixProgramGroup& group)
+		ShaderBindingTableBuilder& AddMiss(std::string_view name, ProgramGroupHandle group)
 		{
 			miss_records.emplace_back(name, sizeof(T), group);
 			return *this;
 		}
 		template<typename T>
-		ShaderBindingTableBuilder& AddHitGroup(std::string_view name, OptixProgramGroup& group)
+		ShaderBindingTableBuilder& AddHitGroup(std::string_view name, ProgramGroupHandle group)
 		{
 			hitgroup_records.emplace_back(name, sizeof(T), group);
 			return *this;
