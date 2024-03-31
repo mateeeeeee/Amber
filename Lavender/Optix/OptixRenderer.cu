@@ -15,8 +15,6 @@
 
 namespace lavender::optix
 {
-	static constexpr uint64 BLOCK_DIM = 16;
-
 	static void OptixLogCallback(unsigned int level, const char* tag, const char* message, void* cbdata)
 	{
 		switch (level)
@@ -78,11 +76,6 @@ namespace lavender::optix
 	{
 		uint64 const width  = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
-
-		uint64 const grid_width = (width + BLOCK_DIM - 1) / BLOCK_DIM;
-		uint64 const grid_height = (height + BLOCK_DIM - 1) / BLOCK_DIM;
-		dim3 const block_dim(BLOCK_DIM, BLOCK_DIM);
-		dim3 const grid_dim(grid_width, grid_height);
 	}
 
 	void OptixRenderer::OnResize(uint32 w, uint32 h)

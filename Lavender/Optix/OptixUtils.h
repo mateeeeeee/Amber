@@ -1,4 +1,8 @@
 #pragma once
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <channel_descriptor.h>
 #include <optix.h>
 #include <optix_types.h>
 
@@ -103,19 +107,135 @@ namespace lavender::optix
 		Texture2D(uint32 w, uint32 h, cudaChannelFormatDesc format, bool srgb);
 	};
 
-
-	template <typename T>
-	struct ShaderRecord
+	struct ModuleOptions
 	{
-		alignas(OPTIX_SBT_RECORD_ALIGNMENT) uint8 header[OPTIX_SBT_RECORD_HEADER_SIZE];
-		T data;
+		uint32 payload_values = 3;
+		uint32 attribute_values = 3;
+		char const* launch_params_name;
+		char const* input_file_name;
 	};
 
-	class Module
+	struct CompileOptions
+	{
+		uint32 payload_values = 3;
+		uint32 attribute_values = 3;
+		char const* launch_params_name;
+		char const* input_file_name;
+	};
+
+	//#todo support pipeline with multiple modules -> hash map of modules?
+	class Pipeline
 	{
 	public:
+		Pipeline(OptixDeviceContext optix_ctx, CompileOptions const& options);
+		~Pipeline();
 
+		OptixProgramGroup& AddRaygenGroup(char const* entry);
+		OptixProgramGroup& AddMissGroup(char const* entry);
+		OptixProgramGroup& AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry);
+
+		void Create(uint32 max_depth = 3);
 
 	private:
+		OptixDeviceContext optix_ctx;
+		OptixModule module = nullptr;
+		OptixPipeline pipeline = nullptr;
+		OptixPipelineCompileOptions pipeline_compile_options;
+		std::vector<OptixProgramGroup> program_groups;
+	};
+
+	class ShaderBindingTable;
+	struct ShaderRecord
+	{
+		friend class ShaderBindingTable;
+	public:
+		ShaderRecord(std::string_view name, uint64 size, OptixProgramGroup program_group)
+			: name(name), size(size), program_group(program_group)
+		{
+		}
+		LAV_DEFAULT_MOVABLE(ShaderRecord)
+
+	private:
+		std::string name;
+		uint64 size;
+		OptixProgramGroup program_group;
+	};
+
+	class ShaderBindingTableBuilder;
+	class ShaderBindingTable
+	{
+		friend class ShaderBindingTableBuilder;
+	public:
+		ShaderBindingTable() = default;
+		~ShaderBindingTable() = default;
+
+		void Commit()
+		{
+			gpu_shader_table.Update(cpu_shader_table.data(), cpu_shader_table.size());
+		}
+
+		uint8* GetShaderRecord(std::string const& shader)
+		{
+			return &cpu_shader_table[record_offsets[shader]];
+		}
+		template <typename T>
+		T& GetShaderParams(std::string const& shader)
+		{
+			return *reinterpret_cast<T*>(GetShaderRecord(shader) + OPTIX_SBT_RECORD_HEADER_SIZE);
+		}
+
+		operator OptixShaderBindingTable const& () const
+		{
+			return shader_binding_table;
+		}
+		operator OptixShaderBindingTable& () 
+		{
+			return shader_binding_table;
+		}
+
+	private:
+		OptixShaderBindingTable shader_binding_table;
+		Buffer gpu_shader_table;
+		std::vector<uint8_t> cpu_shader_table;
+		std::unordered_map<std::string, uint64> record_offsets;
+
+	private:
+		ShaderBindingTable(ShaderRecord&&, std::vector<ShaderRecord>&&, std::vector<ShaderRecord>&&);
+	};
+
+	class ShaderBindingTableBuilder
+	{
+	public:
+		ShaderBindingTableBuilder() = default;
+		~ShaderBindingTableBuilder() = default;
+
+		template<typename T>
+		ShaderBindingTableBuilder& SetRaygen(std::string_view name, OptixProgramGroup& group)
+		{
+			raygen_record = ShaderRecord(name, sizeof(T), group);
+			return *this;
+		}
+		template<typename T>
+		ShaderBindingTableBuilder& AddMiss(std::string_view name, OptixProgramGroup& group)
+		{
+			miss_records.emplace_back(name, sizeof(T), group);
+			return *this;
+		}
+		template<typename T>
+		ShaderBindingTableBuilder& AddHitGroup(std::string_view name, OptixProgramGroup& group)
+		{
+			hitgroup_records.emplace_back(name, sizeof(T), group);
+			return *this;
+		}
+
+		ShaderBindingTable Build()
+		{
+			return ShaderBindingTable(std::move(raygen_record), std::move(miss_records), std::move(hitgroup_records));
+		}
+
+	private:
+		ShaderRecord raygen_record;
+		std::vector<ShaderRecord> miss_records;
+		std::vector<ShaderRecord> hitgroup_records;
 	};
 }
