@@ -154,6 +154,7 @@ namespace lavender::optix
 	{
 		friend class ShaderBindingTable;
 	public:
+		ShaderRecord() = default;
 		ShaderRecord(std::string_view name, uint64 size, ProgramGroupHandle program_group)
 			: name(name), size(size), program_group(program_group)
 		{
@@ -283,20 +284,23 @@ namespace lavender::optix
 			uvs->Update(uv_data, buffer_size);
 		}
 
-		OptixBuildInput GetBuildInput() const
+		OptixBuildInput GetBuildInput()
 		{
+			LAV_ASSERT(vertices);
 			OptixBuildInput build_input{};
 			build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-			CUdeviceptr vertex_dev_ptr = vertices->GetDevicePtr();
-			build_input.triangleArray.vertexBuffers = &vertex_dev_ptr;
+			CUdeviceptr vertex_buffers[] = { vertices->GetDevicePtr() };
+			build_input.triangleArray.vertexBuffers = vertex_buffers;
 			build_input.triangleArray.numVertices = vertices->GetSize() / sizeof(float3);
 			build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
 			build_input.triangleArray.vertexStrideInBytes = sizeof(float3);
-
-			build_input.triangleArray.indexBuffer = indices->GetDevicePtr();
-			build_input.triangleArray.numIndexTriplets = indices->GetSize() / sizeof(uint3);
-			build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
-			build_input.triangleArray.indexStrideInBytes = sizeof(uint3);
+			if (indices)
+			{
+				build_input.triangleArray.indexBuffer = indices->GetDevicePtr();
+				build_input.triangleArray.numIndexTriplets = indices->GetSize() / sizeof(uint3);
+				build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
+				build_input.triangleArray.indexStrideInBytes = sizeof(uint3);
+			}
 
 			build_input.triangleArray.flags = &geometry_flags;
 			build_input.triangleArray.numSbtRecords = 1;
@@ -334,12 +338,11 @@ namespace lavender::optix
 			opts.operation = OPTIX_BUILD_OPERATION_BUILD;
 			opts.motionOptions.numKeys = 1;
 
-			OptixAccelBufferSizes buf_sizes;
-			OptixCheck(optixAccelComputeMemoryUsage(optix_ctx, &opts, build_inputs.data(), build_inputs.size(), &buf_sizes));
+			OptixAccelBufferSizes buf_sizes{};
+			OptixCheck(optixAccelComputeMemoryUsage(optix_ctx, &opts, build_inputs.data(), (uint32)build_inputs.size(), &buf_sizes));
 
-			build_output = Buffer(buf_sizes.outputSizeInBytes);
 			scratch = Buffer(buf_sizes.tempSizeInBytes);
-
+			build_output = Buffer(buf_sizes.outputSizeInBytes);
 			post_build_info = Buffer(sizeof(uint64));
 			OptixAccelEmitDesc emit_desc{};
 			emit_desc.type = OPTIX_PROPERTY_TYPE_COMPACTED_SIZE;
@@ -370,8 +373,8 @@ namespace lavender::optix
 
 		void AddGeometry(Geometry&& geometry)
 		{
-			build_inputs.push_back(geometry.GetBuildInput());
 			geometries.push_back(std::move(geometry));
+			build_inputs.push_back(geometries.back().GetBuildInput());
 		}
 
 		operator OptixTraversableHandle() const { return blas_handle; }

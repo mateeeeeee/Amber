@@ -52,7 +52,7 @@ namespace lavender::optix
 		}
 	}
 
-	Buffer::Buffer(uint64 size) 
+	Buffer::Buffer(uint64 size) : size(size)
 	{
 		CudaCheck(cudaMalloc(&dev_ptr, size));
 	}
@@ -65,7 +65,7 @@ namespace lavender::optix
 
 	Buffer& Buffer::operator=(Buffer&& buffer) noexcept
 	{
-		CudaCheck(cudaFree(dev_ptr));
+		if (dev_ptr) CudaCheck(cudaFree(dev_ptr));
 		size = buffer.size;
 		dev_ptr = buffer.dev_ptr;
 
@@ -76,7 +76,7 @@ namespace lavender::optix
 
 	Buffer::~Buffer()
 	{
-		CudaCheck(cudaFree(dev_ptr));
+		if(dev_ptr) CudaCheck(cudaFree(dev_ptr));
 	}
 
 	void Buffer::Update(void const* data, uint64 data_size)

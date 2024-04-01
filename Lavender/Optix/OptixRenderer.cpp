@@ -2,6 +2,7 @@
 #include <device_launch_parameters.h>
 #include <optix_stubs.h>
 #include <optix_function_table_definition.h>
+#include "OptixShared.h"
 #include "CudaUtils.h"
 #include "MathUtils.h"
 #include "Scene/Scene.h"
@@ -23,6 +24,7 @@ namespace lavender::optix
 		case 1:
 		case 2:
 		case 3:
+			LAV_INFO("%s", message);
 			return;
 		}
 	}
@@ -48,7 +50,11 @@ namespace lavender::optix
 		cuCtxGetCurrent(&cuda_context);
 
 		OptixCheck(optixDeviceContextCreate(cuda_context, nullptr, &optix_context));
+#ifdef _DEBUG
+		OptixCheck(optixDeviceContextSetLogCallback(optix_context, OptixLogCallback, nullptr, 4));
+#else 
 		OptixCheck(optixDeviceContextSetLogCallback(optix_context, OptixLogCallback, nullptr, 0));
+#endif
 	}
 
 	OptixInitializer::~OptixInitializer()
@@ -62,6 +68,36 @@ namespace lavender::optix
 		framebuffer(height, width), device_memory(width * height)
 	{
 		OnResize(width, height);
+
+		Geometry triangle_geometry{};
+		const float3 vertices[3] =
+		{ 
+			{ -0.5f, -0.5f, 0.0f },
+			{  0.5f, -0.5f, 0.0f },
+			{  0.0f,  0.5f, 0.0f }
+		};
+		triangle_geometry.SetVertices(vertices, 3);
+
+		BLAS blas(optix_context);
+		blas.AddGeometry(std::move(triangle_geometry));
+		blas.Build();
+		
+		CompileOptions comp_opts{};
+		comp_opts.input_file_name = "OptixRenderer.cu";
+		comp_opts.launch_params_name = "params";
+		Pipeline pipeline(optix_context, comp_opts);
+		ProgramGroupHandle rg_handle	= pipeline.AddRaygenGroup("__raygen__rg");
+		ProgramGroupHandle miss_handle	= pipeline.AddMissGroup("__miss__ms");
+		ProgramGroupHandle ch_handle	= pipeline.AddHitGroup(nullptr, "__closesthit__ch", nullptr);
+		pipeline.Create();
+
+		ShaderBindingTableBuilder sbt_builder{};
+		sbt_builder.AddHitGroup<HitData>("ch", ch_handle)
+				   .AddMiss<MissData>("ms", miss_handle)
+				   .SetRaygen<RaygenData>("rg", rg_handle);
+
+		ShaderBindingTable sbt = sbt_builder.Build();
+		sbt.GetShaderParams<MissData>("ms").color = make_float3(1.0f, 0.0f, 1.0f);
 	}
 
 	OptixRenderer::~OptixRenderer()
