@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 #include <channel_descriptor.h>
 #include <optix.h>
 #include <optix_types.h>
@@ -40,6 +41,11 @@ namespace lavender::optix
 		U const* As() const
 		{
 			return reinterpret_cast<U const*>(dev_ptr);
+		}
+
+		CUdeviceptr GetDevicePtr() const
+		{
+			return reinterpret_cast<CUdeviceptr>(dev_ptr);
 		}
 
 		void Update(void const* data, uint64 data_size);
@@ -114,7 +120,6 @@ namespace lavender::optix
 		char const* launch_params_name;
 		char const* input_file_name;
 	};
-
 	struct CompileOptions
 	{
 		uint32 payload_values = 3;
@@ -122,12 +127,10 @@ namespace lavender::optix
 		char const* launch_params_name;
 		char const* input_file_name;
 	};
-
 	using ProgramGroupHandle = OptixProgramGroup&;
-
-	//#todo support pipeline with multiple modules -> hash map of modules?
 	class Pipeline
 	{
+		//#todo support pipeline with multiple modules -> hash map of modules?
 	public:
 		Pipeline(OptixDeviceContext optix_ctx, CompileOptions const& options);
 		~Pipeline();
@@ -162,7 +165,6 @@ namespace lavender::optix
 		uint64 size;
 		OptixProgramGroup program_group;
 	};
-
 	class ShaderBindingTableBuilder;
 	class ShaderBindingTable
 	{
@@ -204,7 +206,6 @@ namespace lavender::optix
 	private:
 		ShaderBindingTable(ShaderRecord&&, std::vector<ShaderRecord>&&, std::vector<ShaderRecord>&&);
 	};
-
 	class ShaderBindingTableBuilder
 	{
 	public:
@@ -239,5 +240,236 @@ namespace lavender::optix
 		ShaderRecord raygen_record;
 		std::vector<ShaderRecord> miss_records;
 		std::vector<ShaderRecord> hitgroup_records;
+	};
+
+	class Geometry
+	{
+	public:
+		explicit Geometry(uint32 flags = OPTIX_GEOMETRY_FLAG_NONE) : geometry_flags(flags) {}
+		LAV_DEFAULT_MOVABLE(Geometry)
+		~Geometry() = default;
+
+		template<typename T>
+		void SetVertices(T const* vertex_data, uint64 vertex_count)
+		{
+			static_assert(sizeof(T) == sizeof(float3));
+			vertex_stride = sizeof(T);
+			uint64 buffer_size = vertex_count * sizeof(T);
+			vertices = std::make_unique<Buffer>(buffer_size);
+			vertices->Update(vertex_data, buffer_size);
+		}
+
+		void SetIndices(uint32 const* index_data, uint64 index_count)
+		{
+			uint64 buffer_size = index_count * sizeof(uint32);
+			indices = std::make_unique<Buffer>(buffer_size);
+			indices->Update(index_data, buffer_size);
+		}
+
+		template<typename T>
+		void SetNormals(T const* normal_data, uint64 normal_count)
+		{
+			static_assert(sizeof(T) == sizeof(float3));
+			uint64 buffer_size = normal_count * sizeof(T);
+			normals = std::make_unique<Buffer>(buffer_size);
+			normals->Update(normal_data, buffer_size);
+		}
+		template<typename T>
+		void SetUVs(T const* uv_data, uint64 uv_count)
+		{
+			static_assert(sizeof(T) == sizeof(float2));
+			uint64 buffer_size = uv_count * sizeof(T);
+			uvs = std::make_unique<Buffer>(buffer_size);
+			uvs->Update(uv_data, buffer_size);
+		}
+
+		OptixBuildInput GetBuildInput() const
+		{
+			OptixBuildInput build_input{};
+			build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
+			CUdeviceptr vertex_dev_ptr = vertices->GetDevicePtr();
+			build_input.triangleArray.vertexBuffers = &vertex_dev_ptr;
+			build_input.triangleArray.numVertices = vertices->GetSize() / sizeof(float3);
+			build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
+			build_input.triangleArray.vertexStrideInBytes = sizeof(float3);
+
+			build_input.triangleArray.indexBuffer = indices->GetDevicePtr();
+			build_input.triangleArray.numIndexTriplets = indices->GetSize() / sizeof(uint3);
+			build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
+			build_input.triangleArray.indexStrideInBytes = sizeof(uint3);
+
+			build_input.triangleArray.flags = &geometry_flags;
+			build_input.triangleArray.numSbtRecords = 1;
+			return build_input;
+		}
+
+	private:
+		std::unique_ptr<Buffer> vertices;
+		uint32 vertex_stride = 0;
+
+		std::unique_ptr<Buffer> indices;
+		std::unique_ptr<Buffer> normals;
+		std::unique_ptr<Buffer> uvs;
+		uint32 geometry_flags;
+	};
+	class BLAS
+	{
+	public:
+		explicit BLAS(OptixDeviceContext optix_ctx) : optix_ctx(optix_ctx)
+		{
+		}
+
+		void Compact()
+		{
+			uint64 compacted_size = 0;
+			cudaMemcpy(&compacted_size, post_build_info, sizeof(uint64), cudaMemcpyDeviceToHost);
+			bvh = Buffer(compacted_size);
+			OptixCheck(optixAccelCompact(
+				optix_ctx, 0, blas_handle, bvh.GetDevicePtr(), bvh.GetSize(), &blas_handle));
+		}
+		void Build(uint32 build_flags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION)
+		{
+			OptixAccelBuildOptions opts{};
+			opts.buildFlags = build_flags;
+			opts.operation = OPTIX_BUILD_OPERATION_BUILD;
+			opts.motionOptions.numKeys = 1;
+
+			OptixAccelBufferSizes buf_sizes;
+			OptixCheck(optixAccelComputeMemoryUsage(optix_ctx, &opts, build_inputs.data(), build_inputs.size(), &buf_sizes));
+
+			build_output = Buffer(buf_sizes.outputSizeInBytes);
+			scratch = Buffer(buf_sizes.tempSizeInBytes);
+
+			post_build_info = Buffer(sizeof(uint64));
+			OptixAccelEmitDesc emit_desc{};
+			emit_desc.type = OPTIX_PROPERTY_TYPE_COMPACTED_SIZE;
+			emit_desc.result = post_build_info.GetDevicePtr();
+			OptixCheck(optixAccelBuild(optix_ctx,
+				0,
+				&opts,
+				build_inputs.data(),
+				build_inputs.size(),
+				scratch.GetDevicePtr(),
+				scratch.GetSize(),
+				build_output.GetDevicePtr(),
+				build_output.GetSize(),
+				&blas_handle,
+				&emit_desc,
+				1));
+		}
+		void Clear()
+		{
+			geometries.clear();
+			if (build_output.GetSize() > 0)
+			{
+				build_output = Buffer();
+			}
+			scratch = Buffer();
+			post_build_info = Buffer();
+		}
+
+		void AddGeometry(Geometry&& geometry)
+		{
+			build_inputs.push_back(geometry.GetBuildInput());
+			geometries.push_back(std::move(geometry));
+		}
+
+		operator OptixTraversableHandle() const { return blas_handle; }
+
+	private:
+		OptixDeviceContext optix_ctx;
+		std::vector<Geometry> geometries;
+		std::vector<OptixBuildInput> build_inputs;
+		OptixTraversableHandle blas_handle;
+
+		Buffer build_output;
+		Buffer scratch;
+		Buffer post_build_info;
+		Buffer bvh;
+	};
+
+	class TLAS
+	{
+	public:
+		explicit TLAS(OptixDeviceContext optix_ctx) : optix_ctx(optix_ctx)
+		{
+		}
+
+		void AddInstance(OptixInstance&& instance)
+		{
+			instances.push_back(std::move(instance));
+		}
+
+		void Compact()
+		{
+			uint64 compacted_size = 0;
+			cudaMemcpy(&compacted_size, post_build_info, sizeof(uint64), cudaMemcpyDeviceToHost);
+			bvh = Buffer(compacted_size);
+			OptixCheck(optixAccelCompact(
+				optix_ctx, 0, tlas_handle, bvh.GetDevicePtr(), bvh.GetSize(), &tlas_handle));
+		}
+
+		void Build(uint32 build_flags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION)
+		{
+			instance_buffer = std::make_unique<Buffer>(instances.size() * sizeof(OptixInstance));
+			instance_buffer->Update(instances.data(), instances.size() * sizeof(OptixInstance));
+
+			build_input.type = OPTIX_BUILD_INPUT_TYPE_INSTANCES;
+			build_input.instanceArray.instances = instance_buffer->GetDevicePtr();
+			build_input.instanceArray.numInstances = instance_buffer->GetSize() / sizeof(OptixInstance);
+
+			OptixAccelBuildOptions opts{};
+			opts.buildFlags = build_flags;
+			opts.operation = OPTIX_BUILD_OPERATION_BUILD;
+			opts.motionOptions.numKeys = 1;
+
+			OptixAccelBufferSizes buf_sizes;
+			OptixCheck(optixAccelComputeMemoryUsage(optix_ctx, &opts, &build_input, 1, &buf_sizes));
+
+			build_output = Buffer(buf_sizes.outputSizeInBytes);
+			scratch = Buffer(buf_sizes.tempSizeInBytes);
+
+			post_build_info = Buffer(sizeof(uint64));
+			OptixAccelEmitDesc emit_desc{};
+			emit_desc.type = OPTIX_PROPERTY_TYPE_COMPACTED_SIZE;
+			emit_desc.result = post_build_info.GetDevicePtr();
+
+			OptixCheck(optixAccelBuild(optix_ctx,
+				0,
+				&opts,
+				&build_input,
+				1,
+				scratch.GetDevicePtr(),
+				scratch.GetSize(),
+				build_output.GetDevicePtr(),
+				build_output.GetSize(),
+				&tlas_handle,
+				&emit_desc,
+				1));
+		}
+		void Clear()
+		{
+			instances.clear();
+			if (build_output.GetSize() > 0)
+			{
+				build_output = Buffer();
+			}
+			scratch = Buffer();
+			post_build_info = Buffer();
+		}
+
+		operator OptixTraversableHandle() const { return tlas_handle; }
+
+	private:
+		OptixDeviceContext optix_ctx;
+		std::unique_ptr<Buffer> instance_buffer;
+		std::vector<OptixInstance> instances;
+
+		OptixBuildInput build_input;
+		OptixTraversableHandle tlas_handle;
+		Buffer build_output;
+		Buffer scratch;
+		Buffer post_build_info;
+		Buffer bvh;
 	};
 }
