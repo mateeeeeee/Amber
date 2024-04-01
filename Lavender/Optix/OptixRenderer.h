@@ -47,5 +47,7 @@ namespace lavender::optix
 	private:
 		Framebuffer   framebuffer;
 		DeviceMemory  device_memory;
+
+		std::vector<Geometry> geometries;
 	};
 }

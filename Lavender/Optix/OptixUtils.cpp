@@ -29,7 +29,7 @@ namespace lavender::optix
 		}
 
 		size_t read_size = fread(buffer, sizeof(char), file_size, file);
-		if (read_size != file_size)
+		if (read_size == 0)
 		{
 			fclose(file);
 			free(buffer);
@@ -65,7 +65,7 @@ namespace lavender::optix
 
 	Buffer& Buffer::operator=(Buffer&& buffer) noexcept
 	{
-		if (dev_ptr) CudaCheck(cudaFree(dev_ptr));
+		CudaCheck(cudaFree(dev_ptr));
 		size = buffer.size;
 		dev_ptr = buffer.dev_ptr;
 
@@ -76,7 +76,7 @@ namespace lavender::optix
 
 	Buffer::~Buffer()
 	{
-		if(dev_ptr) CudaCheck(cudaFree(dev_ptr));
+		CudaCheck(cudaFree(dev_ptr));
 	}
 
 	void Buffer::Update(void const* data, uint64 data_size)
