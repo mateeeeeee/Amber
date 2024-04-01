@@ -78,12 +78,55 @@ namespace lavender::optix
 		};
 		triangle_geometry.SetVertices(vertices, 3);
 
-		BLAS blas(optix_context);
-		blas.AddGeometry(std::move(triangle_geometry));
-		blas.Build();
+		//BLAS blas(optix_context);
+		//blas.AddGeometry(std::move(triangle_geometry));
+		//blas.Build();
+		{
+			OptixDeviceContext optix_ctx = optix_context;
+			
+			std::vector<OptixBuildInput> build_inputs;
+			OptixTraversableHandle blas_handle;
+
+			//Buffer build_output;
+			//Buffer scratch;
+			//Buffer post_build_info;
+			//Buffer bvh;
+
+			geometries.push_back(std::move(triangle_geometry));
+			build_inputs.push_back(geometries.back().GetBuildInput());
+
+			OptixAccelBuildOptions opts{};
+			opts.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
+			opts.operation = OPTIX_BUILD_OPERATION_BUILD;
+			opts.motionOptions.numKeys = 1;
+
+			OptixAccelBufferSizes buf_sizes{};
+			OptixCheck(optixAccelComputeMemoryUsage(optix_ctx, &opts, build_inputs.data(), (uint32)build_inputs.size(), &buf_sizes));
+
+			void* scratch_dev = nullptr;
+			void* build_output_dev = nullptr;
+			cudaMalloc(&scratch_dev, buf_sizes.tempSizeInBytes);
+			cudaMalloc(&build_output_dev, buf_sizes.outputSizeInBytes);
+
+			OptixCheck(optixAccelBuild(optix_ctx,
+				0,
+				&opts,
+				build_inputs.data(),
+				build_inputs.size(),
+				reinterpret_cast<CUdeviceptr>(scratch_dev),
+				buf_sizes.tempSizeInBytes,
+				reinterpret_cast<CUdeviceptr>(build_output_dev),
+				buf_sizes.outputSizeInBytes,
+				&blas_handle,
+				nullptr,
+				0));
+
+			cudaFree(build_output_dev);
+			cudaFree(scratch_dev);
+		}
 		
 		CompileOptions comp_opts{};
-		comp_opts.input_file_name = "OptixRenderer.cu";
+		comp_opts.input_file_name = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\Lavender\\Optix\\OptixRenderer.cu";
 		comp_opts.launch_params_name = "params";
 		Pipeline pipeline(optix_context, comp_opts);
 		ProgramGroupHandle rg_handle	= pipeline.AddRaygenGroup("__raygen__rg");
