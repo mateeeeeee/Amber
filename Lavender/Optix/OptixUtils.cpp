@@ -345,7 +345,7 @@ namespace lavender::optix
 		gpu_shader_table = Buffer(sbt_size);
 		cpu_shader_table.resize(sbt_size, 0);
 
-		shader_binding_table.raygenRecord = (CUdeviceptr)gpu_shader_table.As<void>();
+		shader_binding_table.raygenRecord = gpu_shader_table.GetDevicePtr();
 
 		shader_binding_table.missRecordBase = shader_binding_table.raygenRecord + raygen_entry_size;
 		shader_binding_table.missRecordStrideInBytes = miss_entry_size;

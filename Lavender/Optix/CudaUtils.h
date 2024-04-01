@@ -12,7 +12,7 @@
 namespace lavender::optix
 {
 	void CudaCheck(cudaError_t code);
-	void CudaCheckKernel();
+	void CudaSynchronize();
 
 	class CudaStream;
 	class CudaEvent
