@@ -7,42 +7,6 @@
 
 namespace lavender::optix
 {
-	static char* ReadFile(char const* filename, size_t& filesize)
-	{
-		FILE* file = fopen(filename, "r");
-		if (!file)
-		{
-			LAV_ERROR("Failed to open file: %s\n", filename);
-			return NULL;
-		}
-
-		fseek(file, 0, SEEK_END);
-		long file_size = ftell(file);
-		rewind(file);
-
-		char* buffer = (char*)malloc(file_size + 1);
-		if (!buffer)
-		{
-			fclose(file);
-			LAV_ERROR("Memory allocation failed\n");
-			return NULL;
-		}
-
-		size_t read_size = fread(buffer, sizeof(char), file_size, file);
-		if (read_size == 0)
-		{
-			fclose(file);
-			free(buffer);
-			LAV_ERROR("Failed to read file: %s\n", filename);
-			return NULL;
-		}
-		buffer[file_size] = '\0';
-		fclose(file);
-
-		filesize = read_size;
-		return buffer;
-	}
-
 	void OptixCheck(OptixResult code)
 	{
 		if (code != OPTIX_SUCCESS)
@@ -174,8 +138,13 @@ namespace lavender::optix
 			pipeline_compile_options.pipelineLaunchParamsVariableName = options.launch_params_name;
 			pipeline_compile_options.usesPrimitiveTypeFlags = OPTIX_PRIMITIVE_TYPE_FLAGS_TRIANGLE;
 
-			uint64      input_size = 0;
-			const char* input = ReadFile(options.input_file_name, input_size);
+			FILE* file = fopen(options.input_file_name, "rb");
+			fseek(file, 0, SEEK_END);
+			uint64 input_size = ftell(file);
+			std::unique_ptr<char[]> ptx(new char[input_size]);
+			rewind(file);
+			fread(ptx.get(), sizeof(char), input_size, file);
+			fclose(file);
 
 			char log[512];
 			uint64 log_size = sizeof(log);
@@ -183,7 +152,7 @@ namespace lavender::optix
 				optix_ctx,
 				&module_compile_options,
 				&pipeline_compile_options,
-				input,
+				ptx.get(),
 				input_size,
 				log, &log_size,
 				&module

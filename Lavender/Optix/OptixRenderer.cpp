@@ -2,6 +2,7 @@
 #include <device_launch_parameters.h>
 #include <optix_stubs.h>
 #include <optix_function_table_definition.h>
+#include <optix_stack_size.h>
 #include "OptixShared.h"
 #include "CudaUtils.h"
 #include "MathUtils.h"
@@ -12,6 +13,8 @@
 #include "Core/Paths.h"
 #include "Utilities/Random.h"
 #include "Utilities/ImageUtil.h"
+
+#include <fstream>
 
 
 namespace lavender::optix
@@ -81,6 +84,7 @@ namespace lavender::optix
 		//BLAS blas(optix_context);
 		//blas.AddGeometry(std::move(triangle_geometry));
 		//blas.Build();
+		if(false)
 		{
 			OptixDeviceContext optix_ctx = optix_context;
 			
@@ -125,22 +129,144 @@ namespace lavender::optix
 			cudaFree(scratch_dev);
 		}
 		
-		CompileOptions comp_opts{};
-		comp_opts.input_file_name = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\Lavender\\Optix\\OptixRenderer.cu";
-		comp_opts.launch_params_name = "params";
-		Pipeline pipeline(optix_context, comp_opts);
-		ProgramGroupHandle rg_handle	= pipeline.AddRaygenGroup("__raygen__rg");
-		ProgramGroupHandle miss_handle	= pipeline.AddMissGroup("__miss__ms");
-		ProgramGroupHandle ch_handle	= pipeline.AddHitGroup(nullptr, "__closesthit__ch", nullptr);
-		pipeline.Create();
+		{
+			char LOG[512];
+			uint64 LOG_SIZE = 512;
+			OptixModule module = nullptr;
+			OptixPipelineCompileOptions pipeline_compile_options = {};
+			{
+				OptixModuleCompileOptions module_compile_options = {};
+#if !defined( NDEBUG )
+				module_compile_options.optLevel = OPTIX_COMPILE_OPTIMIZATION_LEVEL_0;
+				module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
+#endif
 
-		ShaderBindingTableBuilder sbt_builder{};
-		sbt_builder.AddHitGroup<HitData>("ch", ch_handle)
-				   .AddMiss<MissData>("ms", miss_handle)
-				   .SetRaygen<RaygenData>("rg", rg_handle);
+				pipeline_compile_options.usesMotionBlur = false;
+				pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
+				pipeline_compile_options.numPayloadValues = 3;
+				pipeline_compile_options.numAttributeValues = 3;
+				pipeline_compile_options.exceptionFlags = OPTIX_EXCEPTION_FLAG_NONE;
+				pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
+				pipeline_compile_options.usesPrimitiveTypeFlags = OPTIX_PRIMITIVE_TYPE_FLAGS_TRIANGLE;
 
-		ShaderBindingTable sbt = sbt_builder.Build();
-		sbt.GetShaderParams<MissData>("ms").color = make_float3(1.0f, 0.0f, 1.0f);
+				//FILE* file = fopen("C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\build\\Lavender\\PTX.dir\\Debug\\OptixRenderer.ptx", "r");
+				//fseek(file, 0, SEEK_END);
+				//uint64 input_size = ftell(file);
+				//std::unique_ptr<char[]> ptx(new char[input_size]);
+				//rewind(file);
+				//fread(ptx.get(), sizeof(char), input_size, file);
+				//fclose(file);
+
+				std::string ptx;
+				std::string filename = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\build\\Lavender\\PTX.dir\\Debug\\OptixRenderer.ptx";
+				std::ifstream file(filename.c_str(), std::ios::binary);
+				if (file.good())
+				{
+					// Found usable source file
+					std::vector<unsigned char> buffer = std::vector<unsigned char>(std::istreambuf_iterator<char>(file), {});
+					ptx.assign(buffer.begin(), buffer.end());
+				}
+
+				OptixCheck(optixModuleCreate(
+					optix_context,
+					&module_compile_options,
+					&pipeline_compile_options,
+					ptx.data(),
+					ptx.size(),
+					LOG, &LOG_SIZE,
+					&module
+				));
+			}
+
+			//
+			// Create program groups
+			//
+			OptixProgramGroup raygen_prog_group = nullptr;
+			OptixProgramGroup miss_prog_group = nullptr;
+			OptixProgramGroup hitgroup_prog_group = nullptr;
+			{
+				OptixProgramGroupOptions program_group_options = {}; // Initialize to zeros
+
+				OptixProgramGroupDesc raygen_prog_group_desc = {}; //
+				raygen_prog_group_desc.kind = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
+				raygen_prog_group_desc.raygen.module = module;
+				raygen_prog_group_desc.raygen.entryFunctionName = "__raygen__rg";
+				OptixCheck(optixProgramGroupCreate(
+					optix_context,
+					&raygen_prog_group_desc,
+					1,   // num program groups
+					&program_group_options,
+					LOG, &LOG_SIZE,
+					&raygen_prog_group
+				));
+
+				OptixProgramGroupDesc miss_prog_group_desc = {};
+				miss_prog_group_desc.kind = OPTIX_PROGRAM_GROUP_KIND_MISS;
+				miss_prog_group_desc.miss.module = module;
+				miss_prog_group_desc.miss.entryFunctionName = "__miss__ms";
+				OptixCheck(optixProgramGroupCreate(
+					optix_context,
+					&miss_prog_group_desc,
+					1,   // num program groups
+					&program_group_options,
+					LOG, &LOG_SIZE,
+					&miss_prog_group
+				));
+
+				OptixProgramGroupDesc hitgroup_prog_group_desc = {};
+				hitgroup_prog_group_desc.kind = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
+				hitgroup_prog_group_desc.hitgroup.moduleCH = module;
+				hitgroup_prog_group_desc.hitgroup.entryFunctionNameCH = "__closesthit__ch";
+				OptixCheck(optixProgramGroupCreate(
+					optix_context,
+					&hitgroup_prog_group_desc,
+					1,   // num program groups
+					&program_group_options,
+					LOG, &LOG_SIZE,
+					&hitgroup_prog_group
+				));
+			}
+
+			//
+			// Link pipeline
+			//
+			OptixPipeline pipeline = nullptr;
+			{
+				const uint32_t    max_trace_depth = 1;
+				OptixProgramGroup program_groups[] = { raygen_prog_group, miss_prog_group, hitgroup_prog_group };
+
+				OptixPipelineLinkOptions pipeline_link_options = {};
+				pipeline_link_options.maxTraceDepth = max_trace_depth;
+				OptixCheck(optixPipelineCreate(
+					optix_context,
+					&pipeline_compile_options,
+					&pipeline_link_options,
+					program_groups,
+					sizeof(program_groups) / sizeof(program_groups[0]),
+					LOG, &LOG_SIZE,
+					&pipeline
+				));
+
+				OptixStackSizes stack_sizes = {};
+				for (auto& prog_group : program_groups)
+				{
+					OptixCheck(optixUtilAccumulateStackSizes(prog_group, &stack_sizes, pipeline));
+				}
+
+				uint32_t direct_callable_stack_size_from_traversal;
+				uint32_t direct_callable_stack_size_from_state;
+				uint32_t continuation_stack_size;
+				OptixCheck(optixUtilComputeStackSizes(&stack_sizes, max_trace_depth,
+					0,  // maxCCDepth
+					0,  // maxDCDEpth
+					&direct_callable_stack_size_from_traversal,
+					&direct_callable_stack_size_from_state, &continuation_stack_size));
+				OptixCheck(optixPipelineSetStackSize(pipeline, direct_callable_stack_size_from_traversal,
+					direct_callable_stack_size_from_state, continuation_stack_size,
+					1  // maxTraversableDepth
+				));
+			}
+		}
 	}
 
 	OptixRenderer::~OptixRenderer()

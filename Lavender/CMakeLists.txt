@@ -201,3 +201,15 @@ add_custom_command(TARGET Lavender PRE_BUILD
         "${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.dll"
         "$<TARGET_FILE_DIR:Lavender>"
 )
+
+
+set(OPTIX_SHADER_FILES
+    Optix/OptixRenderer.cu
+)
+
+add_library(PTX OBJECT ${OPTIX_SHADER_FILES})
+set_property(TARGET PTX PROPERTY CUDA_PTX_COMPILATION ON)
+target_include_directories(PTX PRIVATE ${OPTIX_INSTALL_DIR}/include)
+
+# Set the output directory for PTX files
+set(PTX_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/ptx")
