@@ -4,27 +4,33 @@
 
 namespace lavender
 {
-	struct HitData
+	struct Params
 	{
-		float3 color;
+		uchar4* image;
+		unsigned int           image_width;
+		unsigned int           image_height;
+		float3                 cam_eye;
+		float3                 cam_u, cam_v, cam_w;
+		OptixTraversableHandle handle;
 	};
 
-	struct RaygenData
-	{
 
+	struct RayGenData
+	{
+		// No data needed
 	};
+
 
 	struct MissData
 	{
-		float3 color;
+		float3 bg_color;
 	};
 
-	struct LaunchParams
+
+	struct HitGroupData
 	{
-		uint8*				   image;
-		uint32		           image_width;
-		uint32		           image_height;
-		OptixTraversableHandle handle;
+		// No data needed
 	};
+
 }
 

@@ -3,13 +3,12 @@
 #include "OptixShared.h"
 
 using namespace lavender;
-
-extern "C" 
-{
-	__constant__ LaunchParams params;
+extern "C" {
+	__constant__ Params params;
 }
 
-static __forceinline__ __device__ void SetPayload(float3 p)
+
+static __forceinline__ __device__ void setPayload(float3 p)
 {
 	optixSetPayload_0(__float_as_uint(p.x));
 	optixSetPayload_1(__float_as_uint(p.y));
@@ -19,7 +18,16 @@ static __forceinline__ __device__ void SetPayload(float3 p)
 
 static __forceinline__ __device__ void computeRay(uint3 idx, uint3 dim, float3& origin, float3& direction)
 {
+	const float3 U = params.cam_u;
+	const float3 V = params.cam_v;
+	const float3 W = params.cam_w;
+	const float2 d = 2.0f * make_float2(
+		static_cast<float>(idx.x) / static_cast<float>(dim.x),
+		static_cast<float>(idx.y) / static_cast<float>(dim.y)
+	) - 1.0f;
 
+	origin = params.cam_eye;
+	direction = normalize(d.x * U + d.y * V + W);
 }
 
 
@@ -62,7 +70,7 @@ extern "C" __global__ void __raygen__rg()
 extern "C" __global__ void __miss__ms()
 {
 	MissData* miss_data = reinterpret_cast<MissData*>(optixGetSbtDataPointer());
-	SetPayload(miss_data->color);
+	setPayload(miss_data->bg_color);
 }
 
 
@@ -72,6 +80,6 @@ extern "C" __global__ void __closesthit__ch()
 	// attributes are provided by the OptiX API, indlucing barycentric coordinates.
 	const float2 barycentrics = optixGetTriangleBarycentrics();
 
-	SetPayload(make_float3(barycentrics.x, barycentrics.y, 1.0f));
+	setPayload(make_float3(barycentrics, 1.0f));
 }
 
