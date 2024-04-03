@@ -13,7 +13,7 @@ namespace lavender::optix
 			std::exit(EXIT_FAILURE);
 		}
 	}
-	void CudaSynchronize()
+	void CudaSyncCheck()
 	{
 		cudaError_t code = cudaDeviceSynchronize();
 		if (code != cudaError::cudaSuccess)
