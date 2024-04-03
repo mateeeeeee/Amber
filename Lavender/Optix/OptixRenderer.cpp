@@ -70,45 +70,29 @@ namespace lavender::optix
 	{
 		OnResize(width, height);
 
-		//BLAS blas(optix_context);
-		//blas.AddGeometry(std::move(triangle_geometry));
-		//blas.Build();
+		
 		if(true)
 		{
-			OptixDeviceContext optix_ctx = optix_context;
-			OptixTraversableHandle blas_handle;
-
 			const float3 vertices[3] =
 			{
 				{ -0.5f, -0.5f, 0.0f },
 				{  0.5f, -0.5f, 0.0f },
 				{  0.0f,  0.5f, 0.0f }
 			};
-			Buffer vertex_buffer;
-			vertex_buffer = Buffer(3 * sizeof(float3));
-			vertex_buffer.Update(vertices, sizeof(vertices));
-
 			Geometry triangle_geometry{};
-			triangle_geometry.SetVertices(vertices, sizeof(vertices) / sizeof(float3));
+			triangle_geometry.SetVertices(vertices, 3);
 
 			std::vector<Geometry> geometries;
-			geometries.push_back(std::move(triangle_geometry));
+			std::vector<OptixBuildInput> build_inputs;
+			OptixTraversableHandle blas_handle;
 
-			std::vector<OptixBuildInput> build_inputs(1);
-			build_inputs[0] = geometries.back().GetBuildInput();
-			//build_inputs.reserve(12);
-			//build_inputs.push_back();
-			//OptixBuildInput build_inputs[] = { geometries.back().GetBuildInput() };
-			//build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-			//CUdeviceptr vertex_buffers[] = { vertex_buffer.GetDevicePtr() };
-			//build_input.triangleArray.vertexBuffers = vertex_buffers;
-			//build_input.triangleArray.numVertices = vertex_buffer.GetSize() / sizeof(float3);
-			//build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
-			//build_input.triangleArray.vertexStrideInBytes = sizeof(float3);
-			//
-			//uint32 geometry_flags = OPTIX_GEOMETRY_FLAG_NONE;
-			//build_input.triangleArray.flags = &geometry_flags;
-			//build_input.triangleArray.numSbtRecords = 1;
+			//Buffer build_output;
+			//Buffer scratch;
+			//Buffer post_build_info;
+			//Buffer bvh;
+
+			geometries.push_back(std::move(triangle_geometry));
+			build_inputs.emplace_back(geometries.back().GetBuildInput());
 
 			OptixAccelBuildOptions opts{};
 			opts.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
@@ -116,14 +100,14 @@ namespace lavender::optix
 			opts.motionOptions.numKeys = 1;
 
 			OptixAccelBufferSizes buf_sizes{};
-			OptixCheck(optixAccelComputeMemoryUsage(optix_ctx, &opts, build_inputs.data(), 1, &buf_sizes));
+			OptixCheck(optixAccelComputeMemoryUsage(optix_context, &opts, build_inputs.data(), 1, &buf_sizes));
 
 			void* scratch_dev = nullptr;
 			void* build_output_dev = nullptr;
 			cudaMalloc(&scratch_dev, buf_sizes.tempSizeInBytes);
 			cudaMalloc(&build_output_dev, buf_sizes.outputSizeInBytes);
 
-			OptixCheck(optixAccelBuild(optix_ctx,
+			OptixCheck(optixAccelBuild(optix_context,
 				0,
 				&opts,
 				build_inputs.data(), 1,
@@ -139,14 +123,30 @@ namespace lavender::optix
 			cudaFree(build_output_dev);
 			cudaFree(scratch_dev);
 		}
+		else
+		{
+			Geometry triangle_geometry{};
+			const float3 vertices[3] =
+			{
+				{ -0.5f, -0.5f, 0.0f },
+				{  0.5f, -0.5f, 0.0f },
+				{  0.0f,  0.5f, 0.0f }
+			};
+			triangle_geometry.SetVertices(vertices, 3);
+
+			BLAS blas(optix_context);
+			blas.AddGeometry(std::move(triangle_geometry));
+			blas.Build();
+			CudaSynchronize();
+		}
 
 		CompileOptions comp_opts{};
-		comp_opts.input_file_name = "C:\\Users\\mbuljan\\Desktop\\Projects\\Lavender\\build\\Lavender\\PTX.dir\\Debug\\OptixRenderer.ptx";
+		comp_opts.input_file_name = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\build\\Lavender\\PTX.dir\\Debug\\OptixRenderer.ptx";
 		comp_opts.launch_params_name = "params";
 		Pipeline pipeline(optix_context, comp_opts);
-		ProgramGroupHandle rg_handle = pipeline.AddRaygenGroup("__raygen__rg");
-		ProgramGroupHandle miss_handle = pipeline.AddMissGroup("__miss__ms");
-		ProgramGroupHandle ch_handle = pipeline.AddHitGroup(nullptr, "__closesthit__ch", nullptr);
+		OptixProgramGroup rg_handle = pipeline.AddRaygenGroup("__raygen__rg");
+		OptixProgramGroup miss_handle = pipeline.AddMissGroup("__miss__ms");
+		OptixProgramGroup ch_handle = pipeline.AddHitGroup(nullptr, "__closesthit__ch", nullptr);
 		pipeline.Create();
 
 		ShaderBindingTableBuilder sbt_builder{};

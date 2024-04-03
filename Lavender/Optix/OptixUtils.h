@@ -127,7 +127,6 @@ namespace lavender::optix
 		char const* launch_params_name;
 		char const* input_file_name;
 	};
-	using ProgramGroupHandle = OptixProgramGroup&;
 	class Pipeline
 	{
 		//#todo support pipeline with multiple modules -> hash map of modules?
@@ -135,9 +134,9 @@ namespace lavender::optix
 		Pipeline(OptixDeviceContext optix_ctx, CompileOptions const& options);
 		~Pipeline();
 
-		ProgramGroupHandle AddRaygenGroup(char const* entry);
-		ProgramGroupHandle AddMissGroup(char const* entry);
-		ProgramGroupHandle AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry);
+		OptixProgramGroup AddRaygenGroup(char const* entry);
+		OptixProgramGroup AddMissGroup(char const* entry);
+		OptixProgramGroup AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry);
 
 		void Create(uint32 max_depth = 3);
 
@@ -155,7 +154,7 @@ namespace lavender::optix
 		friend class ShaderBindingTable;
 	public:
 		ShaderRecord() = default;
-		ShaderRecord(std::string_view name, uint64 size, ProgramGroupHandle program_group)
+		ShaderRecord(std::string_view name, uint64 size, OptixProgramGroup program_group)
 			: name(name), size(size), program_group(program_group)
 		{
 		}
@@ -214,19 +213,19 @@ namespace lavender::optix
 		~ShaderBindingTableBuilder() = default;
 
 		template<typename T>
-		ShaderBindingTableBuilder& SetRaygen(std::string_view name, ProgramGroupHandle group)
+		ShaderBindingTableBuilder& SetRaygen(std::string_view name, OptixProgramGroup group)
 		{
 			raygen_record = ShaderRecord(name, sizeof(T), group);
 			return *this;
 		}
 		template<typename T>
-		ShaderBindingTableBuilder& AddMiss(std::string_view name, ProgramGroupHandle group)
+		ShaderBindingTableBuilder& AddMiss(std::string_view name, OptixProgramGroup group)
 		{
 			miss_records.emplace_back(name, sizeof(T), group);
 			return *this;
 		}
 		template<typename T>
-		ShaderBindingTableBuilder& AddHitGroup(std::string_view name, ProgramGroupHandle group)
+		ShaderBindingTableBuilder& AddHitGroup(std::string_view name, OptixProgramGroup group)
 		{
 			hitgroup_records.emplace_back(name, sizeof(T), group);
 			return *this;
@@ -374,7 +373,7 @@ namespace lavender::optix
 		void AddGeometry(Geometry&& geometry)
 		{
 			geometries.push_back(std::move(geometry));
-			build_inputs.push_back(geometries.back().GetBuildInput());
+			build_inputs.emplace_back(geometries.back().GetBuildInput());
 		}
 
 		operator OptixTraversableHandle() const { return blas_handle; }
@@ -390,7 +389,6 @@ namespace lavender::optix
 		Buffer post_build_info;
 		Buffer bvh;
 	};
-
 	class TLAS
 	{
 	public:
