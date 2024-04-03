@@ -120,6 +120,7 @@ namespace lavender::optix
 	Pipeline::~Pipeline()
 	{
 		OptixCheck(optixModuleDestroy(module));
+		OptixCheck(optixPipelineDestroy(pipeline));
 	}
 
 	Pipeline::Pipeline(OptixDeviceContext optix_ctx, CompileOptions const& options) : optix_ctx(optix_ctx), pipeline_compile_options()
@@ -313,7 +314,7 @@ namespace lavender::optix
 
 		gpu_shader_table = Buffer(sbt_size);
 		cpu_shader_table.resize(sbt_size, 0);
-
+		shader_binding_table = {};
 		shader_binding_table.raygenRecord = gpu_shader_table.GetDevicePtr();
 
 		shader_binding_table.missRecordBase = shader_binding_table.raygenRecord + raygen_entry_size;

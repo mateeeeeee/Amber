@@ -19,48 +19,48 @@ static __forceinline__ __device__ void setPayload(float3 p)
 
 static __forceinline__ __device__ void computeRay(uint3 idx, uint3 dim, float3& origin, float3& direction)
 {
-	const float3 U = params.cam_u;
-	const float3 V = params.cam_v;
-	const float3 W = params.cam_w;
-	const float2 d = make_float2(
-		static_cast<float>(idx.x) / static_cast<float>(dim.x),
-		static_cast<float>(idx.y) / static_cast<float>(dim.y)
-	);
-
-	origin = params.cam_eye;
+	//const float3 U = params.cam_u;
+	//const float3 V = params.cam_v;
+	//const float3 W = params.cam_w;
+	//const float2 d = make_float2(
+	//	static_cast<float>(idx.x) / static_cast<float>(dim.x),
+	//	static_cast<float>(idx.y) / static_cast<float>(dim.y)
+	//);
+	//
+	//origin = params.cam_eye;
 }
 
 
 extern "C" __global__ void __raygen__rg()
 {
 	// Lookup our location within the launch grid
-	const uint3 idx = optixGetLaunchIndex();
-	const uint3 dim = optixGetLaunchDimensions();
-
-	// Map our launch idx to a screen location and create a ray from the camera
-	// location through the screen
-	float3 ray_origin, ray_direction;
-	computeRay(idx, dim, ray_origin, ray_direction);
-
-	// Trace the ray against our scene hierarchy
-	unsigned int p0, p1, p2;
-	optixTrace(
-		params.handle,
-		ray_origin,
-		ray_direction,
-		0.0f,                // Min intersection distance
-		1e16f,               // Max intersection distance
-		0.0f,                // rayTime -- used for motion blur
-		OptixVisibilityMask(255), // Specify always visible
-		OPTIX_RAY_FLAG_NONE,
-		0,                   // SBT offset   -- See SBT discussion
-		1,                   // SBT stride   -- See SBT discussion
-		0,                   // missSBTIndex -- See SBT discussion
-		p0, p1, p2);
-	float3 result;
-	result.x = __uint_as_float(p0);
-	result.y = __uint_as_float(p1);
-	result.z = __uint_as_float(p2);
+	//const uint3 idx = optixGetLaunchIndex();
+	//const uint3 dim = optixGetLaunchDimensions();
+	//
+	//// Map our launch idx to a screen location and create a ray from the camera
+	//// location through the screen
+	//float3 ray_origin, ray_direction;
+	//computeRay(idx, dim, ray_origin, ray_direction);
+	//
+	//// Trace the ray against our scene hierarchy
+	//unsigned int p0, p1, p2;
+	//optixTrace(
+	//	params.handle,
+	//	ray_origin,
+	//	ray_direction,
+	//	0.0f,                // Min intersection distance
+	//	1e16f,               // Max intersection distance
+	//	0.0f,                // rayTime -- used for motion blur
+	//	OptixVisibilityMask(255), // Specify always visible
+	//	OPTIX_RAY_FLAG_NONE,
+	//	0,                   // SBT offset   -- See SBT discussion
+	//	1,                   // SBT stride   -- See SBT discussion
+	//	0,                   // missSBTIndex -- See SBT discussion
+	//	p0, p1, p2);
+	//float3 result;
+	//result.x = __uint_as_float(p0);
+	//result.y = __uint_as_float(p1);
+	//result.z = __uint_as_float(p2);
 
 	//params.image[idx.y * params.image_width + idx.x] = make_color(result);
 	// Record results in our output raster
@@ -79,8 +79,8 @@ extern "C" __global__ void __closesthit__ch()
 {
 	// When built-in triangle intersection is used, a number of fundamental
 	// attributes are provided by the OptiX API, indlucing barycentric coordinates.
-	const float2 barycentrics = optixGetTriangleBarycentrics();
-
-	setPayload(make_float3(barycentrics.x, barycentrics.y, 1.0f));
+	//const float2 barycentrics = optixGetTriangleBarycentrics();
+	//
+	//setPayload(make_float3(barycentrics.x, barycentrics.y, 1.0f));
 }
 

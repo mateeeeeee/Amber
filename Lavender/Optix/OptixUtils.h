@@ -133,7 +133,6 @@ namespace lavender::optix
 	public:
 		Pipeline() = default;
 		Pipeline(OptixDeviceContext optix_ctx, CompileOptions const& options);
-		LAV_DEFAULT_COPYABLE(Pipeline)
 		~Pipeline();
 
 		OptixProgramGroup AddRaygenGroup(char const* entry);
@@ -203,7 +202,7 @@ namespace lavender::optix
 		}
 
 	private:
-		OptixShaderBindingTable shader_binding_table;
+		OptixShaderBindingTable shader_binding_table{};
 		Buffer gpu_shader_table;
 		std::vector<uint8> cpu_shader_table;
 		std::unordered_map<std::string, uint64> record_offsets;

@@ -125,12 +125,11 @@ namespace lavender::optix
 		CompileOptions comp_opts{};
 		comp_opts.input_file_name = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\build\\Lavender\\PTX.dir\\Debug\\OptixRenderer.ptx";
 		comp_opts.launch_params_name = "params";
-		Pipeline pipeline = Pipeline(optix_context, comp_opts);
-		OptixProgramGroup rg_handle = pipeline.AddRaygenGroup("__raygen__rg");
-		OptixProgramGroup miss_handle = pipeline.AddMissGroup("__miss__ms");
-		OptixProgramGroup ch_handle = pipeline.AddHitGroup(nullptr, "__closesthit__ch", nullptr);
-		pipeline.Create();
-		optix_pipeline = pipeline;
+		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
+		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup("__raygen__rg");
+		OptixProgramGroup miss_handle = pipeline->AddMissGroup("__miss__ms");
+		OptixProgramGroup ch_handle = pipeline->AddHitGroup(nullptr, "__closesthit__ch", nullptr);
+		pipeline->Create();
 
 		ShaderBindingTableBuilder sbt_builder{};
 		sbt_builder.AddHitGroup<HitGroupData>("ch", ch_handle)
@@ -139,6 +138,7 @@ namespace lavender::optix
 
 		sbt = sbt_builder.Build();
 		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(1.0f, 0.0f, 1.0f);
+		sbt.Commit();
 	}
 
 	OptixRenderer::~OptixRenderer()
@@ -169,7 +169,7 @@ namespace lavender::optix
 		));
 
 		OptixShaderBindingTable optix_sbt = sbt;
-		OptixCheck(optixLaunch(optix_pipeline, 0, d_param, sizeof(Params), &optix_sbt, width, height, /*depth=*/1));
+		OptixCheck(optixLaunch(*pipeline, 0, d_param, sizeof(Params), &optix_sbt, width, height, /*depth=*/1));
 		CudaSyncCheck();
 	}
 
