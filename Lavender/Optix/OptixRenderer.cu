@@ -1,5 +1,6 @@
 #pragma once
 #include <optix_device.h>
+#include <vector_functions.h>
 #include "OptixShared.h"
 
 using namespace lavender;
@@ -21,13 +22,12 @@ static __forceinline__ __device__ void computeRay(uint3 idx, uint3 dim, float3& 
 	const float3 U = params.cam_u;
 	const float3 V = params.cam_v;
 	const float3 W = params.cam_w;
-	const float2 d = 2.0f * make_float2(
+	const float2 d = make_float2(
 		static_cast<float>(idx.x) / static_cast<float>(dim.x),
 		static_cast<float>(idx.y) / static_cast<float>(dim.y)
-	) - 1.0f;
+	);
 
 	origin = params.cam_eye;
-	direction = normalize(d.x * U + d.y * V + W);
 }
 
 
@@ -80,6 +80,6 @@ extern "C" __global__ void __closesthit__ch()
 	// attributes are provided by the OptiX API, indlucing barycentric coordinates.
 	const float2 barycentrics = optixGetTriangleBarycentrics();
 
-	setPayload(make_float3(barycentrics, 1.0f));
+	setPayload(make_float3(barycentrics.x, barycentrics.y, 1.0f));
 }
 
