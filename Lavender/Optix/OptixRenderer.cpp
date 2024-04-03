@@ -71,7 +71,7 @@ namespace lavender::optix
 		OnResize(width, height);
 
 		
-		if(true)
+		if(false)
 		{
 			const float3 vertices[3] =
 			{
@@ -85,9 +85,8 @@ namespace lavender::optix
 			std::vector<Geometry> geometries;
 			std::vector<OptixBuildInput> build_inputs;
 			OptixTraversableHandle blas_handle;
-
-			//Buffer build_output;
-			//Buffer scratch;
+			Buffer build_output;
+			Buffer scratch;
 			//Buffer post_build_info;
 			//Buffer bvh;
 
@@ -137,7 +136,6 @@ namespace lavender::optix
 			BLAS blas(optix_context);
 			blas.AddGeometry(std::move(triangle_geometry));
 			blas.Build();
-			CudaSynchronize();
 		}
 
 		CompileOptions comp_opts{};

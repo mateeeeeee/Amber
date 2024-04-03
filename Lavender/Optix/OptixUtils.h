@@ -322,43 +322,7 @@ namespace lavender::optix
 		{
 		}
 
-		void Compact()
-		{
-			uint64 compacted_size = 0;
-			cudaMemcpy(&compacted_size, post_build_info, sizeof(uint64), cudaMemcpyDeviceToHost);
-			bvh = Buffer(compacted_size);
-			OptixCheck(optixAccelCompact(
-				optix_ctx, 0, blas_handle, bvh.GetDevicePtr(), bvh.GetSize(), &blas_handle));
-		}
-		void Build(uint32 build_flags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION)
-		{
-			OptixAccelBuildOptions opts{};
-			opts.buildFlags = build_flags;
-			opts.operation = OPTIX_BUILD_OPERATION_BUILD;
-			opts.motionOptions.numKeys = 1;
-
-			OptixAccelBufferSizes buf_sizes{};
-			OptixCheck(optixAccelComputeMemoryUsage(optix_ctx, &opts, build_inputs.data(), (uint32)build_inputs.size(), &buf_sizes));
-
-			scratch = Buffer(buf_sizes.tempSizeInBytes);
-			build_output = Buffer(buf_sizes.outputSizeInBytes);
-			post_build_info = Buffer(sizeof(uint64));
-			OptixAccelEmitDesc emit_desc{};
-			emit_desc.type = OPTIX_PROPERTY_TYPE_COMPACTED_SIZE;
-			emit_desc.result = post_build_info.GetDevicePtr();
-			OptixCheck(optixAccelBuild(optix_ctx,
-				0,
-				&opts,
-				build_inputs.data(),
-				build_inputs.size(),
-				scratch.GetDevicePtr(),
-				scratch.GetSize(),
-				build_output.GetDevicePtr(),
-				build_output.GetSize(),
-				&blas_handle,
-				&emit_desc,
-				1));
-		}
+		void Build(uint32 build_flags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION);
 		void Clear()
 		{
 			geometries.clear();
@@ -401,53 +365,7 @@ namespace lavender::optix
 			instances.push_back(std::move(instance));
 		}
 
-		void Compact()
-		{
-			uint64 compacted_size = 0;
-			cudaMemcpy(&compacted_size, post_build_info, sizeof(uint64), cudaMemcpyDeviceToHost);
-			bvh = Buffer(compacted_size);
-			OptixCheck(optixAccelCompact(
-				optix_ctx, 0, tlas_handle, bvh.GetDevicePtr(), bvh.GetSize(), &tlas_handle));
-		}
-
-		void Build(uint32 build_flags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION)
-		{
-			instance_buffer = std::make_unique<Buffer>(instances.size() * sizeof(OptixInstance));
-			instance_buffer->Update(instances.data(), instances.size() * sizeof(OptixInstance));
-
-			build_input.type = OPTIX_BUILD_INPUT_TYPE_INSTANCES;
-			build_input.instanceArray.instances = instance_buffer->GetDevicePtr();
-			build_input.instanceArray.numInstances = instance_buffer->GetSize() / sizeof(OptixInstance);
-
-			OptixAccelBuildOptions opts{};
-			opts.buildFlags = build_flags;
-			opts.operation = OPTIX_BUILD_OPERATION_BUILD;
-			opts.motionOptions.numKeys = 1;
-
-			OptixAccelBufferSizes buf_sizes;
-			OptixCheck(optixAccelComputeMemoryUsage(optix_ctx, &opts, &build_input, 1, &buf_sizes));
-
-			build_output = Buffer(buf_sizes.outputSizeInBytes);
-			scratch = Buffer(buf_sizes.tempSizeInBytes);
-
-			post_build_info = Buffer(sizeof(uint64));
-			OptixAccelEmitDesc emit_desc{};
-			emit_desc.type = OPTIX_PROPERTY_TYPE_COMPACTED_SIZE;
-			emit_desc.result = post_build_info.GetDevicePtr();
-
-			OptixCheck(optixAccelBuild(optix_ctx,
-				0,
-				&opts,
-				&build_input,
-				1,
-				scratch.GetDevicePtr(),
-				scratch.GetSize(),
-				build_output.GetDevicePtr(),
-				build_output.GetSize(),
-				&tlas_handle,
-				&emit_desc,
-				1));
-		}
+		void Build(uint32 build_flags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION);
 		void Clear()
 		{
 			instances.clear();
