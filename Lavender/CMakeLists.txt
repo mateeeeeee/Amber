@@ -210,6 +210,10 @@ set(OPTIX_SHADER_FILES
 add_library(PTX OBJECT ${OPTIX_SHADER_FILES})
 set_property(TARGET PTX PROPERTY CUDA_PTX_COMPILATION ON)
 target_include_directories(PTX PRIVATE ${OPTIX_INSTALL_DIR}/include)
-
+target_include_directories(PTX PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(PTX PRIVATE ${CUDA_INCLUDE_DIRS})
 # Set the output directory for PTX files
 set(PTX_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/ptx")
+#todo copy outputs to output folder
+
+add_dependencies(Lavender PTX)
