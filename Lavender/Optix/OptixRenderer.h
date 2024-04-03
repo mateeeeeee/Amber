@@ -48,6 +48,7 @@ namespace lavender::optix
 		Framebuffer   framebuffer;
 		DeviceMemory  device_memory;
 
-		std::vector<Geometry> geometries;
+		Pipeline optix_pipeline;
+		ShaderBindingTable sbt;
 	};
 }

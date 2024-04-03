@@ -116,7 +116,7 @@ namespace lavender::optix
 				&blas_handle,
 				nullptr,
 				0));
-			CudaSynchronize();
+			CudaSyncCheck();
 
 			cudaFree(build_output_dev);
 			cudaFree(scratch_dev);
@@ -125,18 +125,19 @@ namespace lavender::optix
 		CompileOptions comp_opts{};
 		comp_opts.input_file_name = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\build\\Lavender\\PTX.dir\\Debug\\OptixRenderer.ptx";
 		comp_opts.launch_params_name = "params";
-		Pipeline pipeline(optix_context, comp_opts);
+		Pipeline pipeline = Pipeline(optix_context, comp_opts);
 		OptixProgramGroup rg_handle = pipeline.AddRaygenGroup("__raygen__rg");
 		OptixProgramGroup miss_handle = pipeline.AddMissGroup("__miss__ms");
 		OptixProgramGroup ch_handle = pipeline.AddHitGroup(nullptr, "__closesthit__ch", nullptr);
 		pipeline.Create();
+		optix_pipeline = pipeline;
 
 		ShaderBindingTableBuilder sbt_builder{};
 		sbt_builder.AddHitGroup<HitGroupData>("ch", ch_handle)
 			.AddMiss<MissData>("ms", miss_handle)
 			.SetRaygen<RayGenData>("rg", rg_handle);
 
-		ShaderBindingTable sbt = sbt_builder.Build();
+		sbt = sbt_builder.Build();
 		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(1.0f, 0.0f, 1.0f);
 	}
 
@@ -153,22 +154,23 @@ namespace lavender::optix
 		uint64 const width  = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
 
-		//Params params;
-		//params.image = device_memory.As<uint8>();
-		//params.image_width = width;
-		//params.image_height = height;
-		//(void)params.handle;
-		//
-		//CUdeviceptr d_param;
-		//CudaCheck(cudaMalloc(reinterpret_cast<void**>(&d_param), sizeof(Params)));
-		//CudaCheck(cudaMemcpy(
-		//	reinterpret_cast<void*>(d_param),
-		//	&params, sizeof(params),
-		//	cudaMemcpyHostToDevice
-		//));
+		Params params;
+		params.image = device_memory.As<uint8>();
+		params.image_width = width;
+		params.image_height = height;
+		(void)params.handle;
+		
+		CUdeviceptr d_param;
+		CudaCheck(cudaMalloc(reinterpret_cast<void**>(&d_param), sizeof(Params)));
+		CudaCheck(cudaMemcpy(
+			reinterpret_cast<void*>(d_param),
+			&params, sizeof(params),
+			cudaMemcpyHostToDevice
+		));
 
-		//OptixCheck(optixLaunch(pipeline, 0, d_param, sizeof(Params), &sbt, width, height, /*depth=*/1));
-		//CudaSynchronize();
+		OptixShaderBindingTable optix_sbt = sbt;
+		OptixCheck(optixLaunch(optix_pipeline, 0, d_param, sizeof(Params), &optix_sbt, width, height, /*depth=*/1));
+		CudaSyncCheck();
 	}
 
 	void OptixRenderer::OnResize(uint32 w, uint32 h)

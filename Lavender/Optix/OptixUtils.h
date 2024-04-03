@@ -131,7 +131,9 @@ namespace lavender::optix
 	{
 		//#todo support pipeline with multiple modules -> hash map of modules?
 	public:
+		Pipeline() = default;
 		Pipeline(OptixDeviceContext optix_ctx, CompileOptions const& options);
+		LAV_DEFAULT_COPYABLE(Pipeline)
 		~Pipeline();
 
 		OptixProgramGroup AddRaygenGroup(char const* entry);
@@ -139,6 +141,8 @@ namespace lavender::optix
 		OptixProgramGroup AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry);
 
 		void Create(uint32 max_depth = 3);
+
+		operator OptixPipeline() const { return pipeline; }
 
 	private:
 		OptixDeviceContext optix_ctx;
@@ -171,6 +175,7 @@ namespace lavender::optix
 		friend class ShaderBindingTableBuilder;
 	public:
 		ShaderBindingTable() = default;
+		LAV_DEFAULT_MOVABLE(ShaderBindingTable)
 		~ShaderBindingTable() = default;
 
 		void Commit()
@@ -200,7 +205,7 @@ namespace lavender::optix
 	private:
 		OptixShaderBindingTable shader_binding_table;
 		Buffer gpu_shader_table;
-		std::vector<uint8_t> cpu_shader_table;
+		std::vector<uint8> cpu_shader_table;
 		std::unordered_map<std::string, uint64> record_offsets;
 
 	private:
