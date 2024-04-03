@@ -51,6 +51,7 @@ namespace lavender::optix
 		cuCtxGetCurrent(&cuda_context);
 
 		OptixCheck(optixDeviceContextCreate(cuda_context, nullptr, &optix_context));
+
 #ifdef _DEBUG
 		OptixCheck(optixDeviceContextSetLogCallback(optix_context, OptixLogCallback, nullptr, 4));
 #else 
@@ -69,9 +70,7 @@ namespace lavender::optix
 		framebuffer(height, width), device_memory(width * height)
 	{
 		OnResize(width, height);
-
 		
-		if(false)
 		{
 			const float3 vertices[3] =
 			{
@@ -122,21 +121,6 @@ namespace lavender::optix
 			cudaFree(build_output_dev);
 			cudaFree(scratch_dev);
 		}
-		else
-		{
-			Geometry triangle_geometry{};
-			const float3 vertices[3] =
-			{
-				{ -0.5f, -0.5f, 0.0f },
-				{  0.5f, -0.5f, 0.0f },
-				{  0.0f,  0.5f, 0.0f }
-			};
-			triangle_geometry.SetVertices(vertices, 3);
-
-			BLAS blas(optix_context);
-			blas.AddGeometry(std::move(triangle_geometry));
-			blas.Build();
-		}
 
 		CompileOptions comp_opts{};
 		comp_opts.input_file_name = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\build\\Lavender\\PTX.dir\\Debug\\OptixRenderer.ptx";
@@ -168,6 +152,23 @@ namespace lavender::optix
 	{
 		uint64 const width  = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
+
+		//Params params;
+		//params.image = device_memory.As<uint8>();
+		//params.image_width = width;
+		//params.image_height = height;
+		//(void)params.handle;
+		//
+		//CUdeviceptr d_param;
+		//CudaCheck(cudaMalloc(reinterpret_cast<void**>(&d_param), sizeof(Params)));
+		//CudaCheck(cudaMemcpy(
+		//	reinterpret_cast<void*>(d_param),
+		//	&params, sizeof(params),
+		//	cudaMemcpyHostToDevice
+		//));
+
+		//OptixCheck(optixLaunch(pipeline, 0, d_param, sizeof(Params), &sbt, width, height, /*depth=*/1));
+		//CudaSynchronize();
 	}
 
 	void OptixRenderer::OnResize(uint32 w, uint32 h)

@@ -63,12 +63,12 @@ namespace lavender::optix
 
 		uint64 GetCount() const { return GetSize() / sizeof(T); }
 
-		template<typename U> requires std::is_same_v<T,U>
+		template<typename U> // requires std::is_same_v<T,U>
 		U* As()
 		{
 			return reinterpret_cast<U*>(dev_ptr);
 		}
-		template<typename U = T>  requires std::is_same_v<T, U>
+		template<typename U = T>  // requires std::is_same_v<T, U>
 		U const* As() const
 		{
 			return reinterpret_cast<U*>(dev_ptr);
@@ -314,81 +314,5 @@ namespace lavender::optix
 		std::unique_ptr<Buffer> normals;
 		std::unique_ptr<Buffer> uvs;
 		uint32 geometry_flags;
-	};
-	class BLAS
-	{
-	public:
-		explicit BLAS(OptixDeviceContext optix_ctx) : optix_ctx(optix_ctx)
-		{
-		}
-
-		void Build(uint32 build_flags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION);
-		void Clear()
-		{
-			geometries.clear();
-			if (build_output.GetSize() > 0)
-			{
-				build_output = Buffer();
-			}
-			scratch = Buffer();
-			post_build_info = Buffer();
-		}
-
-		void AddGeometry(Geometry&& geometry)
-		{
-			geometries.push_back(std::move(geometry));
-			build_inputs.emplace_back(geometries.back().GetBuildInput());
-		}
-
-		operator OptixTraversableHandle() const { return blas_handle; }
-
-	private:
-		OptixDeviceContext optix_ctx;
-		std::vector<Geometry> geometries;
-		std::vector<OptixBuildInput> build_inputs;
-		OptixTraversableHandle blas_handle;
-
-		Buffer build_output;
-		Buffer scratch;
-		Buffer post_build_info;
-		Buffer bvh;
-	};
-	class TLAS
-	{
-	public:
-		explicit TLAS(OptixDeviceContext optix_ctx) : optix_ctx(optix_ctx)
-		{
-		}
-
-		void AddInstance(OptixInstance&& instance)
-		{
-			instances.push_back(std::move(instance));
-		}
-
-		void Build(uint32 build_flags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION);
-		void Clear()
-		{
-			instances.clear();
-			if (build_output.GetSize() > 0)
-			{
-				build_output = Buffer();
-			}
-			scratch = Buffer();
-			post_build_info = Buffer();
-		}
-
-		operator OptixTraversableHandle() const { return tlas_handle; }
-
-	private:
-		OptixDeviceContext optix_ctx;
-		std::unique_ptr<Buffer> instance_buffer;
-		std::vector<OptixInstance> instances;
-
-		OptixBuildInput build_input;
-		OptixTraversableHandle tlas_handle;
-		Buffer build_output;
-		Buffer scratch;
-		Buffer post_build_info;
-		Buffer bvh;
 	};
 }

@@ -62,6 +62,7 @@ extern "C" __global__ void __raygen__rg()
 	result.y = __uint_as_float(p1);
 	result.z = __uint_as_float(p2);
 
+	//params.image[idx.y * params.image_width + idx.x] = make_color(result);
 	// Record results in our output raster
 	//params.image[idx.y * params.image_width + idx.x] = make_color(result);
 }
