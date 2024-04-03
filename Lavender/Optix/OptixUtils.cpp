@@ -198,7 +198,7 @@ namespace lavender::optix
 		));
 	}
 
-	OptixProgramGroup& Pipeline::AddRaygenGroup(char const* entry)
+	OptixProgramGroup Pipeline::AddRaygenGroup(char const* entry)
 	{
 		OptixProgramGroup prog_group = nullptr;
 		OptixProgramGroupOptions program_group_options{};
@@ -223,7 +223,7 @@ namespace lavender::optix
 		return program_groups.emplace_back(prog_group);
 	}
 
-	OptixProgramGroup& Pipeline::AddMissGroup(char const* entry)
+	OptixProgramGroup Pipeline::AddMissGroup(char const* entry)
 	{
 		OptixProgramGroup prog_group = nullptr;
 		OptixProgramGroupOptions program_group_options{};
@@ -247,7 +247,7 @@ namespace lavender::optix
 		return program_groups.emplace_back(prog_group);
 	}
 
-	OptixProgramGroup& Pipeline::AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry)
+	OptixProgramGroup Pipeline::AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry)
 	{
 		OptixProgramGroup prog_group = nullptr;
 		OptixProgramGroupOptions program_group_options{};
