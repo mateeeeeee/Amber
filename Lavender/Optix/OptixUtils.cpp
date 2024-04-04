@@ -312,10 +312,10 @@ namespace lavender::optix
 
 		uint64 sbt_size = raygen_entry_size + miss_records.size() * miss_entry_size + hitgroup_records.size() * hitgroup_entry_size;
 
-		gpu_shader_table = Buffer(sbt_size);
+		CudaCheck(cudaMalloc(&gpu_shader_table, sbt_size));
 		cpu_shader_table.resize(sbt_size, 0);
 		shader_binding_table = {};
-		shader_binding_table.raygenRecord = gpu_shader_table.GetDevicePtr();
+		shader_binding_table.raygenRecord = reinterpret_cast<CUdeviceptr>(gpu_shader_table);
 
 		shader_binding_table.missRecordBase = shader_binding_table.raygenRecord + raygen_entry_size;
 		shader_binding_table.missRecordStrideInBytes = miss_entry_size;
@@ -327,20 +327,20 @@ namespace lavender::optix
 
 		uint64 offset = 0;
 		record_offsets[raygen_record.name] = offset;
-		optixSbtRecordPackHeader(raygen_record.program_group, &cpu_shader_table[offset]);
+		OptixCheck(optixSbtRecordPackHeader(raygen_record.program_group, &cpu_shader_table[offset]));
 		offset += raygen_entry_size;
 
 		for (auto const& miss_record : miss_records)
 		{
 			record_offsets[miss_record.name] = offset;
-			optixSbtRecordPackHeader(miss_record.program_group, &cpu_shader_table[offset]);
+			OptixCheck(optixSbtRecordPackHeader(miss_record.program_group, &cpu_shader_table[offset]));
 			offset += miss_entry_size;
 		}
 
 		for (auto const& hitgroup_record : hitgroup_records)
 		{
 			record_offsets[hitgroup_record.name] = offset;
-			optixSbtRecordPackHeader(hitgroup_record.program_group, &cpu_shader_table[offset]);
+			OptixCheck(optixSbtRecordPackHeader(hitgroup_record.program_group, &cpu_shader_table[offset]));
 			offset += hitgroup_entry_size;
 		}
 	}
