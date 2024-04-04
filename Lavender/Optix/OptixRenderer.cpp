@@ -83,10 +83,6 @@ namespace lavender::optix
 
 			std::vector<Geometry> geometries;
 			std::vector<OptixBuildInput> build_inputs;
-			Buffer build_output;
-			Buffer scratch;
-			//Buffer post_build_info;
-			//Buffer bvh;
 
 			geometries.push_back(std::move(triangle_geometry));
 			build_inputs.emplace_back(geometries.back().GetBuildInput());
@@ -107,7 +103,7 @@ namespace lavender::optix
 			OptixCheck(optixAccelBuild(optix_context,
 				0,
 				&opts,
-				build_inputs.data(), 1,
+				build_inputs.data(), build_inputs.size(),
 				reinterpret_cast<CUdeviceptr>(scratch_dev),
 				buf_sizes.tempSizeInBytes,
 				reinterpret_cast<CUdeviceptr>(build_output_dev),
@@ -136,7 +132,7 @@ namespace lavender::optix
 			.SetRaygen<RayGenData>("rg", rg_handle);
 
 		sbt = sbt_builder.Build();
-		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(1.0f, 0.0f, 1.0f);
+		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(0.5f, 0.4f, 0.7f);
 		sbt.Commit();
 	}
 
@@ -153,26 +149,28 @@ namespace lavender::optix
 		uint64 const width  = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
 
-		Params params;
+		Params params{};
 		params.image = device_memory.As<uchar4>();
 		params.image_width = width;
 		params.image_height = height;
 		params.handle = blas_handle;
-		
-		CUdeviceptr d_param;
-		CudaCheck(cudaMalloc(reinterpret_cast<void**>(&d_param), sizeof(Params)));
-		CudaCheck(cudaMemcpy(
-			reinterpret_cast<void*>(d_param),
-			&params, sizeof(params),
-			cudaMemcpyHostToDevice
-		));
+
+		void* gpu_params;
+		CudaCheck(cudaMalloc(&gpu_params, sizeof(Params)));
+		CudaCheck(cudaMemcpy(gpu_params, &params, sizeof(Params), cudaMemcpyHostToDevice));
+
+		static uint32 frame = 0;
+
+		LAV_DEBUG("Frame: %d", frame);
 
 		OptixShaderBindingTable optix_sbt = sbt;
-		OptixCheck(optixLaunch(*pipeline, 0, d_param, sizeof(Params), &optix_sbt, width, height, /*depth=*/1));
+		OptixCheck(optixLaunch(*pipeline, 0, reinterpret_cast<CUdeviceptr>(gpu_params), sizeof(Params), &optix_sbt, width, height, 1));
 		CudaSyncCheck();
 
 		cudaMemcpy(framebuffer, device_memory, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
 		CudaSyncCheck();
+
+		++frame;
 	}
 
 	void OptixRenderer::OnResize(uint32 w, uint32 h)

@@ -54,7 +54,6 @@ namespace lavender::optix
 		void* dev_ptr = nullptr;
 		uint64 size = 0;
 	};
-
 	template<typename T>
 	class TypedBuffer : public Buffer
 	{
@@ -63,12 +62,12 @@ namespace lavender::optix
 
 		uint64 GetCount() const { return GetSize() / sizeof(T); }
 
-		template<typename U> // requires std::is_same_v<T,U>
+		template<typename U = T> 
 		U* As()
 		{
 			return reinterpret_cast<U*>(dev_ptr);
 		}
-		template<typename U = T>  // requires std::is_same_v<T, U>
+		template<typename U = T> 
 		U const* As() const
 		{
 			return reinterpret_cast<U*>(dev_ptr);
@@ -83,7 +82,6 @@ namespace lavender::optix
 			return reinterpret_cast<T const*>(dev_ptr);
 		}
 	};
-
 	class Texture2D
 	{
 	public:
@@ -179,7 +177,7 @@ namespace lavender::optix
 
 		void Commit()
 		{
-			gpu_shader_table.Update(cpu_shader_table.data(), cpu_shader_table.size());
+			cudaMemcpy(gpu_shader_table, cpu_shader_table.data(), cpu_shader_table.size(), cudaMemcpyHostToDevice);
 		}
 
 		uint8* GetShaderRecord(std::string const& shader)
@@ -203,7 +201,7 @@ namespace lavender::optix
 
 	private:
 		OptixShaderBindingTable shader_binding_table{};
-		Buffer gpu_shader_table;
+		void* gpu_shader_table;
 		std::vector<uint8> cpu_shader_table;
 		std::unordered_map<std::string, uint64> record_offsets;
 
