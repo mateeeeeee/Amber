@@ -6,7 +6,7 @@ namespace lavender
 {
 	struct Params
 	{
-		uint8_t*			   image;
+		uchar4*				   image;
 		unsigned int           image_width;
 		unsigned int           image_height;
 		float3                 cam_eye;

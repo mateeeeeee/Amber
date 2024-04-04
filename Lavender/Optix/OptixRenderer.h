@@ -5,19 +5,14 @@
 
 namespace lavender
 {
-	struct Pixel
-	{
-		uint8 r, g, b, a;
-	};
-
 	class Scene;
 	class Camera;
-	using Framebuffer = CpuBuffer2D<Pixel>;
+	using Framebuffer = CpuBuffer2D<uchar4>;
 }
 
 namespace lavender::optix
 {
-	using DeviceMemory = optix::TypedBuffer<Pixel>;
+	using DeviceMemory = optix::TypedBuffer<uchar4>;
 
 	class OptixInitializer
 	{
@@ -50,5 +45,6 @@ namespace lavender::optix
 
 		std::unique_ptr<Pipeline> pipeline;
 		ShaderBindingTable sbt;
+		OptixTraversableHandle blas_handle;
 	};
 }
