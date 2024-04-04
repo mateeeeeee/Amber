@@ -83,7 +83,6 @@ namespace lavender::optix
 
 			std::vector<Geometry> geometries;
 			std::vector<OptixBuildInput> build_inputs;
-			OptixTraversableHandle blas_handle;
 			Buffer build_output;
 			Buffer scratch;
 			//Buffer post_build_info;
@@ -155,10 +154,10 @@ namespace lavender::optix
 		uint64 const height = framebuffer.Rows();
 
 		Params params;
-		params.image = device_memory.As<uint8>();
+		params.image = device_memory.As<uchar4>();
 		params.image_width = width;
 		params.image_height = height;
-		(void)params.handle;
+		params.handle = blas_handle;
 		
 		CUdeviceptr d_param;
 		CudaCheck(cudaMalloc(reinterpret_cast<void**>(&d_param), sizeof(Params)));
@@ -171,6 +170,9 @@ namespace lavender::optix
 		OptixShaderBindingTable optix_sbt = sbt;
 		OptixCheck(optixLaunch(*pipeline, 0, d_param, sizeof(Params), &optix_sbt, width, height, /*depth=*/1));
 		CudaSyncCheck();
+
+		cudaMemcpy(framebuffer, device_memory, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
+		CudaSyncCheck();
 	}
 
 	void OptixRenderer::OnResize(uint32 w, uint32 h)
@@ -178,7 +180,7 @@ namespace lavender::optix
 		framebuffer.Resize(h, w);
 		if (device_memory.GetCount() != w * h)
 		{
-			device_memory = optix::TypedBuffer<Pixel>(w * h);
+			device_memory = optix::TypedBuffer<uchar4>(w * h);
 		}
 		cudaMemset(device_memory, 0, device_memory.GetSize());
 	}
@@ -186,7 +188,7 @@ namespace lavender::optix
 	void OptixRenderer::WriteFramebuffer(char const* outfile)
 	{
 		std::string output_path = paths::ResultDir() + outfile;
-		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), sizeof(Pixel));
+		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), sizeof(uchar4));
 	}
 
 }
