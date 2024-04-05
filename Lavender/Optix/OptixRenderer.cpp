@@ -132,7 +132,7 @@ namespace lavender::optix
 			.SetRaygen<RayGenData>("rg", rg_handle);
 
 		sbt = sbt_builder.Build();
-		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(0.5f, 0.4f, 0.7f);
+		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(0.0f, 0.0f, 1.0f);
 		sbt.Commit();
 	}
 
@@ -159,18 +159,12 @@ namespace lavender::optix
 		CudaCheck(cudaMalloc(&gpu_params, sizeof(Params)));
 		CudaCheck(cudaMemcpy(gpu_params, &params, sizeof(Params), cudaMemcpyHostToDevice));
 
-		static uint32 frame = 0;
-
-		LAV_DEBUG("Frame: %d", frame);
-
 		OptixShaderBindingTable optix_sbt = sbt;
 		OptixCheck(optixLaunch(*pipeline, 0, reinterpret_cast<CUdeviceptr>(gpu_params), sizeof(Params), &optix_sbt, width, height, 1));
 		CudaSyncCheck();
 
 		cudaMemcpy(framebuffer, device_memory, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
 		CudaSyncCheck();
-
-		++frame;
 	}
 
 	void OptixRenderer::OnResize(uint32 w, uint32 h)
