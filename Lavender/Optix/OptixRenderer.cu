@@ -68,8 +68,8 @@ extern "C" __global__ void __raygen__rg()
 	const uint3 idx = optixGetLaunchIndex();
 	const uint3 dim = optixGetLaunchDimensions();
 
-	float3 ray_origin = make_float3(0.0f, 0.0f, -1.0f);
-	float3 ray_direction = make_float3(0.0f, 0.0f, 1.0f);
+	float3 ray_origin    = make_float3(0.0f, 0.0f, -1.0f);
+	float3 ray_direction = make_float3(0.0f, 1.0f, 0.0f);
 	//
 	//// Map our launch idx to a screen location and create a ray from the camera
 	//// location through the screen
@@ -87,13 +87,13 @@ extern "C" __global__ void __raygen__rg()
 		ray_origin,
 		ray_direction,
 		0.0f,                // Min intersection distance
-		1.0f,               // Max intersection distance
+		1e16f,               // Max intersection distance
 		0.0f,                // rayTime -- used for motion blur
 		OptixVisibilityMask(255), // Specify always visible
-		OPTIX_RAY_FLAG_NONE,
+		OPTIX_RAY_FLAG_DISABLE_ANYHIT,
 		0,                   // SBT offset   -- See SBT discussion
 		1,                   // SBT stride   -- See SBT discussion
-		0,                   // missSBTIndex -- See SBT discussion
+		1,                   // missSBTIndex -- See SBT discussion
 		p0, p1, p2);
 	float3 result;
 	result.x = __uint_as_float(p0);
@@ -112,7 +112,7 @@ extern "C" __global__ void __miss__ms()
 
 extern "C" __global__ void __closesthit__ch()
 {
-	const float2 barycentrics = optixGetTriangleBarycentrics();
-	setPayload(make_float3(barycentrics.x, barycentrics.y, 1.0f));
+	//const float2 barycentrics = optixGetTriangleBarycentrics();
+	//setPayload(make_float3(0.0f, 1.0f, 0.0f));
 }
 
