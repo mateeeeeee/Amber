@@ -162,7 +162,7 @@ namespace lavender
 
 		camera.SetEye({ 0.0f, 0.0f, 2.0f });
 		camera.SetLookat({ 0.0f, 0.0f, 0.0f });
-		camera.SetUp({ 0.0f, 1.0f, 3.0f });
+		camera.SetUp({ 0.0f, 1.0f, 0.01f });
 		camera.SetFovY(45.0f);
 		camera.SetAspectRatio((float)width / (float)height);
 
