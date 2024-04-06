@@ -125,6 +125,8 @@ namespace lavender
 				nullptr,            
 				0                   
 			));
+
+			//#todo compact
 		}
 
 		CompileOptions comp_opts{};
