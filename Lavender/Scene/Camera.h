@@ -4,6 +4,7 @@ namespace lavender
 {
 	class Camera 
 	{
+		static constexpr float speed = 0.1f;
 	public:
 		Camera() : eye(Vector3(1.0f, 1.0f, 1.0f)), lookat(Vector3(0.0f, 0.0f, 0.0f)), up(Vector3(0.0f, 1.0f, 0.0f)), fovy(35.0f), aspect_ratio(1.0f)
 		{
@@ -21,13 +22,15 @@ namespace lavender
 			dir.Normalize(normalized_dir);
 			return normalized_dir;
 		}
-		void setDirection(Vector3 const& dir) 
+		void SetDirection(Vector3 const& dir) 
 		{ 
 			lookat = eye + dir * dir.Length();
 		}
 
 		Vector3 const& GetEye() const { return eye; }
 		void SetEye(Vector3 const& val) { eye = val; }
+
+		void Tick(float dt);
 
 		Vector3 const& GetLookat() const { return lookat; }
 		void SetLookat(Vector3 const& val) { lookat = val; }
@@ -39,20 +42,11 @@ namespace lavender
 		float GetAspectRatio() const { return aspect_ratio; }
 		void  SetAspectRatio(float val) { aspect_ratio = val; }
 
-		void GetFrame(Vector3& U, Vector3& V, Vector3& W) const
-		{
-			W = lookat - eye;
-			float wlen = W.Length();
-			U = W.Cross(up); U.Normalize();
-			V = U.Cross(W); V.Normalize();
-			float vlen = wlen * tanf(0.5f * fovy * DirectX::XM_PI / 180.0f);
-			V *= vlen;
-			float ulen = vlen * aspect_ratio;
-			U *= ulen;
-		}
+		void GetFrame(Vector3& U, Vector3& V, Vector3& W) const;
 
 	private:
 		Vector3 eye;
+
 		Vector3 lookat;
 		Vector3 up;
 		float fovy;
