@@ -69,12 +69,9 @@ extern "C" __global__ void RG_NAME(rg)()
 
 	float3 ray_origin    = make_float3(0.0f, 0.0f, -1.0f);
 	float3 ray_direction = make_float3(0.0f, 0.0f,  1.0f);
-	
+
 	//computeRay(idx, dim, ray_origin, ray_direction);
 	unsigned int p0, p1, p2;
-	p0 = __float_as_uint(1.0f);
-	p1 = __float_as_uint(0.0f);
-	p2 = __float_as_uint(0.0f);
 	//setPayload(make_float3(1, 0, 0));
 	optixTrace(
 		params.handle,

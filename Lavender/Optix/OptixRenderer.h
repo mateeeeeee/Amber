@@ -7,12 +7,6 @@ namespace lavender
 {
 	class Scene;
 	class Camera;
-	using Framebuffer = CpuBuffer2D<uchar4>;
-}
-
-namespace lavender::optix
-{
-	using DeviceMemory = optix::TypedBuffer<uchar4>;
 
 	class OptixInitializer
 	{
@@ -37,16 +31,15 @@ namespace lavender::optix
 		void OnResize(uint32 w, uint32 h);
 		void WriteFramebuffer(char const* outfile);
 		
-		Framebuffer const& GetFramebuffer() const { return framebuffer; }
+		auto const& GetFramebuffer() const { return framebuffer; }
 
 	private:
-		Framebuffer   framebuffer;
-		DeviceMemory  device_memory;
+		CpuBuffer2D<uchar4>			framebuffer;
+		optix::TypedBuffer<uchar4>  device_memory;
 
-		std::unique_ptr<Pipeline> pipeline;
-		ShaderBindingTable sbt;
-		OptixTraversableHandle blas_handle;
-		CUdeviceptr            d_gas_output_buffer;
-		void* build_output_dev = nullptr;
+		std::unique_ptr<optix::Pipeline> pipeline;
+		optix::ShaderBindingTable sbt;
+		OptixTraversableHandle as_handle;
+		std::unique_ptr<optix::Buffer> as_output;
 	};
 }

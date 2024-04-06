@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 
 
 	Camera camera{};
-	optix::OptixRenderer renderer(cfg.width, cfg.height, std::move(scene));
+	OptixRenderer renderer(cfg.width, cfg.height, std::move(scene));
 	if(use_editor)
 	{
 		Window window(cfg.width, cfg.height, "lavender");

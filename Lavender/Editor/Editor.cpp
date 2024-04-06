@@ -15,7 +15,7 @@
 namespace lavender
 {
 
-	Editor::Editor(Window& window, optix::OptixRenderer& renderer, EditorSink& editor_sink)
+	Editor::Editor(Window& window, OptixRenderer& renderer, EditorSink& editor_sink)
 		: window(window), renderer(renderer), editor_sink(editor_sink)
 	{
 		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
@@ -197,7 +197,7 @@ namespace lavender
 	{
 		Camera camera{};
 		renderer.Render(camera);
-		Framebuffer const& fb = renderer.GetFramebuffer();
+		auto const& fb = renderer.GetFramebuffer();
 
 		int width, height, pitch = -1; void* data = nullptr;
 		SDL_QueryTexture(render_target.get(), nullptr, nullptr, &width, &height);

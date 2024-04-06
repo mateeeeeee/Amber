@@ -213,8 +213,8 @@ target_include_directories(PTX PRIVATE ${OPTIX_INSTALL_DIR}/include)
 target_include_directories(PTX PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(PTX PRIVATE ${CUDA_INCLUDE_DIRS})
 
-target_compile_options(PTX PRIVATE "--device-debug" "-O0" "--generate-line-info")
+target_compile_options(PTX PRIVATE "--use_fast_math" "--generate-line-info" "-O0")
 
-set(PTX_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/ptx")
-
+#set(PTX_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/OptixIR")
+#target_compile_definitions(Lavender PRIVATE PTX_OUTPUT_DIRECTORY="${PTX_OUTPUT_DIRECTORY}")
 add_dependencies(Lavender PTX)

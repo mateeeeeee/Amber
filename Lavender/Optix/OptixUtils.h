@@ -11,106 +11,6 @@ namespace lavender::optix
 {
 	void OptixCheck(OptixResult code);
 
-	class Buffer
-	{
-	public:
-		Buffer() = default;
-		Buffer(uint64 size);
-		LAV_NONCOPYABLE(Buffer)
-		Buffer(Buffer&&) noexcept;
-		Buffer& operator=(Buffer&&) noexcept;
-		~Buffer();
-
-		uint64 GetSize() const { return size; }
-
-		operator void const* () const
-		{
-			return dev_ptr;
-		}
-		operator void* ()
-		{
-			return dev_ptr;
-		}
-
-		template<typename U>
-		U* As()
-		{
-			return reinterpret_cast<U*>(dev_ptr);
-		}
-		template<typename U>
-		U const* As() const
-		{
-			return reinterpret_cast<U const*>(dev_ptr);
-		}
-
-		CUdeviceptr GetDevicePtr() const
-		{
-			return reinterpret_cast<CUdeviceptr>(dev_ptr);
-		}
-
-		void Update(void const* data, uint64 data_size);
-
-	protected:
-		void* dev_ptr = nullptr;
-		uint64 size = 0;
-	};
-	template<typename T>
-	class TypedBuffer : public Buffer
-	{
-	public:
-		explicit TypedBuffer(uint64 count) : Buffer(count * sizeof(T)) {}
-
-		uint64 GetCount() const { return GetSize() / sizeof(T); }
-
-		template<typename U = T> 
-		U* As()
-		{
-			return reinterpret_cast<U*>(dev_ptr);
-		}
-		template<typename U = T> 
-		U const* As() const
-		{
-			return reinterpret_cast<U*>(dev_ptr);
-		}
-
-		operator T* ()
-		{
-			return reinterpret_cast<T*>(dev_ptr);
-		}
-		operator T const* ()
-		{
-			return reinterpret_cast<T const*>(dev_ptr);
-		}
-	};
-	class Texture2D
-	{
-	public:
-		template<typename Format>
-		Texture2D(uint32 w, uint32 h, bool srgb = false) : Texture2D(w,h, cudaCreateChannelDesc<Format>(), srgb)
-		{}
-
-		LAV_NONCOPYABLE(Texture2D)
-		Texture2D(Texture2D&& t) noexcept;
-		Texture2D& operator=(Texture2D&& t) noexcept;
-		~Texture2D();
-
-		uint32 GetWidth() const { return width; }
-		uint32 GetHeight() const { return height; }
-		auto   GetHandle() const { return texture_handle; }
-
-		void Update(void const* data);
-
-	private:
-		uint32 width;
-		uint32 height;
-		cudaChannelFormatDesc format;
-		cudaArray_t data = 0;
-		cudaTextureObject_t texture_handle = 0;
-
-	private:
-		Texture2D(uint32 w, uint32 h, cudaChannelFormatDesc format, bool srgb);
-	};
-
 	struct ModuleOptions
 	{
 		uint32 payload_values = 3;
@@ -244,62 +144,111 @@ namespace lavender::optix
 		std::vector<ShaderRecord> hitgroup_records;
 	};
 
-	class Geometry
+	class Buffer
 	{
 	public:
-		explicit Geometry(uint32 flags = OPTIX_GEOMETRY_FLAG_NONE) : geometry_flags(flags) {}
-		LAV_DEFAULT_MOVABLE(Geometry)
-		~Geometry() = default;
+		explicit Buffer(uint64 alloc_in_bytes);
+		LAV_NONCOPYABLE_NONMOVABLE(Buffer)
+		~Buffer();
+
+		uint64 GetSize() const { return alloc_size; }
+		CUdeviceptr GetDevicePtr() const { return reinterpret_cast<CUdeviceptr>(dev_alloc); }
+
+		operator void const* () const
+		{
+			return dev_alloc;
+		}
+		operator void* ()
+		{
+			return dev_alloc;
+		}
+
+		template<typename U>
+		U* As()
+		{
+			return reinterpret_cast<U*>(dev_alloc);
+		}
+		template<typename U>
+		U const* As() const
+		{
+			return reinterpret_cast<U*>(dev_alloc);
+		}
+
+		void Realloc(uint64 _alloc_size);
+
+		void Update(void const* data, uint64 size)
+		{
+			cudaMemcpy(dev_alloc, data, size, cudaMemcpyHostToDevice);
+		}
 
 		template<typename T>
-		void SetVertices(T const* vertex_data, uint64 vertex_count)
+		void Update(T const& data)
 		{
-			static_assert(sizeof(T) == sizeof(float3));
-			vertex_stride = sizeof(T);
-			this->vertex_count = vertex_count;
-			uint64 buffer_size = vertex_count * sizeof(T);
-
-			CudaCheck(cudaMalloc(&vertices_dev, buffer_size));
-			CudaCheck(cudaMemcpy(vertices_dev, vertex_data, buffer_size, cudaMemcpyHostToDevice));
+			Update(&data, sizeof(T));
 		}
 
-		void SetIndices(uint32 const* index_data, uint64 index_count)
+	protected:
+		void* dev_alloc = nullptr;
+		uint64 alloc_size = 0;
+	};
+	template<typename T>
+	class TypedBuffer : public Buffer
+	{
+	public:
+		explicit TypedBuffer(uint64 count) : Buffer(count * sizeof(T)) {}
+		uint64 GetCount() const { return GetSize() / sizeof(T); }
+
+		template<typename U = T>
+		U* As()
 		{
-			//uint64 buffer_size = index_count * sizeof(uint32);
-			//indices = std::make_unique<Buffer>(buffer_size);
-			//indices->Update(index_data, buffer_size);
+			return reinterpret_cast<U*>(dev_alloc);
+		}
+		template<typename U = T>
+		U const* As() const
+		{
+			return reinterpret_cast<U*>(dev_alloc);
 		}
 
-		OptixBuildInput GetBuildInput()
+		operator T* ()
 		{
-			LAV_ASSERT(vertices_dev);
-			OptixBuildInput build_input{};
-			build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-			CUdeviceptr vertex_buffers[] = { reinterpret_cast<CUdeviceptr>(vertices_dev) };
-			build_input.triangleArray.vertexBuffers = vertex_buffers;
-			build_input.triangleArray.numVertices = vertex_count;
-			build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
-			build_input.triangleArray.vertexStrideInBytes = sizeof(float3);
-			//if (indices)
-			//{
-			//	build_input.triangleArray.indexBuffer = indices->GetDevicePtr();
-			//	build_input.triangleArray.numIndexTriplets = indices->GetSize() / sizeof(uint3);
-			//	build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
-			//	build_input.triangleArray.indexStrideInBytes = sizeof(uint3);
-			//}
-
-			build_input.triangleArray.flags = &geometry_flags;
-			build_input.triangleArray.numSbtRecords = 1;
-			return build_input;
+			return reinterpret_cast<T*>(dev_alloc);
 		}
+		operator T const* ()
+		{
+			return reinterpret_cast<T const*>(dev_alloc);
+		}
+
+		void Realloc(uint64 count)
+		{
+			Buffer::Realloc(count * sizeof(T));
+		}
+	};
+	class Texture2D
+	{
+	public:
+		template<typename Format>
+		Texture2D(uint32 w, uint32 h, bool srgb = false) : Texture2D(w, h, cudaCreateChannelDesc<Format>(), srgb)
+		{}
+
+		LAV_NONCOPYABLE(Texture2D)
+			Texture2D(Texture2D&& t) noexcept;
+		Texture2D& operator=(Texture2D&& t) noexcept;
+		~Texture2D();
+
+		uint32 GetWidth() const { return width; }
+		uint32 GetHeight() const { return height; }
+		auto   GetHandle() const { return texture_handle; }
+
+		void Update(void const* data);
 
 	private:
-		//std::unique_ptr<Buffer> vertices;
-		void* vertices_dev = nullptr;
-		uint32 vertex_stride = 0;
-		uint32 vertex_count = 0;
+		uint32 width;
+		uint32 height;
+		cudaChannelFormatDesc format;
+		cudaArray_t data = 0;
+		cudaTextureObject_t texture_handle = 0;
 
-		//std::unique_ptr<Buffer> indices;
-		uint32 geometry_flags;
+	private:
+		Texture2D(uint32 w, uint32 h, cudaChannelFormatDesc format, bool srgb);
 	};
 }
