@@ -39,8 +39,8 @@ namespace lavender
 		}
 		if (input.GetKey(KeyCode::MouseRight))
 		{
-			float dx = input.GetMouseDeltaX();
-			float dy = input.GetMouseDeltaY();
+			float dx = -input.GetMouseDeltaX();
+			float dy = -input.GetMouseDeltaY();
 
 			Matrix R = Matrix::CreateFromAxisAngle(right, 0.2f * DirectX::XMConvertToRadians(dy));
 			up = Vector3::TransformNormal(up, R);
@@ -61,11 +61,6 @@ namespace lavender
 		U = right;
 		V = up;
 		W = look_dir;
-
-		float vlen = tanf(0.5f * fovy * DirectX::XM_PI / 180.0f);
-		V *= vlen;
-		float ulen = vlen * aspect_ratio;
-		U *= ulen;
 	}
 
 	void Camera::UpdateFrame()
