@@ -174,6 +174,8 @@ namespace lavender
 		params.cam_u = ToFloat3(u);
 		params.cam_v = ToFloat3(v);
 		params.cam_w = ToFloat3(w);
+		params.cam_fovy = camera.GetFovY();
+		params.cam_aspect_ratio = camera.GetAspectRatio();
 
 		TypedBuffer<Params> gpu_params{};
 		gpu_params.Update(params);

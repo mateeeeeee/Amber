@@ -48,36 +48,33 @@ __forceinline__ __device__ float3 GetPayload(unsigned int p0, unsigned int p1, u
 
 static __forceinline__ __device__ void computeRay(uint3 idx, uint3 dim, float3& origin, float3& direction)
 {
-	const float3 U = params.cam_u;
-	const float3 V = params.cam_v;
-	const float3 W = params.cam_w;
-	const float2 d = 2.0f * make_float2(
-		static_cast<float>(idx.x) / static_cast<float>(dim.x),
-		static_cast<float>(idx.y) / static_cast<float>(dim.y)
-	) - 1.0f;
+	float3 U = params.cam_u;
+	float3 V = params.cam_v;
+	float3 W = params.cam_w;
+	float2 d = 2.0f * make_float2((float)idx.x / dim.x, (float)idx.y / dim.y) - 1.0f;
+
+	const float tanFovyHalf = tan(params.cam_fovy * 0.5f);
+	const float aspectRatio = params.cam_aspect_ratio;
 
 	origin = params.cam_eye;
-	direction = normalize(d.x * U + d.y * V + W);
+	direction = normalize((d.x * aspectRatio * tanFovyHalf) * U + (d.y * tanFovyHalf) * V + W);
 }
 
 
 
 extern "C" __global__ void RG_NAME(rg)()
 {
-	
 	const uint3 idx = optixGetLaunchIndex();
 	const uint3 dim = optixGetLaunchDimensions();
 
-	// Map our launch idx to a screen location and create a ray from the camera
-	// location through the screen
-	float3 ray_origin, ray_direction;
-	computeRay(idx, dim, ray_origin, ray_direction);
+	float3 rayOrigin, rayDirection;
+	computeRay(idx, dim, rayOrigin, rayDirection);
 
 	unsigned int p0, p1, p2;
 	optixTrace(
 		params.handle,
-		ray_origin,
-		ray_direction,
+		rayOrigin,
+		rayDirection,
 		0.0f,						
 		1e16f,						
 		0.0f,						
@@ -88,7 +85,7 @@ extern "C" __global__ void RG_NAME(rg)()
 		0,                   
 		p0, p1, p2);
 	float3 result = GetPayload(p0, p1, p2);
-	params.image[(params.image_height - idx.y - 1) * params.image_width + idx.x] = MakeColor(result);
+	params.image[idx.y * params.image_width + idx.x] = MakeColor(result);
 }
 
 
