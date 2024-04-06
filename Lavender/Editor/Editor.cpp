@@ -75,7 +75,10 @@ namespace lavender
 	void Editor::Run()
 	{
 		g_Input.Tick();
-		renderer.Update(ImGui::GetIO().DeltaTime);
+		float dt = ImGui::GetIO().DeltaTime;
+
+		camera.Tick(dt);
+		renderer.Update(dt);
 		Begin();
 		{
 			Render();
@@ -108,6 +111,7 @@ namespace lavender
 		SDLCheck(gui_target.get());
 
 		renderer.OnResize(w, h);
+		camera.SetAspectRatio((float)w / h);
 	}
 
 	void Editor::OnWindowEvent(WindowEventData const& data)
