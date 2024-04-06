@@ -26,11 +26,11 @@ namespace lavender
 		}
 		if (input.GetKey(KeyCode::A))
 		{
-			eye += speed_factor * dt * u;
+			eye -= speed_factor * dt * u;
 		}
 		if (input.GetKey(KeyCode::D))
 		{
-			eye -= speed_factor * dt * u;
+			eye += speed_factor * dt * u;
 		}
 		if (input.GetKey(KeyCode::Q))
 		{
@@ -52,10 +52,9 @@ namespace lavender
 
 	void Camera::GetFrame(Vector3& U, Vector3& V, Vector3& W) const
 	{
-		W = lookat - eye;
+		W = look_dir;
 		U = W.Cross(up); U.Normalize();
 		V = U.Cross(W); V.Normalize();
-		W.Normalize();
 	}
 
 }

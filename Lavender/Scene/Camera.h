@@ -6,25 +6,14 @@ namespace lavender
 	{
 		static constexpr float speed = 0.1f;
 	public:
-		Camera() : eye(Vector3(1.0f, 1.0f, 1.0f)), lookat(Vector3(0.0f, 0.0f, 0.0f)), up(Vector3(0.0f, 1.0f, 0.0f)), fovy(35.0f), aspect_ratio(1.0f)
+		Camera() : eye(Vector3(0.0f, 0.0f, 1.0f)), look_dir(Vector3(0.0f, 0.0f, -1.0f)), up(Vector3(0.0f, 1.0f, 0.0f)), fovy(35.0f), aspect_ratio(1.0f)
 		{
 		}
 
 		Camera(Vector3 const& eye, Vector3 const& lookat, Vector3 const& up, float fovY, float aspectRatio)
-			: eye(eye), lookat(lookat), up(up), fovy(fovY), aspect_ratio(aspectRatio)
+			: eye(eye), up(up), fovy(fovY), aspect_ratio(aspectRatio)
 		{
-		}
-
-		Vector3 GetDirection() const 
-		{ 
-			Vector3 dir = lookat - eye;
-			Vector3 normalized_dir;
-			dir.Normalize(normalized_dir);
-			return normalized_dir;
-		}
-		void SetDirection(Vector3 const& dir) 
-		{ 
-			lookat = eye + dir * dir.Length();
+			SetLookat(lookat);
 		}
 
 		Vector3 const& GetEye() const { return eye; }
@@ -32,8 +21,20 @@ namespace lavender
 
 		void Tick(float dt);
 
-		Vector3 const& GetLookat() const { return lookat; }
-		void SetLookat(Vector3 const& val) { lookat = val; }
+		void SetLookat(Vector3 const& val) 
+		{ 
+			look_dir = val - eye;
+			look_dir.Normalize();
+		}
+		Vector3 GetLookDir() const
+		{
+			return look_dir;
+		}
+		void SetLookDir(Vector3 const& dir)
+		{
+			look_dir = dir;
+			look_dir.Normalize();
+		}
 
 		Vector3 const& GetUp() const { return up; }
 		void SetUp(Vector3 const& val) { up = val; }
@@ -46,8 +47,7 @@ namespace lavender
 
 	private:
 		Vector3 eye;
-
-		Vector3 lookat;
+		Vector3 look_dir;
 		Vector3 up;
 		float fovy;
 		float aspect_ratio;
