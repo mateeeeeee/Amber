@@ -256,52 +256,37 @@ namespace lavender::optix
 		{
 			static_assert(sizeof(T) == sizeof(float3));
 			vertex_stride = sizeof(T);
+			this->vertex_count = vertex_count;
 			uint64 buffer_size = vertex_count * sizeof(T);
-			vertices = std::make_unique<Buffer>(buffer_size);
-			vertices->Update(vertex_data, buffer_size);
+
+			CudaCheck(cudaMalloc(&vertices_dev, buffer_size));
+			CudaCheck(cudaMemcpy(vertices_dev, vertex_data, buffer_size, cudaMemcpyHostToDevice));
 		}
 
 		void SetIndices(uint32 const* index_data, uint64 index_count)
 		{
-			uint64 buffer_size = index_count * sizeof(uint32);
-			indices = std::make_unique<Buffer>(buffer_size);
-			indices->Update(index_data, buffer_size);
-		}
-
-		template<typename T>
-		void SetNormals(T const* normal_data, uint64 normal_count)
-		{
-			static_assert(sizeof(T) == sizeof(float3));
-			uint64 buffer_size = normal_count * sizeof(T);
-			normals = std::make_unique<Buffer>(buffer_size);
-			normals->Update(normal_data, buffer_size);
-		}
-		template<typename T>
-		void SetUVs(T const* uv_data, uint64 uv_count)
-		{
-			static_assert(sizeof(T) == sizeof(float2));
-			uint64 buffer_size = uv_count * sizeof(T);
-			uvs = std::make_unique<Buffer>(buffer_size);
-			uvs->Update(uv_data, buffer_size);
+			//uint64 buffer_size = index_count * sizeof(uint32);
+			//indices = std::make_unique<Buffer>(buffer_size);
+			//indices->Update(index_data, buffer_size);
 		}
 
 		OptixBuildInput GetBuildInput()
 		{
-			LAV_ASSERT(vertices);
+			LAV_ASSERT(vertices_dev);
 			OptixBuildInput build_input{};
 			build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-			CUdeviceptr vertex_buffers[] = { vertices->GetDevicePtr() };
+			CUdeviceptr vertex_buffers[] = { reinterpret_cast<CUdeviceptr>(vertices_dev) };
 			build_input.triangleArray.vertexBuffers = vertex_buffers;
-			build_input.triangleArray.numVertices = vertices->GetSize() / sizeof(float3);
+			build_input.triangleArray.numVertices = vertex_count;
 			build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
 			build_input.triangleArray.vertexStrideInBytes = sizeof(float3);
-			if (indices)
-			{
-				build_input.triangleArray.indexBuffer = indices->GetDevicePtr();
-				build_input.triangleArray.numIndexTriplets = indices->GetSize() / sizeof(uint3);
-				build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
-				build_input.triangleArray.indexStrideInBytes = sizeof(uint3);
-			}
+			//if (indices)
+			//{
+			//	build_input.triangleArray.indexBuffer = indices->GetDevicePtr();
+			//	build_input.triangleArray.numIndexTriplets = indices->GetSize() / sizeof(uint3);
+			//	build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
+			//	build_input.triangleArray.indexStrideInBytes = sizeof(uint3);
+			//}
 
 			build_input.triangleArray.flags = &geometry_flags;
 			build_input.triangleArray.numSbtRecords = 1;
@@ -309,12 +294,12 @@ namespace lavender::optix
 		}
 
 	private:
-		std::unique_ptr<Buffer> vertices;
+		//std::unique_ptr<Buffer> vertices;
+		void* vertices_dev = nullptr;
 		uint32 vertex_stride = 0;
+		uint32 vertex_count = 0;
 
-		std::unique_ptr<Buffer> indices;
-		std::unique_ptr<Buffer> normals;
-		std::unique_ptr<Buffer> uvs;
+		//std::unique_ptr<Buffer> indices;
 		uint32 geometry_flags;
 	};
 }

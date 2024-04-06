@@ -14,6 +14,7 @@
 #include "Utilities/Random.h"
 #include "Utilities/ImageUtil.h"
 
+#include <array>
 
 namespace lavender::optix
 {
@@ -50,11 +51,13 @@ namespace lavender::optix
 
 		cuCtxGetCurrent(&cuda_context);
 
-		OptixCheck(optixDeviceContextCreate(cuda_context, nullptr, &optix_context));
-
 #ifdef _DEBUG
+		OptixDeviceContextOptions ctx_options{};
+		ctx_options.validationMode = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
+		OptixCheck(optixDeviceContextCreate(cuda_context, &ctx_options, &optix_context));
 		OptixCheck(optixDeviceContextSetLogCallback(optix_context, OptixLogCallback, nullptr, 4));
 #else 
+		OptixCheck(optixDeviceContextCreate(cuda_context, nullptr, &optix_context));
 		OptixCheck(optixDeviceContextSetLogCallback(optix_context, OptixLogCallback, nullptr, 0));
 #endif
 	}
@@ -71,6 +74,8 @@ namespace lavender::optix
 	{
 		OnResize(width, height);
 		
+
+		if(false)
 		{
 			const float3 vertices[3] =
 			{
@@ -88,15 +93,14 @@ namespace lavender::optix
 			build_inputs.emplace_back(geometries.back().GetBuildInput());
 
 			OptixAccelBuildOptions opts{};
-			opts.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
+			opts.buildFlags = OPTIX_BUILD_FLAG_NONE;
 			opts.operation = OPTIX_BUILD_OPERATION_BUILD;
 			opts.motionOptions.numKeys = 1;
 
 			OptixAccelBufferSizes buf_sizes{};
-			OptixCheck(optixAccelComputeMemoryUsage(optix_context, &opts, build_inputs.data(), 1, &buf_sizes));
+			OptixCheck(optixAccelComputeMemoryUsage(optix_context, &opts, build_inputs.data(), build_inputs.size(), &buf_sizes));
 
 			void* scratch_dev = nullptr;
-			void* build_output_dev = nullptr;
 			cudaMalloc(&scratch_dev, buf_sizes.tempSizeInBytes);
 			cudaMalloc(&build_output_dev, buf_sizes.outputSizeInBytes);
 
@@ -113,17 +117,92 @@ namespace lavender::optix
 				0));
 			CudaSyncCheck();
 
-			cudaFree(build_output_dev);
+			//cudaFree(build_output_dev);
 			cudaFree(scratch_dev);
+		}
+		else
+		{
+			
+			// Use default options for simplicity.  In a real use case we would want to
+			// enable compaction, etc
+			OptixAccelBuildOptions accel_options = {};
+			accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
+			accel_options.operation = OPTIX_BUILD_OPERATION_BUILD;
+
+			// Triangle build input: simple list of three vertices
+			const std::array<float3, 3> vertices =
+			{ {
+				  { -0.5f, -0.5f, 0.0f },
+				  {  0.5f, -0.5f, 0.0f },
+				  {  0.0f,  0.5f, 0.0f }
+			} };
+
+			const size_t vertices_size = sizeof(float3) * vertices.size();
+			CUdeviceptr d_vertices = 0;
+			CudaCheck(cudaMalloc(reinterpret_cast<void**>(&d_vertices), vertices_size));
+			CudaCheck(cudaMemcpy(
+				reinterpret_cast<void*>(d_vertices),
+				vertices.data(),
+				vertices_size,
+				cudaMemcpyHostToDevice
+			));
+
+			// Our build input is a simple list of non-indexed triangle vertices
+			const uint32_t triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE };
+			OptixBuildInput triangle_input = {};
+			triangle_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
+			triangle_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
+			triangle_input.triangleArray.numVertices = static_cast<uint32_t>(vertices.size());
+			triangle_input.triangleArray.vertexBuffers = &d_vertices;
+			triangle_input.triangleArray.flags = triangle_input_flags;
+			triangle_input.triangleArray.numSbtRecords = 1;
+
+			OptixAccelBufferSizes gas_buffer_sizes;
+			OptixCheck(optixAccelComputeMemoryUsage(
+				optix_context,
+				&accel_options,
+				&triangle_input,
+				1, // Number of build inputs
+				&gas_buffer_sizes
+			));
+			CUdeviceptr d_temp_buffer_gas;
+			CudaCheck(cudaMalloc(
+				reinterpret_cast<void**>(&d_temp_buffer_gas),
+				gas_buffer_sizes.tempSizeInBytes
+			));
+			CudaCheck(cudaMalloc(
+				reinterpret_cast<void**>(&d_gas_output_buffer),
+				gas_buffer_sizes.outputSizeInBytes
+			));
+
+			OptixCheck(optixAccelBuild(
+				optix_context,
+				0,                  // CUDA stream
+				&accel_options,
+				&triangle_input,
+				1,                  // num build inputs
+				d_temp_buffer_gas,
+				gas_buffer_sizes.tempSizeInBytes,
+				d_gas_output_buffer,
+				gas_buffer_sizes.outputSizeInBytes,
+				&blas_handle,
+				nullptr,            // emitted property list
+				0                   // num emitted properties
+			));
+
+			// We can now free the scratch space buffer used during build and the vertex
+			// inputs, since they are not needed by our trivial shading method
+			CudaCheck(cudaFree(reinterpret_cast<void*>(d_temp_buffer_gas)));
+			CudaCheck(cudaFree(reinterpret_cast<void*>(d_vertices)));
 		}
 
 		CompileOptions comp_opts{};
 		comp_opts.input_file_name = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\build\\Lavender\\PTX.dir\\Debug\\OptixRenderer.ptx";
 		comp_opts.launch_params_name = "params";
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
-		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup("__raygen__rg");
-		OptixProgramGroup miss_handle = pipeline->AddMissGroup("__miss__ms");
-		OptixProgramGroup ch_handle = pipeline->AddHitGroup(nullptr, "__closesthit__ch", nullptr);
+		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup(RG_NAME_STR(rg));
+		OptixProgramGroup miss_handle = pipeline->AddMissGroup(MISS_NAME_STR(ms));
+		OptixProgramGroup ch_handle = pipeline->AddHitGroup(nullptr, CH_NAME_STR(ch), nullptr);
 		pipeline->Create();
 
 		ShaderBindingTableBuilder sbt_builder{};

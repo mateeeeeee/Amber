@@ -46,5 +46,7 @@ namespace lavender::optix
 		std::unique_ptr<Pipeline> pipeline;
 		ShaderBindingTable sbt;
 		OptixTraversableHandle blas_handle;
+		CUdeviceptr            d_gas_output_buffer;
+		void* build_output_dev = nullptr;
 	};
 }
