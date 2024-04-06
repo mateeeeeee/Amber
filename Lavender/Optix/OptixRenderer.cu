@@ -11,7 +11,7 @@ extern "C"
 
 __forceinline__ __device__ float3 toSRGB(const float3& c)
 {
-	float  invGamma = 1.0f / 2.4f;
+	float  invGamma = 1.0f / 2.2f;
 	float3 powed = make_float3(powf(c.x, invGamma), powf(c.y, invGamma), powf(c.z, invGamma));
 	return make_float3(
 		c.x < 0.0031308f ? 12.92f * c.x : 1.055f * powed.x - 0.055f,
@@ -62,21 +62,15 @@ static __forceinline__ __device__ void computeRay(uint3 idx, uint3 dim, float3& 
 }
 
 
-extern "C" __global__ void __raygen__rg()
+extern "C" __global__ void RG_NAME(rg)()
 {
-	// Lookup our location within the launch grid
 	const uint3 idx = optixGetLaunchIndex();
 	const uint3 dim = optixGetLaunchDimensions();
 
 	float3 ray_origin    = make_float3(0.0f, 0.0f, -1.0f);
-	float3 ray_direction = make_float3(0.0f, 1.0f, 0.0f);
-	//
-	//// Map our launch idx to a screen location and create a ray from the camera
-	//// location through the screen
-	//float3 ray_origin, ray_direction;
+	float3 ray_direction = make_float3(0.0f, 0.0f,  1.0f);
+	
 	//computeRay(idx, dim, ray_origin, ray_direction);
-	//
-	//// Trace the ray against our scene hierarchy
 	unsigned int p0, p1, p2;
 	p0 = __float_as_uint(1.0f);
 	p1 = __float_as_uint(0.0f);
@@ -86,14 +80,14 @@ extern "C" __global__ void __raygen__rg()
 		params.handle,
 		ray_origin,
 		ray_direction,
-		0.0f,                // Min intersection distance
-		1e16f,               // Max intersection distance
-		0.0f,                // rayTime -- used for motion blur
-		OptixVisibilityMask(255), // Specify always visible
-		OPTIX_RAY_FLAG_DISABLE_ANYHIT,
-		0,                   // SBT offset   -- See SBT discussion
-		1,                   // SBT stride   -- See SBT discussion
-		1,                   // missSBTIndex -- See SBT discussion
+		0.0f,						
+		1e16f,						
+		0.0f,						
+		OptixVisibilityMask(255),	
+		OPTIX_RAY_FLAG_NONE,
+		0,                   
+		1,                   
+		0,                   
 		p0, p1, p2);
 	float3 result;
 	result.x = __uint_as_float(p0);
@@ -106,13 +100,13 @@ extern "C" __global__ void __raygen__rg()
 extern "C" __global__ void __miss__ms()
 {
 	MissData* miss_data = reinterpret_cast<MissData*>(optixGetSbtDataPointer());
-	setPayload(miss_data->bg_color);
+	setPayload(make_float3(0.0f, 0.0f, 1.0f));
 }
 
 
 extern "C" __global__ void __closesthit__ch()
 {
 	//const float2 barycentrics = optixGetTriangleBarycentrics();
-	//setPayload(make_float3(0.0f, 1.0f, 0.0f));
+	setPayload(make_float3(0.0f, 1.0f, 0.0f));
 }
 

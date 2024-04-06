@@ -127,7 +127,7 @@ namespace lavender::optix
 	{
 		{
 			OptixModuleCompileOptions module_compile_options{};
-#if !defined( NDEBUG )
+#if defined(_DEBUG)
 			module_compile_options.optLevel = OPTIX_COMPILE_OPTIMIZATION_LEVEL_0;
 			module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
 #endif
@@ -189,13 +189,13 @@ namespace lavender::optix
 		uint32 direct_callable_stack_size_from_state;
 		uint32 continuation_stack_size;
 		OptixCheck(optixUtilComputeStackSizes(&stack_sizes, max_depth,
-			0,  // maxCCDepth
-			0,  // maxDCDEpth
+			0,
+			0,
 			&direct_callable_stack_size_from_traversal,
 			&direct_callable_stack_size_from_state, &continuation_stack_size));
 		OptixCheck(optixPipelineSetStackSize(pipeline, direct_callable_stack_size_from_traversal,
 			direct_callable_stack_size_from_state, continuation_stack_size,
-			1  // maxTraversableDepth
+			1  
 		));
 	}
 
