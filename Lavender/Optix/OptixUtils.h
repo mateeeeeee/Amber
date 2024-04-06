@@ -195,7 +195,7 @@ namespace lavender::optix
 	class TypedBuffer : public Buffer
 	{
 	public:
-		explicit TypedBuffer(uint64 count) : Buffer(count * sizeof(T)) {}
+		explicit TypedBuffer(uint64 count = 1) : Buffer(count * sizeof(T)) {}
 		uint64 GetCount() const { return GetSize() / sizeof(T); }
 
 		template<typename U = T>

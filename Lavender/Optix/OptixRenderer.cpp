@@ -5,7 +5,6 @@
 #include <optix_stack_size.h>
 #include "OptixShared.h"
 #include "CudaUtils.h"
-#include "MathUtils.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "OptixRenderer.h"
@@ -155,10 +154,22 @@ namespace lavender
 	{
 	}
 
-	void OptixRenderer::Render(Camera const& camera)
+	void OptixRenderer::Render(Camera& camera)
 	{
-		uint64 const width  = framebuffer.Cols();
+
+		uint64 const width = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
+
+		camera.SetEye({ 0.0f, 0.0f, 2.0f });
+		camera.SetLookat({ 0.0f, 0.0f, 0.0f });
+		camera.SetUp({ 0.0f, 1.0f, 3.0f });
+		camera.SetFovY(45.0f);
+		camera.SetAspectRatio((float)width / (float)height);
+
+		auto ToFloat3 = [](Vector3 const& v)
+			{
+				return make_float3(v.x, v.y, v.z);
+			};
 
 		Params params{};
 		params.image = device_memory.As<uchar4>();
@@ -166,12 +177,18 @@ namespace lavender
 		params.image_height = height;
 		params.handle = as_handle;
 
-		void* gpu_params;
-		CudaCheck(cudaMalloc(&gpu_params, sizeof(Params)));
-		CudaCheck(cudaMemcpy(gpu_params, &params, sizeof(Params), cudaMemcpyHostToDevice));
+		Vector3 u, v, w;
+		camera.GetFrame(u, v, w);
+		params.cam_eye = ToFloat3(camera.GetEye());
+		params.cam_u = ToFloat3(u);
+		params.cam_v = ToFloat3(v);
+		params.cam_w = ToFloat3(w);
+
+		TypedBuffer<Params> gpu_params{};
+		gpu_params.Update(params);
 
 		OptixShaderBindingTable optix_sbt = sbt;
-		OptixCheck(optixLaunch(*pipeline, 0, reinterpret_cast<CUdeviceptr>(gpu_params), sizeof(Params), &optix_sbt, width, height, 1));
+		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), &optix_sbt, width, height, 1));
 		CudaSyncCheck();
 
 		cudaMemcpy(framebuffer, device_memory, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);

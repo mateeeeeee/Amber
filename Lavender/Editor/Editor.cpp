@@ -15,8 +15,8 @@
 namespace lavender
 {
 
-	Editor::Editor(Window& window, OptixRenderer& renderer, EditorSink& editor_sink)
-		: window(window), renderer(renderer), editor_sink(editor_sink)
+	Editor::Editor(Window& window, Camera& camera, OptixRenderer& renderer, EditorSink& editor_sink)
+		: window(window), camera(camera), renderer(renderer), editor_sink(editor_sink)
 	{
 		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
 		window.GetWindowEvent().AddMember(&Editor::OnWindowEvent, *this);
@@ -195,7 +195,6 @@ namespace lavender
 
 	void Editor::Render()
 	{
-		Camera camera{};
 		renderer.Render(camera);
 		auto const& fb = renderer.GetFramebuffer();
 
