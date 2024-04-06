@@ -16,8 +16,10 @@
 
 #include <array>
 
-namespace lavender::optix
+namespace lavender
 {
+	using namespace optix;
+
 	static void OptixLogCallback(unsigned int level, const char* tag, const char* message, void* cbdata)
 	{
 		switch (level)
@@ -74,86 +76,27 @@ namespace lavender::optix
 	{
 		OnResize(width, height);
 		
-
-		if(false)
 		{
-			const float3 vertices[3] =
-			{
-				{ -0.5f, -0.5f, 0.0f },
-				{  0.5f, -0.5f, 0.0f },
-				{  0.0f,  0.5f, 0.0f }
-			};
-			Geometry triangle_geometry{};
-			triangle_geometry.SetVertices(vertices, 3);
-
-			std::vector<Geometry> geometries;
-			std::vector<OptixBuildInput> build_inputs;
-
-			geometries.push_back(std::move(triangle_geometry));
-			build_inputs.emplace_back(geometries.back().GetBuildInput());
-
-			OptixAccelBuildOptions opts{};
-			opts.buildFlags = OPTIX_BUILD_FLAG_NONE;
-			opts.operation = OPTIX_BUILD_OPERATION_BUILD;
-			opts.motionOptions.numKeys = 1;
-
-			OptixAccelBufferSizes buf_sizes{};
-			OptixCheck(optixAccelComputeMemoryUsage(optix_context, &opts, build_inputs.data(), build_inputs.size(), &buf_sizes));
-
-			void* scratch_dev = nullptr;
-			cudaMalloc(&scratch_dev, buf_sizes.tempSizeInBytes);
-			cudaMalloc(&build_output_dev, buf_sizes.outputSizeInBytes);
-
-			OptixCheck(optixAccelBuild(optix_context,
-				0,
-				&opts,
-				build_inputs.data(), build_inputs.size(),
-				reinterpret_cast<CUdeviceptr>(scratch_dev),
-				buf_sizes.tempSizeInBytes,
-				reinterpret_cast<CUdeviceptr>(build_output_dev),
-				buf_sizes.outputSizeInBytes,
-				&blas_handle,
-				nullptr,
-				0));
-			CudaSyncCheck();
-
-			//cudaFree(build_output_dev);
-			cudaFree(scratch_dev);
-		}
-		else
-		{
-			
-			// Use default options for simplicity.  In a real use case we would want to
-			// enable compaction, etc
-			OptixAccelBuildOptions accel_options = {};
+			OptixAccelBuildOptions accel_options{};
 			accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
 			accel_options.operation = OPTIX_BUILD_OPERATION_BUILD;
+			float3 vertices[3] =
+			{
+			  { -0.5f, -0.5f, 0.0f },
+			  {  0.5f, -0.5f, 0.0f },
+			  {  0.0f,  0.5f, 0.0f }
+			};
 
-			// Triangle build input: simple list of three vertices
-			const std::array<float3, 3> vertices =
-			{ {
-				  { -0.5f, -0.5f, 0.0f },
-				  {  0.5f, -0.5f, 0.0f },
-				  {  0.0f,  0.5f, 0.0f }
-			} };
+			TypedBuffer<float3> vertex_buffer(3);
+			vertex_buffer.Update(vertices, sizeof(vertices));
 
-			const size_t vertices_size = sizeof(float3) * vertices.size();
-			CUdeviceptr d_vertices = 0;
-			CudaCheck(cudaMalloc(reinterpret_cast<void**>(&d_vertices), vertices_size));
-			CudaCheck(cudaMemcpy(
-				reinterpret_cast<void*>(d_vertices),
-				vertices.data(),
-				vertices_size,
-				cudaMemcpyHostToDevice
-			));
-
-			// Our build input is a simple list of non-indexed triangle vertices
-			const uint32_t triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE };
-			OptixBuildInput triangle_input = {};
+			uint32 triangle_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
+			CUdeviceptr vertex_buffers[]  = { vertex_buffer.GetDevicePtr() };
+			OptixBuildInput triangle_input{};
 			triangle_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
 			triangle_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
-			triangle_input.triangleArray.numVertices = static_cast<uint32_t>(vertices.size());
-			triangle_input.triangleArray.vertexBuffers = &d_vertices;
+			triangle_input.triangleArray.numVertices = vertex_buffer.GetCount();
+			triangle_input.triangleArray.vertexBuffers = vertex_buffers;
 			triangle_input.triangleArray.flags = triangle_input_flags;
 			triangle_input.triangleArray.numSbtRecords = 1;
 
@@ -162,38 +105,27 @@ namespace lavender::optix
 				optix_context,
 				&accel_options,
 				&triangle_input,
-				1, // Number of build inputs
+				1,
 				&gas_buffer_sizes
 			));
-			CUdeviceptr d_temp_buffer_gas;
-			CudaCheck(cudaMalloc(
-				reinterpret_cast<void**>(&d_temp_buffer_gas),
-				gas_buffer_sizes.tempSizeInBytes
-			));
-			CudaCheck(cudaMalloc(
-				reinterpret_cast<void**>(&d_gas_output_buffer),
-				gas_buffer_sizes.outputSizeInBytes
-			));
+
+			as_output = std::make_unique<Buffer>(gas_buffer_sizes.outputSizeInBytes);
+			Buffer scratch_buffer(gas_buffer_sizes.tempSizeInBytes);
 
 			OptixCheck(optixAccelBuild(
 				optix_context,
-				0,                  // CUDA stream
+				0,                 
 				&accel_options,
 				&triangle_input,
-				1,                  // num build inputs
-				d_temp_buffer_gas,
-				gas_buffer_sizes.tempSizeInBytes,
-				d_gas_output_buffer,
-				gas_buffer_sizes.outputSizeInBytes,
-				&blas_handle,
-				nullptr,            // emitted property list
-				0                   // num emitted properties
+				1,                 
+				scratch_buffer.GetDevicePtr(),
+				scratch_buffer.GetSize(),
+				as_output->GetDevicePtr(),
+				as_output->GetSize(),
+				&as_handle,
+				nullptr,            
+				0                   
 			));
-
-			// We can now free the scratch space buffer used during build and the vertex
-			// inputs, since they are not needed by our trivial shading method
-			CudaCheck(cudaFree(reinterpret_cast<void*>(d_temp_buffer_gas)));
-			CudaCheck(cudaFree(reinterpret_cast<void*>(d_vertices)));
 		}
 
 		CompileOptions comp_opts{};
@@ -232,7 +164,7 @@ namespace lavender::optix
 		params.image = device_memory.As<uchar4>();
 		params.image_width = width;
 		params.image_height = height;
-		params.handle = blas_handle;
+		params.handle = as_handle;
 
 		void* gpu_params;
 		CudaCheck(cudaMalloc(&gpu_params, sizeof(Params)));
@@ -249,10 +181,7 @@ namespace lavender::optix
 	void OptixRenderer::OnResize(uint32 w, uint32 h)
 	{
 		framebuffer.Resize(h, w);
-		if (device_memory.GetCount() != w * h)
-		{
-			device_memory = optix::TypedBuffer<uchar4>(w * h);
-		}
+		device_memory.Realloc(w * h);
 		cudaMemset(device_memory, 0, device_memory.GetSize());
 	}
 

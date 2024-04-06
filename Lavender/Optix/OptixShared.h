@@ -5,7 +5,6 @@
 #define RG_NAME(name) __raygen__##name
 #define MISS_NAME(name) __miss__##name
 #define CH_NAME(name) __closesthit__##name
-
 #define RG_NAME_STR(name) LAV_STRINGIFY(RG_NAME(name)) 
 #define MISS_NAME_STR(name) LAV_STRINGIFY(MISS_NAME(name)) 
 #define CH_NAME_STR(name) LAV_STRINGIFY(CH_NAME(name)) 
