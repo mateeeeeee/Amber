@@ -5,8 +5,7 @@ namespace lavender
 	class Camera 
 	{
 	public:
-		Camera() 
-			: eye(Vector3(1.0f, 1.0f, 1.0f)), lookat(Vector3(0.0f, 0.0f, 0.0f)), up(Vector3(0.0f, 1.0f, 0.0f)), fovy(35.0f), aspect_ratio(1.0f)
+		Camera() : eye(Vector3(1.0f, 1.0f, 1.0f)), lookat(Vector3(0.0f, 0.0f, 0.0f)), up(Vector3(0.0f, 1.0f, 0.0f)), fovy(35.0f), aspect_ratio(1.0f)
 		{
 		}
 

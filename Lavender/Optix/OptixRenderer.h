@@ -26,7 +26,7 @@ namespace lavender
 		~OptixRenderer();
 
 		void Update(float dt);
-		void Render(Camera const& camera);
+		void Render(Camera& camera);
 
 		void OnResize(uint32 w, uint32 h);
 		void WriteFramebuffer(char const* outfile);

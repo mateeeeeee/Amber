@@ -64,18 +64,17 @@ int main(int argc, char* argv[])
 	}
 	catch (std::runtime_error const& e)
 	{
-		//LAV_ERROR("{}", e.what());
-		//return EXIT_FAILURE;
+		LAV_ERROR("{}", e.what());
+		return EXIT_FAILURE;
 	}
 
-
-	Camera camera{};
+	Camera camera = std::move(cfg.camera);
 	OptixRenderer renderer(cfg.width, cfg.height, std::move(scene));
 	if(use_editor)
 	{
 		Window window(cfg.width, cfg.height, "lavender");
 		if (maximize_window) window.Maximize();
-		Editor editor(window, renderer, *g_LogManager.GetEditorSink());
+		Editor editor(window, camera, renderer, *g_LogManager.GetEditorSink());
 		while (window.Loop())
 		{
 			editor.Run();
@@ -84,7 +83,7 @@ int main(int argc, char* argv[])
 	else
 	{
 		renderer.Render(camera);
-		renderer.WriteFramebuffer("test.hdr"); 
+		renderer.WriteFramebuffer("test.png"); 
 	}
 	g_LogManager.Destroy();
 
