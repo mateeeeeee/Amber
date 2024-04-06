@@ -159,11 +159,6 @@ namespace lavender
 		uint64 const width = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
 
-		auto ToFloat3 = [](Vector3 const& v)
-			{
-				return make_float3(v.x, v.y, v.z);
-			};
-
 		Params params{};
 		params.image = device_memory.As<uchar4>();
 		params.image_width = width;
@@ -172,12 +167,11 @@ namespace lavender
 
 		Vector3 u, v, w;
 		camera.GetFrame(u, v, w);
+		auto ToFloat3 = [](Vector3 const& v) { return make_float3(v.x, v.y, v.z); };
 		params.cam_eye = ToFloat3(camera.GetEye());
 		params.cam_u = ToFloat3(u);
 		params.cam_v = ToFloat3(v);
 		params.cam_w = ToFloat3(w);
-
-		LAV_DEBUG("Camera eye: (%f,%f,%f)\n", params.cam_eye.x, params.cam_eye.y, params.cam_eye.z);
 
 		TypedBuffer<Params> gpu_params{};
 		gpu_params.Update(params);
