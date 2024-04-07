@@ -61,7 +61,7 @@ namespace lavender
 				std::string path = std::string(pbrt_base_dir) + t->fileName;
 				const uint32 id = scene.textures.size();
 				pbrt_textures[texture] = id;
-				scene.textures.emplace_back(path.c_str());
+				//scene.textures.emplace_back(path.c_str());
 				//LAV_INFO("Loaded image texture: %s\n", t->fileName.c_str());
 				return id;
 			}

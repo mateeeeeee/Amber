@@ -3,6 +3,7 @@
 #include <vector>
 #include "Mesh.h"
 #include "Material.h"
+#include "Utilities/ImageUtil.h"
 
 namespace lavender
 {
@@ -14,7 +15,6 @@ namespace lavender
 		std::vector<Instance> instances;
 		std::vector<Material> materials;
 		std::vector<Image> textures;
-		//std::vector<QuadLight> lights;
 		BoundingBox bounding_box;
 	};
 
