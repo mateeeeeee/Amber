@@ -52,6 +52,7 @@ set(SCENE_FILES
     Scene/Scene.h
     Scene/Scene.cpp
     Scene/Camera.h
+    Scene/Camera.cpp
     Scene/Light.h
     Scene/Mesh.h
     Scene/Material.h
@@ -100,6 +101,7 @@ set(OPTIX_BACKEND_FILES
     Optix/CudaUtils.h
     Optix/CudaUtils.cpp
     Optix/CudaMath.h
+    Optix/CudaRandom.h
     Optix/OptixUtils.h
     Optix/OptixUtils.cpp
     Optix/OptixRenderer.h
