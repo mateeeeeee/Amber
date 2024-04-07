@@ -223,23 +223,28 @@ namespace lavender::optix
 			Buffer::Realloc(count * sizeof(T));
 		}
 	};
-	class Texture2D
+
+	class ITexture
 	{
 	public:
-		template<typename Format>
-		Texture2D(uint32 w, uint32 h, bool srgb = false) : Texture2D(w, h, cudaCreateChannelDesc<Format>(), srgb)
-		{}
+		virtual ~ITexture() = default;
+		virtual cudaTextureObject_t GetHandle() const = 0;
+		virtual uint32 GetWidth() const = 0;
+		virtual uint32 GetHeight() const = 0;
+		virtual void Update(void const*) = 0;
+	};
 
-		LAV_NONCOPYABLE(Texture2D)
-			Texture2D(Texture2D&& t) noexcept;
-		Texture2D& operator=(Texture2D&& t) noexcept;
+	class Texture2D : public ITexture
+	{
+	public:
+		Texture2D(uint32 w, uint32 h, cudaChannelFormatDesc format, bool srgb);
+		LAV_NONCOPYABLE_NONMOVABLE(Texture2D)
 		~Texture2D();
 
-		uint32 GetWidth() const { return width; }
-		uint32 GetHeight() const { return height; }
-		auto   GetHandle() const { return texture_handle; }
-
-		void Update(void const* data);
+		virtual cudaTextureObject_t GetHandle() const override { return texture_handle; }
+		virtual uint32 GetWidth()  const override { return width; }
+		virtual uint32 GetHeight() const override { return height; }
+		virtual void Update(void const* img_data) override;
 
 	private:
 		uint32 width;
@@ -247,8 +252,11 @@ namespace lavender::optix
 		cudaChannelFormatDesc format;
 		cudaArray_t data = 0;
 		cudaTextureObject_t texture_handle = 0;
-
-	private:
-		Texture2D(uint32 w, uint32 h, cudaChannelFormatDesc format, bool srgb);
 	};
+
+	template<typename FormatT>
+	inline std::unique_ptr<Texture2D> MakeTexture2D(uint32 w, uint32 h, bool srgb = false)
+	{
+		return std::make_unique<Texture2D>(w, h, cudaCreateChannelDesc<FormatT>(), srgb);
+	}
 }

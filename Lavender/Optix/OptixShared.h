@@ -17,16 +17,21 @@ namespace lavender
 		uchar4*				   image;
 		unsigned int		   sample_count;
 		unsigned int		   frame_index;
+
 		float3                 cam_eye;
 		float3                 cam_u, cam_v, cam_w;
 		float				   cam_fovy;
 		float				   cam_aspect_ratio;
+#ifdef __CUDACC__
+		cudaTextureObject_t* textures;
+#else
+		CUdeviceptr			 textures;
+#endif
 	};
 
 
 	struct RayGenData
 	{
-		// No data needed
 	};
 
 
@@ -38,7 +43,6 @@ namespace lavender
 
 	struct HitGroupData
 	{
-		// No data needed
 	};
 
 }

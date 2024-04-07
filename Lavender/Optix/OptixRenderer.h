@@ -42,6 +42,8 @@ namespace lavender
 		OptixTraversableHandle as_handle;
 		std::unique_ptr<optix::Buffer> as_output;
 
+		std::vector<std::unique_ptr<optix::Texture2D>> textures;
+		std::unique_ptr<optix::Buffer> texture_list_buffer;
 		uint32 frame_index;
 	};
 }

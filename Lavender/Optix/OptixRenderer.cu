@@ -128,6 +128,7 @@ extern "C" __global__ void __miss__ms()
 extern "C" __global__ void __closesthit__ch()
 {
 	const float2 barycentrics = optixGetTriangleBarycentrics();
-	SetPayload(make_float3(barycentrics.x, barycentrics.y, 1.0f - barycentrics.x - barycentrics.y));
+	float4 sampled = tex2D<float4>(params.textures[0], barycentrics.x, barycentrics.y);
+	SetPayload(make_float3(sampled));
 }
 

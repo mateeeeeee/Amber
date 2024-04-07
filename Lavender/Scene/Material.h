@@ -3,7 +3,7 @@
 
 namespace lavender
 {
-
+	//move to image.h/cpp
 	struct Image 
 	{
 		std::string name;
