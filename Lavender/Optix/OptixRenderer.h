@@ -26,7 +26,7 @@ namespace lavender
 		~OptixRenderer();
 
 		void Update(float dt);
-		void Render(Camera& camera);
+		void Render(Camera& camera, uint32 sample_count);
 
 		void OnResize(uint32 w, uint32 h);
 		void WriteFramebuffer(char const* outfile);
@@ -41,5 +41,7 @@ namespace lavender
 		optix::ShaderBindingTable sbt;
 		OptixTraversableHandle as_handle;
 		std::unique_ptr<optix::Buffer> as_output;
+
+		uint32 frame_index;
 	};
 }

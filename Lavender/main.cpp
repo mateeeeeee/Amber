@@ -74,7 +74,9 @@ int main(int argc, char* argv[])
 	{
 		Window window(cfg.width, cfg.height, "lavender");
 		if (maximize_window) window.Maximize();
-		Editor editor(window, camera, renderer, *g_LogManager.GetEditorSink());
+		Editor editor(window, camera, renderer);
+		editor.SetEditorSink(g_LogManager.GetEditorSink());
+		editor.SetDefaultRendererOptions(cfg.samples_per_pixel, cfg.max_depth);
 		while (window.Loop())
 		{
 			editor.Run();
@@ -82,7 +84,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		renderer.Render(camera);
+		renderer.Render(camera, cfg.samples_per_pixel);
 		renderer.WriteFramebuffer("test.png"); 
 	}
 	g_LogManager.Destroy();

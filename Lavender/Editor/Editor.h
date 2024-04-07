@@ -23,13 +23,23 @@ namespace lavender
 		};
 
 	public:
-		Editor(Window& window, Camera& camera, OptixRenderer& renderer, EditorSink& editor_sink);
+		Editor(Window& window, Camera& camera, OptixRenderer& renderer);
 		~Editor();
 
 		void Run();
 
 		void OnResize(int32 w, int32 h);
 		void OnWindowEvent(WindowEventData const&);
+
+		void SetEditorSink(EditorSink* sink)
+		{
+			editor_sink = sink;
+		}
+		void SetDefaultRendererOptions(uint32 _sample_count, uint32 _max_depth)
+		{
+			sample_count = _sample_count;
+			max_depth = _max_depth;
+		}
 
 	private:
 		Window& window;
@@ -42,7 +52,10 @@ namespace lavender
 		bool gui_enabled = true;
 		bool visibility_flags[Visibility_Count] = {false};
 		std::unique_ptr<EditorConsole> editor_console;
-		EditorSink& editor_sink;
+		EditorSink* editor_sink;
+
+		int32 sample_count = 1;
+		int32 max_depth = 1;
 
 	private:
 		void SetStyle();
@@ -60,5 +73,6 @@ namespace lavender
 		void LogWindow();
 		void ConsoleWindow();
 		void StatsWindow();
+		void SettingsWindow();
 	};
 }

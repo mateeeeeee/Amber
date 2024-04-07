@@ -5,7 +5,7 @@
 		"width" : 1080,
 		"height" : 720,
 		"max depth" : 4,
-		"samples per pixel" : 32,
+		"samples per pixel" : 1,
         "camera": 
 		{
 			"position": [

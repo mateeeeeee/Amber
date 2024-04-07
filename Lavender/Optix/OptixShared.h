@@ -15,8 +15,8 @@ namespace lavender
 	{
 		OptixTraversableHandle handle;
 		uchar4*				   image;
-		unsigned int           image_width;
-		unsigned int           image_height;
+		unsigned int		   sample_count;
+		unsigned int		   frame_index;
 		float3                 cam_eye;
 		float3                 cam_u, cam_v, cam_w;
 		float				   cam_fovy;

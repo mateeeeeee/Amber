@@ -15,8 +15,8 @@
 namespace lavender
 {
 
-	Editor::Editor(Window& window, Camera& camera, OptixRenderer& renderer, EditorSink& editor_sink)
-		: window(window), camera(camera), renderer(renderer), editor_sink(editor_sink)
+	Editor::Editor(Window& window, Camera& camera, OptixRenderer& renderer)
+		: window(window), camera(camera), renderer(renderer)
 	{
 		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
 		window.GetWindowEvent().AddMember(&Editor::OnWindowEvent, *this);
@@ -199,7 +199,7 @@ namespace lavender
 
 	void Editor::Render()
 	{
-		renderer.Render(camera);
+		renderer.Render(camera, sample_count);
 		auto const& fb = renderer.GetFramebuffer();
 
 		int width, height, pitch = -1; void* data = nullptr;
@@ -263,6 +263,7 @@ namespace lavender
 		LogWindow();
 		ConsoleWindow();
 		StatsWindow();
+		SettingsWindow();
 	}
 
 	void Editor::EndGUI()
@@ -276,7 +277,7 @@ namespace lavender
 	void Editor::LogWindow()
 	{
 		if (!visibility_flags[Visibility_Log]) return;
-		editor_sink.Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Log]);
+		if(editor_sink) editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Log]);
 	}
 
 	void Editor::ConsoleWindow()
@@ -293,6 +294,18 @@ namespace lavender
 			ImGuiIO& io = ImGui::GetIO();
 			ImGui::Text("FPS: %.1f ms", io.Framerate);
 			ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
+		}
+		ImGui::End();
+	}
+
+	void Editor::SettingsWindow()
+	{
+		if (!visibility_flags[Visibility_Settings]) return;
+		ImGui::Begin(ICON_FA_GEAR" Settings");
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			ImGui::SliderInt("Samples", &sample_count, 1, 64);
+			ImGui::SliderInt("Max Depth", &max_depth, 1, 8);
 		}
 		ImGui::End();
 	}

@@ -71,10 +71,9 @@ namespace lavender
 
 
 	OptixRenderer::OptixRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene)  : OptixInitializer(), 
-		framebuffer(height, width), device_memory(width * height)
+		framebuffer(height, width), device_memory(width * height), frame_index(0)
 	{
 		OnResize(width, height);
-		
 		{
 			OptixAccelBuildOptions accel_options{};
 			accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
@@ -156,16 +155,16 @@ namespace lavender
 	{
 	}
 
-	void OptixRenderer::Render(Camera& camera)
+	void OptixRenderer::Render(Camera& camera, uint32 sample_count)
 	{
 		uint64 const width = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
 
 		Params params{};
 		params.image = device_memory.As<uchar4>();
-		params.image_width = width;
-		params.image_height = height;
 		params.handle = as_handle;
+		params.sample_count = sample_count;
+		params.frame_index = frame_index;
 
 		Vector3 u, v, w;
 		camera.GetFrame(u, v, w);
@@ -186,6 +185,8 @@ namespace lavender
 
 		cudaMemcpy(framebuffer, device_memory, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
 		CudaSyncCheck();
+
+		++frame_index;
 	}
 
 	void OptixRenderer::OnResize(uint32 w, uint32 h)

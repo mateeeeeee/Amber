@@ -2,9 +2,9 @@
 #include <optix.h>
 #include "OptixShared.h"
 #include "CudaMath.h"
+#include "CudaRandom.h"
 
 using namespace lavender;
-
 extern "C" 
 {
 	__constant__ Params params;
@@ -31,6 +31,11 @@ __forceinline__ __device__ uchar4 MakeColor(const float3& c)
 	return make_uchar4(QuantizeUnsigned8Bits(srgb.x), QuantizeUnsigned8Bits(srgb.y), QuantizeUnsigned8Bits(srgb.z), 255u);
 }
 
+struct Payload
+{
+	float3 color;
+};
+
 __forceinline__ __device__ void SetPayload(float3 p)
 {
 	optixSetPayload_0(__float_as_uint(p.x));
@@ -45,60 +50,84 @@ __forceinline__ __device__ float3 GetPayload(unsigned int p0, unsigned int p1, u
 	p.z = __uint_as_float(p2);
 	return p;
 }
-
-static __forceinline__ __device__ void computeRay(uint3 idx, uint3 dim, float3& origin, float3& direction)
+template<typename T>
+__forceinline__ __device__ T const& GetShaderParams()
 {
-	float3 U = params.cam_u;
-	float3 V = params.cam_v;
-	float3 W = params.cam_w;
-	float2 d = 2.0f * make_float2((float)idx.x / dim.x, (float)idx.y / dim.y) - 1.0f;
-
-	const float tanFovyHalf = tan(params.cam_fovy * 0.5f);
-	const float aspectRatio = params.cam_aspect_ratio;
-
-	origin = params.cam_eye;
-	direction = normalize((d.x * aspectRatio * tanFovyHalf) * U + (d.y * tanFovyHalf) * V + W);
+	return *reinterpret_cast<T const*>(optixGetSbtDataPointer());
 }
 
+
+__forceinline__ __device__ 
+void TraceRadiance(OptixTraversableHandle scene,
+	float3                 rayOrigin,
+	float3                 rayDirection,
+	float                  tmin,
+	float                  tmax,
+	Payload& payload)
+{
+	unsigned int p0, p1, p2;
+	optixTrace(
+		scene,
+		rayOrigin,
+		rayDirection,
+		tmin,
+		tmax,
+		0.0f,
+		OptixVisibilityMask(255),
+		OPTIX_RAY_FLAG_NONE,
+		0,
+		1,
+		0,
+		p0, p1, p2);
+	payload.color = make_float3(__uint_as_float(p0), __uint_as_float(p1), __uint_as_float(p2));
+}
 
 
 extern "C" __global__ void RG_NAME(rg)()
 {
-	const uint3 idx = optixGetLaunchIndex();
-	const uint3 dim = optixGetLaunchDimensions();
+	OptixTraversableHandle scene = params.handle;
+	float3 const  eye = params.cam_eye;
+	float3 const  U = params.cam_u;
+	float3 const  V = params.cam_v;
+	float3 const  W = params.cam_w;
+	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
+	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
+	
+	int samples = params.sample_count;
+	float3 result = make_float3(0.0f);
+	do
+	{
+		unsigned int seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.frame_index * params.sample_count);
+		float2 subpixelJitter = make_float2(rnd(seed), rnd(seed));
+		float2 d = (make_float2(pixel) + subpixelJitter) / make_float2(screen);
+		d = 2.0f * d - 1.0f;
 
-	float3 rayOrigin, rayDirection;
-	computeRay(idx, dim, rayOrigin, rayDirection);
+		const float tanFovyHalf = tan(params.cam_fovy * 0.5f);
+		const float aspectRatio = params.cam_aspect_ratio;
 
-	unsigned int p0, p1, p2;
-	optixTrace(
-		params.handle,
-		rayOrigin,
-		rayDirection,
-		0.0f,						
-		1e16f,						
-		0.0f,						
-		OptixVisibilityMask(255),	
-		OPTIX_RAY_FLAG_NONE,
-		0,                   
-		1,                   
-		0,                   
-		p0, p1, p2);
-	float3 result = GetPayload(p0, p1, p2);
-	params.image[idx.y * params.image_width + idx.x] = MakeColor(result);
+		float3 rayDirection = normalize(d.x * aspectRatio * tanFovyHalf * U + d.y * tanFovyHalf * V + W);
+		float3 rayOrigin = eye;
+
+		Payload p{};
+		TraceRadiance(scene, rayOrigin, rayDirection, 1e-5f, 1e16f, p);
+		result += p.color;
+	} while (--samples);
+
+	result = result / params.sample_count;
+	params.image[pixel.x + pixel.y * screen.x] = MakeColor(result);
 }
 
 
 extern "C" __global__ void __miss__ms()
 {
-	MissData* miss_data = reinterpret_cast<MissData*>(optixGetSbtDataPointer());
+	MissData const& miss_data = GetShaderParams<MissData>(); 
 	SetPayload(make_float3(0.0f, 0.0f, 1.0f));
 }
 
 
 extern "C" __global__ void __closesthit__ch()
 {
-	//const float2 barycentrics = optixGetTriangleBarycentrics();
-	SetPayload(make_float3(0.0f, 1.0f, 0.0f));
+	const float2 barycentrics = optixGetTriangleBarycentrics();
+	SetPayload(make_float3(barycentrics.x, barycentrics.y, 1.0f - barycentrics.x - barycentrics.y));
 }
 
