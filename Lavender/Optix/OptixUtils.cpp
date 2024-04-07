@@ -264,5 +264,44 @@ namespace lavender::optix
 		}
 	}
 
+	Texture2D::Texture2D(uint32 w, uint32 h, cudaChannelFormatDesc format, bool srgb) : width(w), height(h), format(format)
+	{
+		CudaCheck(cudaMallocArray(&data, &format, w, h));
+
+		cudaResourceDesc res_desc{};
+		res_desc.resType = cudaResourceTypeArray;
+		res_desc.res.array.array = data;
+
+		cudaTextureDesc tex_desc{};
+		tex_desc.addressMode[0] = cudaAddressModeWrap;
+		tex_desc.addressMode[1] = cudaAddressModeWrap;
+		tex_desc.filterMode = cudaFilterModeLinear;
+		tex_desc.readMode = cudaReadModeNormalizedFloat;
+		tex_desc.sRGB = srgb;
+		tex_desc.normalizedCoords = 1;
+		tex_desc.maxAnisotropy = 1;
+		tex_desc.maxMipmapLevelClamp = 1;
+		tex_desc.minMipmapLevelClamp = 1;
+		tex_desc.mipmapFilterMode = cudaFilterModePoint;
+
+		cudaCreateTextureObject(&texture_handle, &res_desc, &tex_desc, nullptr);
+	}
+
+	Texture2D::~Texture2D()
+	{
+		if (data)
+		{
+			cudaFreeArray(data);
+			cudaDestroyTextureObject(texture_handle);
+		}
+	}
+
+	void Texture2D::Update(void const* img_data)
+	{
+		uint64 const pixel_size = (format.x + format.y + format.z + format.w) / 8;
+		uint64 const pitch = pixel_size * width;
+		CudaCheck(cudaMemcpy2DToArray(data, 0, 0, img_data, pitch, pitch, height, cudaMemcpyHostToDevice));
+	}
+
 }
 
