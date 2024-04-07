@@ -1,5 +1,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
+
 #include "ImageUtil.h"
 
 namespace lavender
@@ -16,5 +20,17 @@ namespace lavender
 		case ImageFormat::BMP: stbi_write_bmp(filename, (int)width, (int)height, 4, data); break;
 		default: LAV_UNREACHABLE();
 		}
+	}
+
+
+	Image::Image(char const* file)
+	{
+		stbi_set_flip_vertically_on_load(1);
+		uint8* image_data = stbi_load(file, &width, &height, &channels, 4);
+		channels = 4;
+		LAV_ASSERT_MSG(image_data, "Could not load image");
+		data = std::vector<uint8>(image_data, image_data + width * height * channels);
+		stbi_image_free(image_data);
+		stbi_set_flip_vertically_on_load(0);
 	}
 }

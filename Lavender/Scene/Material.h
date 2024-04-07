@@ -3,21 +3,6 @@
 
 namespace lavender
 {
-	//move to image.h/cpp
-	struct Image 
-	{
-		std::string name;
-		uint32 width;
-		uint32 height;
-		uint32 channels;
-		std::vector<uint8> img;
-
-		explicit Image(std::string_view file);
-		Image(uint8 const* buf,
-			int width, int height, int channels,
-			std::string_view name);
-	};
-
 	struct Material 
 	{
 		Vector3 base_color = Vector3(0.9f, 0.9f, 0.9f);
