@@ -128,7 +128,7 @@ namespace lavender
 			//#todo compact
 
 
-			std::string texture_path = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\Lavender\\Resources\\Scenes\\simple\\textures\\lines.png";
+			std::string texture_path = "C:\\Users\\mbuljan\\Desktop\\Projects\\Lavender\\Lavender\\Resources\\Icons\\lavender.jpg";
 			Image img(texture_path.c_str());
 
 			textures.push_back(MakeTexture2D<uchar4>(img.width, img.height));
