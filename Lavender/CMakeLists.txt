@@ -56,7 +56,6 @@ set(SCENE_FILES
     Scene/Light.h
     Scene/Mesh.h
     Scene/Material.h
-    Scene/Material.cpp
 )
 
 set(EDITOR_FILES
