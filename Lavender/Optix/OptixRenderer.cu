@@ -97,7 +97,7 @@ extern "C" __global__ void RG_NAME(rg)()
 	float3 result = make_float3(0.0f);
 	do
 	{
-		unsigned int seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.frame_index * params.sample_count);
+		unsigned int seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.sample_count);
 		float2 subpixelJitter = make_float2(rnd(seed), rnd(seed));
 		float2 d = (make_float2(pixel) + subpixelJitter) / make_float2(screen);
 		d = 2.0f * d - 1.0f;

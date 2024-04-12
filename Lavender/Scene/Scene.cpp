@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "Core/Logger.h"
 #include "pbrtParser/Scene.h"
+#include "tinyobjloader/tiny_obj_loader.h"
 
 
 namespace lavender
@@ -28,22 +29,24 @@ namespace lavender
 	{
 		x |= i & 0x1fffffff;
 	}
-	
-	namespace
-	{
-		enum class SceneFormat : uint8
-		{
-			PBRT,
-			PBF,
-			Unknown
-		};
-		SceneFormat GetSceneFormat(std::string_view scene_file)
-		{
-			if (scene_file.ends_with(".pbrt")) return SceneFormat::PBRT;
-			else if (scene_file.ends_with(".pbf")) return SceneFormat::PBF;
-			else return SceneFormat::Unknown;
-		}
 
+	enum class SceneFormat : uint8
+	{
+		OBJ,
+		PBRT,
+		PBF,
+		Unknown
+	};
+	SceneFormat GetSceneFormat(std::string_view scene_file)
+	{
+		if (scene_file.ends_with(".pbrt")) return SceneFormat::PBRT;
+		else if (scene_file.ends_with(".pbf")) return SceneFormat::PBF;
+		else if (scene_file.ends_with(".obj")) return SceneFormat::OBJ;
+		else return SceneFormat::Unknown;
+	}
+	
+	namespace 
+	{
 		uint32 LoadPBRTTexture(
 			Scene& scene,
 			pbrt::Texture::SP const& texture,
@@ -273,7 +276,6 @@ namespace lavender
 
 					primitive_id = scene->primitives.size();
 					scene->primitives.emplace_back(mesh_id, material_ids);
-
 					pbrt_objects[instance->object->name] = mesh_id;
 				}
 				else
@@ -295,6 +297,107 @@ namespace lavender
 
 			return scene;
 		}
+
+		std::unique_ptr<Scene> LoadObjScene(std::string_view scene_file)
+		{
+			tinyobj::ObjReaderConfig reader_config{};
+			tinyobj::ObjReader reader;
+			if (!reader.ParseFromFile(std::string(scene_file), reader_config))
+			{
+				if (!reader.Error().empty())
+				{
+					LAV_ERROR("TinyOBJ error: %s", reader.Error().c_str());
+				}
+				return nullptr;
+			}
+			if (!reader.Warning().empty())
+			{
+				LAV_WARN("TinyOBJ warning: %s", reader.Warning().c_str());
+			}
+
+			std::string obj_base_dir = std::string(scene_file.substr(0, scene_file.rfind('/')));
+			tinyobj::attrib_t const& attrib = reader.GetAttrib();
+			std::vector<tinyobj::shape_t> const& shapes = reader.GetShapes();
+			std::vector<tinyobj::material_t> const& materials = reader.GetMaterials();
+
+			std::unique_ptr<Scene> obj_scene = std::make_unique<Scene>();
+
+			Mesh mesh;
+			std::vector<uint32> material_ids;
+			for (uint64 s = 0; s < shapes.size(); s++)
+			{
+				tinyobj::mesh_t const& obj_mesh = shapes[s].mesh;
+				if(obj_mesh.material_ids[0] >= 0) material_ids.push_back(obj_mesh.material_ids[0]);
+				
+				Geometry geometry;
+				uint32 index_offset = 0;
+				for (uint64 f = 0; f < obj_mesh.num_face_vertices.size(); ++f) 
+				{
+					LAV_ASSERT(obj_mesh.num_face_vertices[f] == 3);
+					for (uint64 v = 0; v < 3; v++)
+					{
+						tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+
+						tinyobj::real_t vx = attrib.vertices[3 * uint64(idx.vertex_index) + 0];
+						tinyobj::real_t vy = attrib.vertices[3 * uint64(idx.vertex_index) + 1];
+						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2];
+
+						geometry.vertices.emplace_back(vx, vy, vz);
+
+						if (idx.normal_index >= 0)
+						{
+							tinyobj::real_t nx = attrib.normals[3 * uint64(idx.normal_index) + 0];
+							tinyobj::real_t ny = attrib.normals[3 * uint64(idx.normal_index) + 1];
+							tinyobj::real_t nz = attrib.normals[3 * uint64(idx.normal_index) + 2];
+							geometry.normals.emplace_back(nx, ny, nz);
+						}
+
+						if (idx.texcoord_index >= 0)
+						{
+							tinyobj::real_t tx = attrib.texcoords[2 * uint64(idx.texcoord_index) + 0];
+							tinyobj::real_t ty = attrib.texcoords[2 * uint64(idx.texcoord_index) + 1];
+
+							geometry.uvs.emplace_back(tx, ty);
+						}
+					}
+					geometry.indices.emplace_back(index_offset, index_offset + 1, index_offset + 2);
+					index_offset += 3;
+				}
+				mesh.geometries.push_back(geometry);
+			}
+			obj_scene->meshes.push_back(std::move(mesh));
+			obj_scene->primitives.emplace_back(0, material_ids);
+			obj_scene->instances.emplace_back(Matrix::Identity, 0);
+
+			auto clamp = []<typename T>(T v, T min, T max) {
+				return v < min ? min : (v > max ? max : v);
+			};
+
+			std::unordered_map<std::string, int32_t> texture_ids;
+			for (auto const& m : materials)
+			{
+				Material material{};
+				material.base_color = Vector3(m.diffuse[0], m.diffuse[1], m.diffuse[2]);
+				material.specular = clamp(m.shininess / 500.f, 0.0f, 1.0f);
+				material.roughness = clamp(1.f - material.specular, 0.0f, 1.0f);
+				material.specular_transmission = 0.0f;
+				if (!m.diffuse_texname.empty()) 
+				{
+					if (texture_ids.find(m.diffuse_texname) == texture_ids.end())
+					{
+						texture_ids[m.diffuse_texname] = obj_scene->textures.size();
+						std::string texture_path = obj_base_dir + "/" + m.diffuse_texname;
+						obj_scene->textures.emplace_back(texture_path.c_str(), true);
+					}
+					const int32 id = texture_ids[m.diffuse_texname];
+					uint32 tex_mask = TEXTURED_PARAM_MASK;
+					SET_TEXTURE_ID(tex_mask, id);
+					material.base_color.x = *reinterpret_cast<float*>(&tex_mask);
+				}
+				obj_scene->materials.push_back(material);
+			}
+			return obj_scene;
+		}
 	}
 
 	std::unique_ptr<Scene> LoadScene(char const* _scene_file)
@@ -313,6 +416,11 @@ namespace lavender
 		{
 			std::shared_ptr<pbrt::Scene> pbrt_scene = pbrt::Scene::loadFrom(_scene_file);
 			return ConvertPBRTScene(pbrt_scene, scene_file);
+		}
+		break;
+		case SceneFormat::OBJ:
+		{
+			return LoadObjScene(scene_file);
 		}
 		break;
 		case SceneFormat::Unknown:

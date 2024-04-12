@@ -23,7 +23,7 @@ namespace lavender
 	}
 
 
-	Image::Image(char const* file)
+	Image::Image(char const* file, bool srgb) : srgb(srgb)
 	{
 		stbi_set_flip_vertically_on_load(1);
 		uint8* image_data = stbi_load(file, &width, &height, &channels, 4);

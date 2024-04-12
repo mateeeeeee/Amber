@@ -94,6 +94,9 @@ set(EXTERNAL_FILES
 
     External/FontAwesome/IconsFontAwesome6.h
     External/json/json.hpp
+
+    External/tinyobjloader/tiny_obj_loader.h
+    External/tinyobjloader/tiny_obj_loader.cc
 )
 
 set(OPTIX_BACKEND_FILES

@@ -1,7 +1,7 @@
 {
   "scene": 
    {
-		"scene file" : "simple/teapot-metal.pbrt",
+		"scene file" : "OBJ/sphere_regular.obj",
 		"width" : 1080,
 		"height" : 720,
 		"max depth" : 4,
