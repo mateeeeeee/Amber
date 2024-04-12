@@ -41,7 +41,7 @@ namespace lavender
 		std::unique_ptr<optix::Pipeline> pipeline;
 		optix::ShaderBindingTable sbt;
 		OptixTraversableHandle as_handle;
-		std::unique_ptr<optix::Buffer> as_output;
+		std::vector<std::unique_ptr<optix::Buffer>> as_outputs;
 
 		std::vector<std::unique_ptr<optix::Texture2D>> textures;
 		std::unique_ptr<optix::Buffer> texture_list_buffer;

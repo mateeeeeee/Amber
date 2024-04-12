@@ -73,6 +73,8 @@ namespace lavender
 		framebuffer(height, width), device_memory(width * height), frame_index(0), scene(std::move(_scene))
 	{
 		OnResize(width, height);
+
+		if(false)
 		{
 			OptixAccelBuildOptions accel_options{};
 			accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
@@ -106,7 +108,8 @@ namespace lavender
 				&gas_buffer_sizes
 			));
 
-			as_output = std::make_unique<Buffer>(gas_buffer_sizes.outputSizeInBytes);
+			as_outputs.resize(1);
+			as_outputs[0] = std::make_unique<Buffer>(gas_buffer_sizes.outputSizeInBytes);
 			Buffer scratch_buffer(gas_buffer_sizes.tempSizeInBytes);
 
 			OptixCheck(optixAccelBuild(
@@ -117,8 +120,8 @@ namespace lavender
 				1,                 
 				scratch_buffer.GetDevicePtr(),
 				scratch_buffer.GetSize(),
-				as_output->GetDevicePtr(),
-				as_output->GetSize(),
+				as_outputs[0]->GetDevicePtr(),
+				as_outputs[0]->GetSize(),
 				&as_handle,
 				nullptr,            
 				0                   
@@ -126,6 +129,94 @@ namespace lavender
 			CudaSyncCheck();
 
 			//#todo compact
+
+
+			std::string texture_path = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\Lavender\\Resources\\Icons\\lavender.jpg";
+			Image img(texture_path.c_str());
+
+			textures.push_back(MakeTexture2D<uchar4>(img.width, img.height));
+			textures.back()->Update(img.data.data());
+			std::vector<cudaTextureObject_t> texture_handles;
+			texture_handles.push_back(textures.back()->GetHandle());
+
+			texture_list_buffer = std::make_unique<optix::Buffer>(textures.size() * sizeof(cudaTextureObject_t));
+			texture_list_buffer->Update(texture_handles.data(), texture_handles.size() * sizeof(cudaTextureObject_t));
+		}
+		else
+		{
+			OptixAccelBuildOptions accel_options{};
+			accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
+			accel_options.operation = OPTIX_BUILD_OPERATION_BUILD;
+
+			for (Mesh const& mesh : scene->meshes)
+			{
+				std::vector<std::unique_ptr<Buffer>> vertex_buffers, index_buffers, normal_buffers, uv_buffers;
+				for (Geometry const& geom : mesh.geometries) 
+				{
+					std::unique_ptr<Buffer> vertex_buffer = std::make_unique<Buffer>(geom.vertices.size() * sizeof(Vector3));
+					vertex_buffer->Update(geom.vertices.data(), vertex_buffer->GetSize());
+					vertex_buffers.push_back(std::move(vertex_buffer));
+
+					LAV_ASSERT(!geom.indices.empty());
+
+					std::unique_ptr<Buffer> index_buffer = std::make_unique<Buffer>(geom.indices.size() * sizeof(Vector3u));
+					index_buffer->Update(geom.indices.data(), index_buffer->GetSize());
+					index_buffers.push_back(std::move(index_buffer));
+				}
+
+				std::vector<OptixBuildInput> build_inputs(mesh.geometries.size());
+				for (uint32 i = 0; i < build_inputs.size(); ++i)
+				{
+					OptixBuildInput& build_input = build_inputs[i];
+
+					uint32 build_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
+					CUdeviceptr vb_ptrs[] = { vertex_buffers[i]->GetDevicePtr() };
+
+					build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
+					build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
+					build_input.triangleArray.numVertices = vertex_buffers[i]->GetSize() / sizeof(Vector3);
+					build_input.triangleArray.vertexStrideInBytes = sizeof(Vector3);
+					build_input.triangleArray.vertexBuffers = vb_ptrs;
+
+					build_input.triangleArray.indexBuffer = index_buffers[i]->GetDevicePtr();
+					build_input.triangleArray.numIndexTriplets = index_buffers[i]->GetSize() / sizeof(Vector3u);
+					build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
+					build_input.triangleArray.indexStrideInBytes = sizeof(Vector3u);
+
+					build_input.triangleArray.flags = build_input_flags;
+					build_input.triangleArray.numSbtRecords = 1;
+				}
+
+				OptixAccelBufferSizes as_buffer_sizes{};
+				OptixCheck(optixAccelComputeMemoryUsage(
+					optix_context,
+					&accel_options,
+					build_inputs.data(),
+					build_inputs.size(),
+					&as_buffer_sizes
+				));
+
+				std::unique_ptr<Buffer> as_output = std::make_unique<Buffer>(as_buffer_sizes.outputSizeInBytes);
+				Buffer scratch_buffer(as_buffer_sizes.tempSizeInBytes);
+
+				OptixCheck(optixAccelBuild(
+					optix_context,
+					0,
+					&accel_options,
+					build_inputs.data(),
+					build_inputs.size(),
+					scratch_buffer.GetDevicePtr(),
+					scratch_buffer.GetSize(),
+					as_output->GetDevicePtr(),
+					as_output->GetSize(),
+					&as_handle,
+					nullptr,
+					0
+				));
+				CudaSyncCheck();
+
+				as_outputs.push_back(std::move(as_output));
+			}
 
 
 			std::string texture_path = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\Lavender\\Resources\\Icons\\lavender.jpg";
