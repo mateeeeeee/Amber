@@ -14,12 +14,13 @@ namespace lavender
 
 	struct Image
 	{
-		explicit Image(char const* file);
+		explicit Image(char const* file, bool srgb = false);
 
 		int32 width;
 		int32 height;
 		int32 channels;
 		std::vector<uint8> data;
+		bool srgb;
 	};
 
 }

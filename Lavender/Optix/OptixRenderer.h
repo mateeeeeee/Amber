@@ -34,6 +34,7 @@ namespace lavender
 		auto const& GetFramebuffer() const { return framebuffer; }
 
 	private:
+		std::unique_ptr<Scene>		scene;
 		CpuBuffer2D<uchar4>			framebuffer;
 		optix::TypedBuffer<uchar4>  device_memory;
 

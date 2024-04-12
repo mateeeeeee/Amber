@@ -69,8 +69,8 @@ namespace lavender
 	}
 
 
-	OptixRenderer::OptixRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene)  : OptixInitializer(), 
-		framebuffer(height, width), device_memory(width * height), frame_index(0)
+	OptixRenderer::OptixRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(), 
+		framebuffer(height, width), device_memory(width * height), frame_index(0), scene(std::move(_scene))
 	{
 		OnResize(width, height);
 		{
@@ -128,7 +128,7 @@ namespace lavender
 			//#todo compact
 
 
-			std::string texture_path = "C:\\Users\\mbuljan\\Desktop\\Projects\\Lavender\\Lavender\\Resources\\Icons\\lavender.jpg";
+			std::string texture_path = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\Lavender\\Resources\\Icons\\lavender.jpg";
 			Image img(texture_path.c_str());
 
 			textures.push_back(MakeTexture2D<uchar4>(img.width, img.height));
