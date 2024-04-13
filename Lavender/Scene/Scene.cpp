@@ -33,6 +33,8 @@ namespace lavender
 	enum class SceneFormat : uint8
 	{
 		OBJ,
+		GLTF,
+		GLB,
 		PBRT,
 		PBF,
 		Unknown
@@ -42,6 +44,8 @@ namespace lavender
 		if (scene_file.ends_with(".pbrt")) return SceneFormat::PBRT;
 		else if (scene_file.ends_with(".pbf")) return SceneFormat::PBF;
 		else if (scene_file.ends_with(".obj")) return SceneFormat::OBJ;
+		else if (scene_file.ends_with(".gltf")) return SceneFormat::GLTF;
+		else if (scene_file.ends_with(".glb")) return SceneFormat::GLB;
 		else return SceneFormat::Unknown;
 	}
 	
@@ -398,6 +402,11 @@ namespace lavender
 			}
 			return obj_scene;
 		}
+
+		std::unique_ptr<Scene> LoadGltfScene(std::string_view scene_file)
+		{
+			return nullptr;
+		}
 	}
 
 	std::unique_ptr<Scene> LoadScene(char const* _scene_file)
@@ -406,6 +415,17 @@ namespace lavender
 		SceneFormat scene_format = GetSceneFormat(scene_file);
 		switch (scene_format)
 		{
+		case SceneFormat::OBJ:
+		{
+			return LoadObjScene(scene_file);
+		}
+		break;
+		case SceneFormat::GLTF:
+		case SceneFormat::GLB:
+		{
+			return LoadGltfScene(scene_file);
+		}
+		break;
 		case SceneFormat::PBRT:
 		{
 			std::shared_ptr<pbrt::Scene> pbrt_scene = pbrt::importPBRT(_scene_file);
@@ -416,11 +436,6 @@ namespace lavender
 		{
 			std::shared_ptr<pbrt::Scene> pbrt_scene = pbrt::Scene::loadFrom(_scene_file);
 			return ConvertPBRTScene(pbrt_scene, scene_file);
-		}
-		break;
-		case SceneFormat::OBJ:
-		{
-			return LoadObjScene(scene_file);
 		}
 		break;
 		case SceneFormat::Unknown:
