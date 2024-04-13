@@ -218,17 +218,17 @@ namespace lavender
 				as_outputs.push_back(std::move(as_output));
 			}
 
-
-			std::string texture_path = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\Lavender\\Resources\\Icons\\lavender.jpg";
-			Image img(texture_path.c_str());
-
-			textures.push_back(MakeTexture2D<uchar4>(img.width, img.height));
-			textures.back()->Update(img.data.data());
 			std::vector<cudaTextureObject_t> texture_handles;
-			texture_handles.push_back(textures.back()->GetHandle());
+			texture_handles.reserve(scene->textures.size());
+			for (Image const& texture : scene->textures)
+			{
+				textures.push_back(MakeTexture2D<uchar4>(texture.width, texture.height));
+				textures.back()->Update(texture.data.data());
+				texture_handles.push_back(textures.back()->GetHandle());
+			}
 
-			texture_list_buffer = std::make_unique<optix::Buffer>(textures.size() * sizeof(cudaTextureObject_t));
-			texture_list_buffer->Update(texture_handles.data(), texture_handles.size() * sizeof(cudaTextureObject_t));
+			texture_list_buffer = std::make_unique<Buffer>(textures.size() * sizeof(cudaTextureObject_t));
+			texture_list_buffer->Update(texture_handles.data(), texture_list_buffer->GetSize());
 		}
 
 		CompileOptions comp_opts{};
