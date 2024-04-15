@@ -14,17 +14,12 @@ namespace lavender
 	struct Mesh
 	{
 		std::vector<Geometry> geometries;
-	};
-
-	struct Primitive
-	{
-		uint64 mesh_id;
-		std::vector<uint32> material_ids;
+		std::vector<uint32>   material_ids;
 	};
 
 	struct Instance
 	{
 		Matrix transform;
-		uint64 primitive_id;
+		uint64 mesh_id;
 	};
 }

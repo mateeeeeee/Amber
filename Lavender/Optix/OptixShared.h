@@ -22,6 +22,7 @@ namespace lavender
 		float3                 cam_u, cam_v, cam_w;
 		float				   cam_fovy;
 		float				   cam_aspect_ratio;
+
 #ifdef __CUDACC__
 		cudaTextureObject_t* textures;
 #else
@@ -45,5 +46,42 @@ namespace lavender
 	{
 	};
 
+	struct MaterialGPU
+	{
+		float3 base_color = make_float3(0.9f, 0.9f, 0.9f);
+		float metallic = 0.0f;
+
+		float specular = 0.0f;
+		float roughness = 1.0f;
+		float specular_tint = 0.0f;
+		float anisotropy = 0.0f;
+
+		float sheen = 0.0f;
+		float sheen_tint = 0.0f;
+		float clearcoat = 0.0f;
+		float clearcoat_gloss = 0.0f;
+
+		float ior = 1.5f;
+		float specular_transmission = 0.0f;
+	};
+
+	struct MeshGPU
+	{
+		unsigned int positions_offset;
+		unsigned int positions_count;
+		unsigned int uvs_offset;
+		unsigned int uvs_count;
+		unsigned int normals_offset;
+		unsigned int normals_count;
+		unsigned int indices_offset;
+		unsigned int indices_count;
+		unsigned int material_idx;
+	};
+
+	struct InstanceGPU
+	{
+		float		 transform[16];
+		unsigned int mesh_idx;
+	};
 }
 

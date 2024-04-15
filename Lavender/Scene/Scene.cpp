@@ -278,8 +278,6 @@ namespace lavender
 					uint64 const mesh_id = scene->meshes.size();
 					scene->meshes.emplace_back(geometries);
 
-					primitive_id = scene->primitives.size();
-					scene->primitives.emplace_back(mesh_id, material_ids);
 					pbrt_objects[instance->object->name] = mesh_id;
 				}
 				else
@@ -341,7 +339,6 @@ namespace lavender
 					for (uint64 v = 0; v < 3; v++)
 					{
 						tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-
 						tinyobj::real_t vx = attrib.vertices[3 * uint64(idx.vertex_index) + 0];
 						tinyobj::real_t vy = attrib.vertices[3 * uint64(idx.vertex_index) + 1];
 						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2];
@@ -368,9 +365,9 @@ namespace lavender
 					index_offset += 3;
 				}
 				mesh.geometries.push_back(geometry);
+				mesh.material_ids.push_back(obj_mesh.material_ids[0]);
 			}
 			obj_scene->meshes.push_back(std::move(mesh));
-			obj_scene->primitives.emplace_back(0, material_ids);
 			obj_scene->instances.emplace_back(Matrix::Identity, 0);
 
 			auto clamp = []<typename T>(T v, T min, T max) {

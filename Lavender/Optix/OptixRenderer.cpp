@@ -74,80 +74,8 @@ namespace lavender
 	{
 		OnResize(width, height);
 
-		if(false)
+		if(true)
 		{
-			OptixAccelBuildOptions accel_options{};
-			accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
-			accel_options.operation = OPTIX_BUILD_OPERATION_BUILD;
-			float3 vertices[3] =
-			{
-			  { -0.5f, -0.5f, 0.0f },
-			  {  0.5f, -0.5f, 0.0f },
-			  {  0.0f,  0.5f, 0.0f }
-			};
-
-			TypedBuffer<float3> vertex_buffer(3);
-			vertex_buffer.Update(vertices, sizeof(vertices));
-
-			uint32 triangle_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
-			CUdeviceptr vertex_buffers[]  = { vertex_buffer.GetDevicePtr() };
-			OptixBuildInput triangle_input{};
-			triangle_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-			triangle_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
-			triangle_input.triangleArray.numVertices = vertex_buffer.GetCount();
-			triangle_input.triangleArray.vertexBuffers = vertex_buffers;
-			triangle_input.triangleArray.flags = triangle_input_flags;
-			triangle_input.triangleArray.numSbtRecords = 1;
-
-			OptixAccelBufferSizes gas_buffer_sizes;
-			OptixCheck(optixAccelComputeMemoryUsage(
-				optix_context,
-				&accel_options,
-				&triangle_input,
-				1,
-				&gas_buffer_sizes
-			));
-
-			as_outputs.resize(1);
-			as_outputs[0] = std::make_unique<Buffer>(gas_buffer_sizes.outputSizeInBytes);
-			Buffer scratch_buffer(gas_buffer_sizes.tempSizeInBytes);
-
-			OptixCheck(optixAccelBuild(
-				optix_context,
-				0,                 
-				&accel_options,
-				&triangle_input,
-				1,                 
-				scratch_buffer.GetDevicePtr(),
-				scratch_buffer.GetSize(),
-				as_outputs[0]->GetDevicePtr(),
-				as_outputs[0]->GetSize(),
-				&as_handle,
-				nullptr,            
-				0                   
-			));
-			CudaSyncCheck();
-
-			//#todo compact
-
-
-			std::string texture_path = "C:\\Users\\Mate\\Desktop\\Projekti\\Lavender\\Lavender\\Resources\\Icons\\lavender.jpg";
-			Image img(texture_path.c_str());
-
-			textures.push_back(MakeTexture2D<uchar4>(img.width, img.height));
-			textures.back()->Update(img.data.data());
-			std::vector<cudaTextureObject_t> texture_handles;
-			texture_handles.push_back(textures.back()->GetHandle());
-
-			texture_list_buffer = std::make_unique<optix::Buffer>(textures.size() * sizeof(cudaTextureObject_t));
-			texture_list_buffer->Update(texture_handles.data(), texture_handles.size() * sizeof(cudaTextureObject_t));
-		}
-		else
-		{
-			OptixAccelBuildOptions accel_options{};
-			accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
-			accel_options.operation = OPTIX_BUILD_OPERATION_BUILD;
-
 			for (Mesh const& mesh : scene->meshes)
 			{
 				std::vector<std::unique_ptr<Buffer>> vertex_buffers, index_buffers, normal_buffers, uv_buffers;
@@ -187,6 +115,10 @@ namespace lavender
 					build_input.triangleArray.numSbtRecords = 1;
 				}
 
+				OptixAccelBuildOptions accel_options{};
+				accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
+				accel_options.operation = OPTIX_BUILD_OPERATION_BUILD;
+
 				OptixAccelBufferSizes as_buffer_sizes{};
 				OptixCheck(optixAccelComputeMemoryUsage(
 					optix_context,
@@ -199,6 +131,7 @@ namespace lavender
 				std::unique_ptr<Buffer> as_output = std::make_unique<Buffer>(as_buffer_sizes.outputSizeInBytes);
 				Buffer scratch_buffer(as_buffer_sizes.tempSizeInBytes);
 
+				blas_handles.resize(1);
 				OptixCheck(optixAccelBuild(
 					optix_context,
 					0,
@@ -209,7 +142,7 @@ namespace lavender
 					scratch_buffer.GetSize(),
 					as_output->GetDevicePtr(),
 					as_output->GetSize(),
-					&as_handle,
+					&blas_handles[0],
 					nullptr,
 					0
 				));
@@ -229,6 +162,175 @@ namespace lavender
 
 			texture_list_buffer = std::make_unique<Buffer>(textures.size() * sizeof(cudaTextureObject_t));
 			texture_list_buffer->Update(texture_handles.data(), texture_list_buffer->GetSize());
+		}
+		else
+		{
+			std::vector<MeshGPU> gpu_meshes;
+			std::vector<Vector3> vertices;
+			std::vector<Vector3> normals;
+			std::vector<Vector2> uvs;
+			std::vector<Vector3u> indices;
+
+			std::vector<std::vector<OptixBuildInput>> build_inputs;
+			for (Mesh const& mesh : scene->meshes)
+			{
+				std::vector<OptixBuildInput>& mesh_build_inputs = build_inputs.emplace_back();
+				for (uint32 i = 0; i < mesh.geometries.size(); ++i)
+				{
+					Geometry const& geom = mesh.geometries[i];
+					MeshGPU& gpu_mesh = gpu_meshes.emplace_back();
+
+					gpu_mesh.positions_offset = vertices.size();
+					gpu_mesh.positions_count  = geom.vertices.size();
+					for (Vector3 const& vertex : geom.vertices)
+					{
+						vertices.push_back(vertex);
+					}
+					gpu_mesh.normals_offset = normals.size();
+					gpu_mesh.normals_count  = geom.normals.size();
+					for (Vector3 const& normal : geom.normals)
+					{
+						normals.push_back(normal);
+					}
+					gpu_mesh.uvs_offset = uvs.size();
+					gpu_mesh.uvs_count  = geom.uvs.size();
+					for (Vector2 const& uv : geom.uvs)
+					{
+						uvs.push_back(uv);
+					}
+					gpu_mesh.indices_offset = indices.size();
+					gpu_mesh.indices_count  = geom.indices.size();
+					for (Vector3u const& index : geom.indices)
+					{
+						indices.push_back(index);
+					}
+					gpu_mesh.material_idx = mesh.material_ids[i];
+				}
+			}
+
+			auto CreateBuffer = []<typename T>(std::vector<T> const& buf)
+			{
+				std::unique_ptr<Buffer> buffer = std::make_unique<Buffer>(buf.size() * sizeof(T));
+				buffer->Update(buf.data(), buffer->GetSize());
+				return buffer;
+			};
+
+			mesh_list_buffer	= CreateBuffer(gpu_meshes); 
+			vertices_buffer		= CreateBuffer(vertices);
+			normals_buffer		= CreateBuffer(normals);
+			uvs_buffer			= CreateBuffer(uvs);
+			indices_buffer		= CreateBuffer(indices);
+			blas_handles.resize(gpu_meshes.size());
+
+			//std::vector<OptixBuildInput> build_inputs;
+			for (MeshGPU const& gpu_mesh : gpu_meshes)
+			{
+				//OptixBuildInput& build_input = build_inputs.emplace_back();
+				//uint32 build_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
+				//CUdeviceptr vertex_buffers[] = { vertices_buffer->GetDevicePtr() + gpu_mesh.positions_offset };
+				//
+				//build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
+				//build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
+				//build_input.triangleArray.numVertices = gpu_mesh.positions_count;
+				//build_input.triangleArray.vertexStrideInBytes = sizeof(Vector3);
+				//build_input.triangleArray.vertexBuffers = vertex_buffers;
+				//
+				//build_input.triangleArray.indexBuffer = indices_buffer->GetDevicePtr() + gpu_mesh.indices_offset;
+				//build_input.triangleArray.numIndexTriplets = gpu_mesh.indices_count;
+				//build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
+				//build_input.triangleArray.indexStrideInBytes = sizeof(Vector3u);
+				//
+				//build_input.triangleArray.flags = build_input_flags;
+				//build_input.triangleArray.numSbtRecords = 1;
+				//
+				//OptixAccelBuildOptions accel_options{};
+				//accel_options.buildFlags = OPTIX_BUILD_FLAG_NONE;
+				//accel_options.operation = OPTIX_BUILD_OPERATION_BUILD;
+
+				//OptixAccelBufferSizes as_buffer_sizes{};
+				//OptixCheck(optixAccelComputeMemoryUsage(
+				//	optix_context,
+				//	&accel_options,
+				//	build_inputs.data(),
+				//	build_inputs.size(),
+				//	&as_buffer_sizes
+				//));
+
+				//std::unique_ptr<Buffer> as_output = std::make_unique<Buffer>(as_buffer_sizes.outputSizeInBytes);
+				//Buffer scratch_buffer(as_buffer_sizes.tempSizeInBytes);
+
+				//OptixTraversableHandle& blas = blas_handles.emplace_back();
+				//OptixCheck(optixAccelBuild(
+				//	optix_context,
+				//	0,
+				//	&accel_options,
+				//	build_inputs.data(),
+				//	build_inputs.size(),
+				//	scratch_buffer.GetDevicePtr(),
+				//	scratch_buffer.GetSize(),
+				//	as_output->GetDevicePtr(),
+				//	as_output->GetSize(),
+				//	&blas,
+				//	nullptr,
+				//	0
+				//));
+				//CudaSyncCheck();
+				//as_outputs.push_back(std::move(as_output));
+			}
+
+			std::vector<OptixInstance> instances;
+			instances.reserve(scene->instances.size());
+			for (size_t i = 0; i < scene->instances.size(); ++i) 
+			{
+				Instance const& inst = scene->instances[i];
+				OptixInstance instance{};
+				instance.instanceId = i;
+				instance.sbtOffset = 0; //#todo 
+				instance.flags = OPTIX_INSTANCE_FLAG_DISABLE_ANYHIT;
+				instance.traversableHandle = blas_handles[inst.mesh_id];
+				instance.visibilityMask = 0xff;
+
+				memset(instance.transform, 0, sizeof(instance.transform));
+				auto const& m = inst.transform.Transpose();
+				memcpy(instance.transform, &m, sizeof(instance.transform));
+				instances.push_back(instance);
+			}
+
+
+			std::vector<cudaTextureObject_t> texture_handles;
+			texture_handles.reserve(scene->textures.size());
+			for (Image const& texture : scene->textures)
+			{
+				textures.push_back(MakeTexture2D<uchar4>(texture.width, texture.height));
+				textures.back()->Update(texture.data.data());
+				texture_handles.push_back(textures.back()->GetHandle());
+			}
+
+			texture_list_buffer = std::make_unique<Buffer>(textures.size() * sizeof(cudaTextureObject_t));
+			texture_list_buffer->Update(texture_handles.data(), texture_list_buffer->GetSize());
+
+			std::vector<MaterialGPU> materials;
+			materials.reserve(scene->materials.size());
+			for (Material const& m : scene->materials) 
+			{
+				MaterialGPU optix_material{};
+				optix_material.base_color = make_float3(m.base_color.x, m.base_color.y, m.base_color.z);
+				optix_material.metallic = m.metallic;
+				optix_material.specular = m.specular;
+				optix_material.roughness = m.roughness;
+				optix_material.specular_tint = m.specular_tint;
+				optix_material.anisotropy = m.anisotropy;
+				optix_material.sheen = m.sheen;
+				optix_material.sheen_tint = m.sheen_tint;
+				optix_material.clearcoat = m.clearcoat;
+				optix_material.clearcoat_gloss = m.clearcoat_gloss;
+				optix_material.ior = m.ior;
+				optix_material.specular_transmission = m.specular_transmission;
+
+				materials.push_back(optix_material);
+			}
+			material_list_buffer = std::make_unique<Buffer>(materials.size() * sizeof(MaterialGPU));
+			material_list_buffer->Update(materials.data(), material_list_buffer->GetSize());
 		}
 
 		CompileOptions comp_opts{};
@@ -265,7 +367,7 @@ namespace lavender
 
 		Params params{};
 		params.image = device_memory.As<uchar4>();
-		params.handle = as_handle;
+		params.handle = blas_handles[0];
 		params.sample_count = sample_count;
 		params.frame_index = frame_index;
 		params.textures = texture_list_buffer->GetDevicePtr();
