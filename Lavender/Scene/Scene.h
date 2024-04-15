@@ -11,7 +11,6 @@ namespace lavender
 	struct Scene
 	{
 		std::vector<Mesh> meshes;
-		std::vector<Primitive> primitives;
 		std::vector<Instance> instances;
 		std::vector<Material> materials;
 		std::vector<Image> textures;
