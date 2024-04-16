@@ -147,7 +147,7 @@ namespace lavender
 			{
 				OptixBuildInput& build_input = build_inputs.emplace_back();
 				uint32 build_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
-				CUdeviceptr vertex_buffers[] = { vertices_buffer->GetDevicePtr() + blas_info.vertex_offset };
+				CUdeviceptr vertex_buffers[] = { vertices_buffer->GetDevicePtr() + blas_info.vertex_offset * sizeof(Vector3) }; 
 				
 				build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
 				build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
@@ -155,7 +155,7 @@ namespace lavender
 				build_input.triangleArray.vertexStrideInBytes = sizeof(Vector3);
 				build_input.triangleArray.vertexBuffers = vertex_buffers;
 				
-				build_input.triangleArray.indexBuffer = indices_buffer->GetDevicePtr() + blas_info.index_offset;
+				build_input.triangleArray.indexBuffer = indices_buffer->GetDevicePtr() + blas_info.index_offset * sizeof(Vector3u); 
 				build_input.triangleArray.numIndexTriplets = blas_info.index_count;
 				build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
 				build_input.triangleArray.indexStrideInBytes = sizeof(Vector3u);
@@ -274,7 +274,7 @@ namespace lavender
 				optix_material.clearcoat_gloss = m.clearcoat_gloss;
 				optix_material.ior = m.ior;
 				optix_material.specular_transmission = m.specular_transmission;
-
+				optix_material.diffuse_tex_id = m.diffuse_tex_id;
 				materials.push_back(optix_material);
 			}
 			material_list_buffer = std::make_unique<Buffer>(materials.size() * sizeof(MaterialGPU));
@@ -318,6 +318,12 @@ namespace lavender
 		params.handle = blas_handles[0];
 		params.sample_count = sample_count;
 		params.frame_index = frame_index;
+		params.vertices = vertices_buffer->GetDevicePtr();
+		params.indices = indices_buffer->GetDevicePtr();
+		params.normals = normals_buffer->GetDevicePtr();
+		params.uvs = uvs_buffer->GetDevicePtr();
+		params.materials = material_list_buffer->GetDevicePtr();
+		params.meshes = mesh_list_buffer->GetDevicePtr();
 		params.textures = texture_list_buffer->GetDevicePtr();
 
 		Vector3 u, v, w;
