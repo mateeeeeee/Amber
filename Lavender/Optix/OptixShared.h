@@ -11,37 +11,13 @@
 
 namespace lavender
 {
-	struct Params
-	{
-		OptixTraversableHandle handle;
-		uchar4*				   image;
-		unsigned int		   sample_count;
-		unsigned int		   frame_index;
-
-		float3                 cam_eye;
-		float3                 cam_u, cam_v, cam_w;
-		float				   cam_fovy;
-		float				   cam_aspect_ratio;
-
-#ifdef __CUDACC__
-		cudaTextureObject_t* textures;
-#else
-		CUdeviceptr			 textures;
-#endif
-	};
-
-
 	struct RayGenData
 	{
 	};
-
-
 	struct MissData
 	{
 		float3 bg_color;
 	};
-
-
 	struct HitGroupData
 	{
 	};
@@ -63,6 +39,8 @@ namespace lavender
 
 		float ior = 1.5f;
 		float specular_transmission = 0.0f;
+
+		int diffuse_tex_id;
 	};
 
 	struct MeshGPU
@@ -78,10 +56,35 @@ namespace lavender
 		unsigned int material_idx;
 	};
 
-	struct InstanceGPU
+	struct Params
 	{
-		float		 transform[16];
-		unsigned int mesh_idx;
+		OptixTraversableHandle	handle;
+		uchar4*					image;
+		unsigned int			sample_count;
+		unsigned int			frame_index;
+
+		float3					cam_eye;
+		float3					cam_u, cam_v, cam_w;
+		float					cam_fovy;
+		float					cam_aspect_ratio;
+#ifdef __CUDACC__
+		float3* vertices;
+		float3* normals;
+		float2* uvs;
+		uint3* indices;
+		cudaTextureObject_t* textures;
+		MaterialGPU* materials;
+		MeshGPU* meshes;
+#else
+		CUdeviceptr				vertices;
+		CUdeviceptr				normals;
+		CUdeviceptr				uvs;
+		CUdeviceptr				indices;
+		CUdeviceptr				textures;
+		CUdeviceptr				materials;
+		CUdeviceptr				meshes;
+#endif
 	};
+
 }
 
