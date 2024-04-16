@@ -8,28 +8,6 @@
 
 namespace lavender
 {
-	inline constexpr uint32 TEXTURED_PARAM_MASK = 0x80000000;
-	inline constexpr bool   IS_TEXTURED_PARAM(uint32 x)
-	{
-		return (x) & 0x80000000;
-	}
-	inline constexpr uint32 GET_TEXTURE_CHANNEL(uint32 x)
-	{
-		return ((x) >> 29) & 0x3;
-	}
-	inline constexpr void   SET_TEXTURE_CHANNEL(uint32& x, uint32 c)
-	{
-		x |= (c & 0x3) << 29;
-	}
-	inline constexpr uint32 GET_TEXTURE_ID(uint32 x)
-	{
-		return (x) & 0x1fffffff;
-	}
-	inline constexpr void   SET_TEXTURE_ID(uint32& x, uint32 i)
-	{
-		x |= i & 0x1fffffff;
-	}
-
 	enum class SceneFormat : uint8
 	{
 		OBJ,
@@ -51,7 +29,7 @@ namespace lavender
 	
 	namespace 
 	{
-		uint32 LoadPBRTTexture(
+		int32 LoadPBRTTexture(
 			Scene& scene,
 			pbrt::Texture::SP const& texture,
 			std::string_view pbrt_base_dir,
@@ -120,19 +98,14 @@ namespace lavender
 				loaded_mat.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
 				if (m->map_kd) 
 				{
-					if (auto const_tex = std::dynamic_pointer_cast<pbrt::ConstantTexture>(m->map_kd)) 
+					if (auto const_tex = m->map_kd->as<pbrt::ConstantTexture>())
 					{
 						loaded_mat.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
 					}
 					else 
 					{
-						uint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
-						if (tex_id != uint32(-1)) 
-						{
-							uint32 tex_mask = TEXTURED_PARAM_MASK;
-							SET_TEXTURE_ID(tex_mask, tex_id);
-							loaded_mat.base_color.x = *reinterpret_cast<float*>(&tex_mask);
-						}
+						int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						loaded_mat.diffuse_tex_id = tex_id;
 					}
 				}
 				Vector3 ks(m->ks.x, m->ks.y, m->ks.z);
@@ -144,39 +117,30 @@ namespace lavender
 				loaded_mat.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
 				if (m->map_kd) 
 				{
-					if (auto const_tex = std::dynamic_pointer_cast<pbrt::ConstantTexture>(m->map_kd)) 
+					if (auto const_tex = m->map_kd->as<pbrt::ConstantTexture>())
 					{
 						loaded_mat.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
 					}
 					else 
 					{
-						uint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
-						if (tex_id != uint32(-1)) 
-						{
-							uint32 tex_mask = TEXTURED_PARAM_MASK;
-							SET_TEXTURE_ID(tex_mask, tex_id);
-							loaded_mat.base_color.x = *reinterpret_cast<float*>(&tex_mask);
-						}
+						int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						loaded_mat.diffuse_tex_id = tex_id;
 					}
 				}
 			}
 			else if (auto m = mat->as<pbrt::SubstrateMaterial>())
 			{
 				loaded_mat.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
-				if (m->map_kd) {
-					if (auto const_tex = std::dynamic_pointer_cast<pbrt::ConstantTexture>(m->map_kd)) 
+				if (m->map_kd) 
+				{
+					if (auto const_tex = m->map_kd->as<pbrt::ConstantTexture>())
 					{
 						loaded_mat.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
 					}
 					else 
 					{
-						uint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
-						if (tex_id != uint32(-1))
-						{
-							uint32 tex_mask = TEXTURED_PARAM_MASK;
-							SET_TEXTURE_ID(tex_mask, tex_id);
-							loaded_mat.base_color.x = *reinterpret_cast<float*>(&tex_mask);
-						}
+						int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						loaded_mat.diffuse_tex_id = tex_id;
 					}
 				}
 				Vector3 ks(m->ks.x, m->ks.y, m->ks.z);
@@ -370,7 +334,8 @@ namespace lavender
 			obj_scene->meshes.push_back(std::move(mesh));
 			obj_scene->instances.emplace_back(Matrix::Identity, 0);
 
-			auto clamp = []<typename T>(T v, T min, T max) {
+			auto clamp = []<typename T>(T v, T min, T max)
+			{
 				return v < min ? min : (v > max ? max : v);
 			};
 
@@ -391,9 +356,7 @@ namespace lavender
 						obj_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
 					const int32 id = texture_ids[m.diffuse_texname];
-					uint32 tex_mask = TEXTURED_PARAM_MASK;
-					SET_TEXTURE_ID(tex_mask, id);
-					material.base_color.x = *reinterpret_cast<float*>(&tex_mask);
+					material.diffuse_tex_id = id;
 				}
 				obj_scene->materials.push_back(material);
 			}

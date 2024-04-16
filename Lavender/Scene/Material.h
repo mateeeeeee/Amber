@@ -20,5 +20,7 @@ namespace lavender
 
 		float ior = 1.5f;
 		float specular_transmission = 0.0f;
+
+		int32 diffuse_tex_id = -1;
 	};
 }
