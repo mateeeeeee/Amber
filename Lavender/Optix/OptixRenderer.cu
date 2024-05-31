@@ -57,7 +57,7 @@ __forceinline__ __device__ T const& GetShaderParams()
 }
 
 
-__forceinline__ __device__ 
+__device__ 
 void TraceRadiance(OptixTraversableHandle scene,
 	float3                 rayOrigin,
 	float3                 rayDirection,
@@ -125,10 +125,55 @@ extern "C" __global__ void __miss__ms()
 }
 
 
+struct VertexData
+{
+	float3 pos;
+	float3 nor;
+	float2 uv;
+};
+
+template<typename T>
+__forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
+{
+	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
+}
+
+__device__ VertexData LoadVertexData(MeshGPU mesh, unsigned int primitive_idx, float2 barycentrics)
+{
+	uint3* mesh_indices = params.indices + mesh.indices_offset;
+	uint3 primitive_indices = mesh_indices[primitive_idx];
+	unsigned int i0 = primitive_indices.x;
+	unsigned int i1 = primitive_indices.y;
+	unsigned int i2 = primitive_indices.z;
+
+	float3* mesh_vertices = params.vertices + mesh.positions_offset;
+	float3 pos0 = mesh_vertices[i0];
+	float3 pos1 = mesh_vertices[i1];
+	float3 pos2 = mesh_vertices[i2];
+	float3 pos = Interpolate(pos0, pos1, pos2, barycentrics);
+
+	float3* mesh_normals = params.normals + mesh.normals_offset;
+	float3 nor0 = mesh_normals[i0];
+	float3 nor1 = mesh_normals[i1];
+	float3 nor2 = mesh_normals[i2];
+	float3 nor = Interpolate(nor0, nor1, nor2, barycentrics);
+
+	float2* mesh_uvs = params.uvs + mesh.uvs_offset;
+	float2 uv0 = mesh_uvs[i0];
+	float2 uv1 = mesh_uvs[i1];
+	float2 uv2 = mesh_uvs[i2];
+	float2 uv = Interpolate(uv0, uv1, uv2, barycentrics);
+	return VertexData{ pos, nor, uv };
+}
+
+
 extern "C" __global__ void __closesthit__ch()
 {
-	const float2 barycentrics = optixGetTriangleBarycentrics();
-	//float4 sampled = tex2D<float4>(params.textures[0], barycentrics.x, barycentrics.y);
-	SetPayload(make_float3(barycentrics, 1.0f));
+	unsigned int instance_idx  = optixGetInstanceIndex();
+	MeshGPU mesh	 = params.meshes[instance_idx];
+	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
+	MaterialGPU material = params.materials[mesh.material_idx];
+	float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
+	SetPayload(make_float3(sampled));
 }
 

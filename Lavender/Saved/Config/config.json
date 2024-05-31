@@ -1,7 +1,7 @@
 {
   "scene": 
    {
-		"scene file" : "OBJ/sphere_regular.obj",
+		"scene file" : "OBJ/capsule.obj",
 		"width" : 1080,
 		"height" : 720,
 		"max depth" : 4,
