@@ -73,7 +73,6 @@ namespace lavender
 		framebuffer(height, width), device_memory(width * height), frame_index(0), scene(std::move(_scene))
 	{
 		OnResize(width, height);
-
 		{
 			std::vector<MeshGPU> gpu_meshes;
 			std::vector<Vector3> vertices;
@@ -81,19 +80,8 @@ namespace lavender
 			std::vector<Vector2> uvs;
 			std::vector<Vector3u> indices;
 
-			struct BlasInfo
-			{
-				uint32 vertex_offset;
-				uint32 vertex_count;
-				uint32 index_offset;
-				uint32 index_count;
-			};
-			std::vector<BlasInfo> blas_infos;
 			for (Mesh const& mesh : scene->meshes)
 			{
-				BlasInfo& blas_info = blas_infos.emplace_back();
-				blas_info.vertex_offset = vertices.size();
-				blas_info.index_offset = indices.size();
 				for (uint32 i = 0; i < mesh.geometries.size(); ++i)
 				{
 					Geometry const& geom = mesh.geometries[i];
@@ -125,8 +113,6 @@ namespace lavender
 					}
 					gpu_mesh.material_idx = mesh.material_ids[i];
 				}
-				blas_info.vertex_count = vertices.size() - blas_info.vertex_offset;
-				blas_info.index_count = indices.size() - blas_info.index_offset;
 			}
 
 			auto CreateBuffer = []<typename T>(std::vector<T> const& buf)
@@ -143,20 +129,20 @@ namespace lavender
 			blas_handles.reserve(gpu_meshes.size());
 
 			std::vector<OptixBuildInput> build_inputs;
-			for (BlasInfo const& blas_info : blas_infos)
+			for (MeshGPU const& gpu_mesh : gpu_meshes)
 			{
 				OptixBuildInput& build_input = build_inputs.emplace_back();
 				uint32 build_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
-				CUdeviceptr vertex_buffers[] = { vertices_buffer->GetDevicePtr() + blas_info.vertex_offset * sizeof(Vector3) }; 
+				CUdeviceptr vertex_buffers[] = { vertices_buffer->GetDevicePtr() + gpu_mesh.positions_offset * sizeof(Vector3) }; 
 				
 				build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
 				build_input.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
-				build_input.triangleArray.numVertices = blas_info.vertex_count;
+				build_input.triangleArray.numVertices = gpu_mesh.positions_count;
 				build_input.triangleArray.vertexStrideInBytes = sizeof(Vector3);
 				build_input.triangleArray.vertexBuffers = vertex_buffers;
 				
-				build_input.triangleArray.indexBuffer = indices_buffer->GetDevicePtr() + blas_info.index_offset * sizeof(Vector3u); 
-				build_input.triangleArray.numIndexTriplets = blas_info.index_count;
+				build_input.triangleArray.indexBuffer = indices_buffer->GetDevicePtr() + gpu_mesh.indices_offset * sizeof(Vector3u); 
+				build_input.triangleArray.numIndexTriplets = gpu_mesh.indices_count;
 				build_input.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
 				build_input.triangleArray.indexStrideInBytes = sizeof(Vector3u);
 				
@@ -198,9 +184,10 @@ namespace lavender
 				as_outputs.push_back(std::move(as_output));
 			}
 
+			//#todo scene->instances should match with number of blases, i.e. number of geometries (not meshes!)
 			std::vector<OptixInstance> instances;
 			instances.reserve(scene->instances.size());
-			for (size_t i = 0; i < scene->instances.size(); ++i) 
+			for (uint64 i = 0; i < scene->instances.size(); ++i) 
 			{
 				Instance const& inst = scene->instances[i];
 				OptixInstance instance{};
