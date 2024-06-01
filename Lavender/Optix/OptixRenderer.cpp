@@ -184,7 +184,6 @@ namespace lavender
 				as_outputs.push_back(std::move(as_output));
 			}
 
-			//#todo scene->instances should match with number of blases, i.e. number of geometries (not meshes!)
 			std::vector<OptixInstance> instances;
 			instances.reserve(scene->instances.size());
 			for (uint64 i = 0; i < scene->instances.size(); ++i) 
@@ -193,7 +192,7 @@ namespace lavender
 				OptixInstance instance{};
 				instance.instanceId = i;
 				instance.sbtOffset = 0; 
-				instance.flags = OPTIX_INSTANCE_FLAG_DISABLE_ANYHIT;
+				instance.flags = OPTIX_INSTANCE_FLAG_NONE;
 				instance.traversableHandle = blas_handles[inst.mesh_id];
 				instance.visibilityMask = 0xff;
 
@@ -216,7 +215,7 @@ namespace lavender
 			OptixAccelBufferSizes buf_sizes{};
 			OptixCheck(optixAccelComputeMemoryUsage(optix_context, &accel_build_options, &geom_desc, 1, &buf_sizes));
 
-			std::unique_ptr<Buffer> as_output = std::make_unique<Buffer>(buf_sizes.outputSizeInBytes);
+			Buffer as_output(buf_sizes.outputSizeInBytes);
 			Buffer scratch(buf_sizes.tempSizeInBytes);
 
 			OptixCheck(optixAccelBuild(optix_context,
@@ -226,8 +225,8 @@ namespace lavender
 				1,
 				scratch.GetDevicePtr(),
 				scratch.GetSize(),
-				as_output->GetDevicePtr(),
-				as_output->GetSize(),
+				as_output.GetDevicePtr(),
+				as_output.GetSize(),
 				&tlas_handle,
 				nullptr,
 				0));
@@ -279,9 +278,8 @@ namespace lavender
 
 		ShaderBindingTableBuilder sbt_builder{};
 		sbt_builder.AddHitGroup<HitGroupData>("ch", ch_handle)
-			.AddMiss<MissData>("ms", miss_handle)
-			.SetRaygen<RayGenData>("rg", rg_handle);
-
+				   .AddMiss<MissData>("ms", miss_handle)
+				   .SetRaygen<RayGenData>("rg", rg_handle);
 		sbt = sbt_builder.Build();
 		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(0.0f, 0.0f, 1.0f);
 		sbt.Commit();
@@ -302,7 +300,7 @@ namespace lavender
 
 		Params params{};
 		params.image = device_memory.As<uchar4>();
-		params.handle = blas_handles[0];
+		params.handle = tlas_handle;
 		params.sample_count = sample_count;
 		params.frame_index = frame_index;
 		params.vertices = vertices_buffer->GetDevicePtr();
