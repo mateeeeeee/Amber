@@ -76,7 +76,7 @@ void TraceRadiance(OptixTraversableHandle scene,
 		OptixVisibilityMask(255),
 		OPTIX_RAY_FLAG_NONE,
 		0,
-		1,
+		0,
 		0,
 		p0, p1, p2);
 	payload.color = make_float3(__uint_as_float(p0), __uint_as_float(p1), __uint_as_float(p2));
@@ -131,13 +131,11 @@ struct VertexData
 	float3 nor;
 	float2 uv;
 };
-
 template<typename T>
 __forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
 {
 	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
 }
-
 __device__ VertexData LoadVertexData(MeshGPU mesh, unsigned int primitive_idx, float2 barycentrics)
 {
 	uint3* mesh_indices = params.indices + mesh.indices_offset;
@@ -166,14 +164,25 @@ __device__ VertexData LoadVertexData(MeshGPU mesh, unsigned int primitive_idx, f
 	return VertexData{ pos, nor, uv };
 }
 
-
 extern "C" __global__ void __closesthit__ch()
 {
-	unsigned int instance_idx  = optixGetInstanceIndex();
-	MeshGPU mesh	 = params.meshes[instance_idx];
-	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
-	MaterialGPU material = params.materials[mesh.material_idx];
-	float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-	SetPayload(make_float3(sampled));
+	unsigned int instance_idx = optixGetInstanceIndex();
+	//MeshGPU mesh	 = params.meshes[instance_idx];
+	//VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
+	//MaterialGPU material = params.materials[mesh.material_idx];
+	//float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
+	//SetPayload(make_float3(sampled));
+	if (instance_idx == 0)
+	{
+		SetPayload(make_float3(0,0,0));
+	}
+	else if (instance_idx == 1)
+	{
+		SetPayload(make_float3(1, 1, 1));
+	}
+	else
+	{
+		SetPayload(make_float3(1,0,0));
+	}
 }
 

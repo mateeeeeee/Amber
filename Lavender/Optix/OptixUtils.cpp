@@ -31,7 +31,7 @@ namespace lavender::optix
 			module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
 #endif
 			pipeline_compile_options.usesMotionBlur = false;
-			pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
+			pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_ANY;
 			pipeline_compile_options.numPayloadValues = options.payload_values;
 			pipeline_compile_options.numAttributeValues = options.attribute_values;
 			pipeline_compile_options.exceptionFlags = OPTIX_EXCEPTION_FLAG_NONE;
@@ -94,7 +94,7 @@ namespace lavender::optix
 			&direct_callable_stack_size_from_state, &continuation_stack_size));
 		OptixCheck(optixPipelineSetStackSize(pipeline, direct_callable_stack_size_from_traversal,
 			direct_callable_stack_size_from_state, continuation_stack_size,
-			1  
+			2  
 		));
 	}
 

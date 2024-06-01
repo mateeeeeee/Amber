@@ -295,7 +295,7 @@ namespace lavender
 				tinyobj::mesh_t const& obj_mesh = shapes[s].mesh;
 				if(obj_mesh.material_ids[0] >= 0) material_ids.push_back(obj_mesh.material_ids[0]);
 				
-				Geometry geometry;
+				Geometry geometry{};
 				uint32 index_offset = 0;
 				for (uint64 f = 0; f < obj_mesh.num_face_vertices.size(); ++f) 
 				{
@@ -303,9 +303,9 @@ namespace lavender
 					for (uint64 v = 0; v < 3; v++)
 					{
 						tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-						tinyobj::real_t vx = attrib.vertices[3 * uint64(idx.vertex_index) + 0];
-						tinyobj::real_t vy = attrib.vertices[3 * uint64(idx.vertex_index) + 1];
-						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2];
+						tinyobj::real_t vx = attrib.vertices[3 * uint64(idx.vertex_index) + 0] * 0.01f;
+						tinyobj::real_t vy = attrib.vertices[3 * uint64(idx.vertex_index) + 1] * 0.01f;
+						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2] * 0.01f;
 
 						geometry.vertices.emplace_back(vx, vy, vz);
 
@@ -328,18 +328,18 @@ namespace lavender
 					geometry.indices.emplace_back(index_offset, index_offset + 1, index_offset + 2);
 					index_offset += 3;
 				}
+				obj_scene->instances.emplace_back(Matrix::Identity, mesh.geometries.size());
 				mesh.geometries.push_back(geometry);
 				mesh.material_ids.push_back(obj_mesh.material_ids[0]);
 			}
 			obj_scene->meshes.push_back(std::move(mesh));
-			obj_scene->instances.emplace_back(Matrix::Identity, 0);
-
+			
 			auto clamp = []<typename T>(T v, T min, T max)
 			{
 				return v < min ? min : (v > max ? max : v);
 			};
 
-			std::unordered_map<std::string, int32_t> texture_ids;
+			std::unordered_map<std::string, int32> texture_ids;
 			for (auto const& m : materials)
 			{
 				Material material{};
