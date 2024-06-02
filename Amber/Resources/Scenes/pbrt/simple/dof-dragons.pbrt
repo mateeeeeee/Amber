@@ -1,0 +1,92 @@
+Film "image" 
+	"integer xresolution" [1000] "integer yresolution" [424] 
+"string filename" "dof-dragons.exr"
+
+Sampler "sobol" "integer pixelsamples" [1024]
+
+#LookAt 2.3 .1 -.7    .4 0 -.9  0 1 0
+Rotate -3 1 0 0
+Rotate 52 0 1 0
+Translate -2.3 -.05 .5
+Camera "perspective" "float fov" [30]
+	"float focaldistance" [.75] 
+	"float lensradius" [.01] 
+	#"float lensradius" [.0075] 
+	#"float lensradius" [.002] 
+
+WorldBegin
+
+AttributeBegin
+AreaLightSource "diffuse" "color L" [4 4 4] "integer nsamples" [128]
+Translate 0 10 0
+Rotate 90 1 0 0
+#Shape "disk" "float radius" [8]
+AttributeEnd
+
+AttributeBegin
+  Rotate 270 0 1 0
+  Rotate -90 1 0 0
+#  LightSource "infinite" "string mapname" "textures/uffizi_latlong.exr"
+  LightSource "infinite" "rgb L" [ .9 .8 1 ]
+AttributeEnd
+
+
+Texture "grid" "color" "imagemap" "string filename" ["textures/lines.png"]
+Texture "sgrid" "color" "scale" "texture tex1" "grid" "color tex2" [ .5 .5 .5 ]
+Material "matte" "texture Kd" "sgrid"
+Shape "trianglemesh" "point P" [ -4 0 -4 4 0 -4 4 0 4 -4 0 4 ]
+      "float uv" [ 0 0 5 0 5 5 0 5 ]
+	"integer indices" [ 0 1 2 2 3 0]
+
+ObjectBegin "dragon-b"
+Material "fourier"  "string bsdffile" "bsdfs/roughglass_alpha_0.2.bsdf"
+Translate 0 -.05272 0
+Translate -.01 0 0
+Rotate -10 0 1 0
+Translate .01 0 0
+Shape "plymesh" "string filename" "geometry/dragon.ply"
+ObjectEnd
+
+ObjectBegin "dragon-a"
+Material "fourier"  "string bsdffile" "bsdfs/roughgold_alpha_0.2.bsdf"
+Translate 0 -.05272 0
+Translate -.01 0 0
+Rotate -17 0 1 0
+Translate .01 0 0
+Shape "plymesh" "string filename" "geometry/dragon.ply"
+ObjectEnd
+
+Translate -.6 0 0 
+ObjectInstance "dragon-b"
+
+Translate .26 0 0 
+ObjectInstance "dragon-a"
+
+Translate .26 0 0 
+ObjectInstance "dragon-b"
+
+Translate .26 0 0 
+ObjectInstance "dragon-a"
+
+Translate .26 0 0 
+ObjectInstance "dragon-b"
+
+Translate .26 0 0 
+ObjectInstance "dragon-a"
+
+Translate .26 0 0 
+ObjectInstance "dragon-b"
+
+Translate .26 0 0 
+ObjectInstance "dragon-a"
+
+Translate .26 0 0 
+ObjectInstance "dragon-b"
+
+Translate .26 0 0 
+ObjectInstance "dragon-a"
+
+Translate .26 0 0 
+ObjectInstance "dragon-b"
+
+WorldEnd

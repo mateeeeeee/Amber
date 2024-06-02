@@ -12,7 +12,7 @@ if(NOT DEFINED CMAKE_CUDA_STANDARD)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 endif()
 
-project(Lavender CUDA CXX)
+project(Amber CUDA CXX)
 
 set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -26,11 +26,11 @@ elseif()
 endif()
 
 add_compile_definitions(
-  "$<$<CONFIG:DEBUG>:LAVENDER_DEBUG_BUILD>"
-  "$<$<CONFIG:RELEASE>: LAVENDER_RELEASE_BUILD>"
+  "$<$<CONFIG:DEBUG>:AMBER_DEBUG_BUILD>"
+  "$<$<CONFIG:RELEASE>: AMBER_RELEASE_BUILD>"
 )
 
 add_subdirectory(Libraries/pbrtParser) 
-add_subdirectory(Lavender)
+add_subdirectory(Amber)
 
-add_dependencies(Lavender pbrtParser)
+add_dependencies(Amber pbrtParser)
