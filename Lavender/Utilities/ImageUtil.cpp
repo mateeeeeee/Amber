@@ -18,7 +18,7 @@ namespace lavender
 		case ImageFormat::HDR: stbi_write_hdr(filename, (int)width, (int)height, 4, (float const*)data); break;
 		case ImageFormat::TGA: stbi_write_tga(filename, (int)width, (int)height, 4, data); break;
 		case ImageFormat::BMP: stbi_write_bmp(filename, (int)width, (int)height, 4, data); break;
-		default: LAV_UNREACHABLE();
+		default: LAV_ASSERT(false);
 		}
 	}
 
