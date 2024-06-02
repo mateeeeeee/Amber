@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 #include <optix.h>
 #include "OptixShared.h"
 #include "CudaMath.h"
@@ -57,7 +58,7 @@ __forceinline__ __device__ T const& GetShaderParams()
 }
 
 
-__device__ 
+__noinline__ __device__ 
 void TraceRadiance(OptixTraversableHandle scene,
 	float3                 rayOrigin,
 	float3                 rayDirection,
@@ -85,6 +86,7 @@ void TraceRadiance(OptixTraversableHandle scene,
 
 extern "C" __global__ void RG_NAME(rg)()
 {
+
 	OptixTraversableHandle scene = params.handle;
 	float3 const  eye = params.cam_eye;
 	float3 const  U = params.cam_u;
@@ -138,7 +140,10 @@ __forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, 
 }
 __device__ VertexData LoadVertexData(MeshGPU mesh, unsigned int primitive_idx, float2 barycentrics)
 {
+	VertexData vertex{};
 	uint3* mesh_indices = params.indices + mesh.indices_offset;
+	if (primitive_idx >= mesh.indices_count) vertex;
+
 	uint3 primitive_indices = mesh_indices[primitive_idx];
 	unsigned int i0 = primitive_indices.x;
 	unsigned int i1 = primitive_indices.y;
@@ -148,41 +153,31 @@ __device__ VertexData LoadVertexData(MeshGPU mesh, unsigned int primitive_idx, f
 	float3 pos0 = mesh_vertices[i0];
 	float3 pos1 = mesh_vertices[i1];
 	float3 pos2 = mesh_vertices[i2];
-	float3 pos = Interpolate(pos0, pos1, pos2, barycentrics);
+	vertex.pos = Interpolate(pos0, pos1, pos2, barycentrics);
 
 	float3* mesh_normals = params.normals + mesh.normals_offset;
 	float3 nor0 = mesh_normals[i0];
 	float3 nor1 = mesh_normals[i1];
 	float3 nor2 = mesh_normals[i2];
-	float3 nor = Interpolate(nor0, nor1, nor2, barycentrics);
-
+	vertex.nor = Interpolate(nor0, nor1, nor2, barycentrics);
+	
 	float2* mesh_uvs = params.uvs + mesh.uvs_offset;
 	float2 uv0 = mesh_uvs[i0];
 	float2 uv1 = mesh_uvs[i1];
 	float2 uv2 = mesh_uvs[i2];
-	float2 uv = Interpolate(uv0, uv1, uv2, barycentrics);
-	return VertexData{ pos, nor, uv };
+	vertex.uv = Interpolate(uv0, uv1, uv2, barycentrics);
+	return vertex;
 }
 
 extern "C" __global__ void __closesthit__ch()
 {
 	unsigned int instance_idx = optixGetInstanceIndex();
-	//MeshGPU mesh	 = params.meshes[instance_idx];
-	//VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
-	//MaterialGPU material = params.materials[mesh.material_idx];
-	//float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-	//SetPayload(make_float3(sampled));
-	if (instance_idx == 0)
-	{
-		SetPayload(make_float3(0,0,0));
-	}
-	else if (instance_idx == 1)
-	{
-		SetPayload(make_float3(1, 1, 1));
-	}
-	else
-	{
-		SetPayload(make_float3(1,0,0));
-	}
+	unsigned int primitive_idx = optixGetPrimitiveIndex();
+
+	MeshGPU mesh = params.meshes[instance_idx];
+	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
+	MaterialGPU material = params.materials[mesh.material_idx];
+	float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
+	SetPayload(make_float3(sampled));
 }
 
