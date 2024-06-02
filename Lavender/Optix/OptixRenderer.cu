@@ -142,7 +142,6 @@ __device__ VertexData LoadVertexData(MeshGPU mesh, unsigned int primitive_idx, f
 {
 	VertexData vertex{};
 	uint3* mesh_indices = params.indices + mesh.indices_offset;
-	if (primitive_idx >= mesh.indices_count) vertex;
 
 	uint3 primitive_indices = mesh_indices[primitive_idx];
 	unsigned int i0 = primitive_indices.x;
@@ -177,7 +176,16 @@ extern "C" __global__ void __closesthit__ch()
 	MeshGPU mesh = params.meshes[instance_idx];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 	MaterialGPU material = params.materials[mesh.material_idx];
-	float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-	SetPayload(make_float3(sampled));
+	float3 result{};
+	if (material.diffuse_tex_id >= 0)
+	{
+		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
+		result = make_float3(sampled);
+	}
+	else
+	{
+		result = material.base_color;
+	}
+	SetPayload(result);
 }
 
