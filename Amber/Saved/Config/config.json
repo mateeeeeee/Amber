@@ -1,0 +1,30 @@
+{
+  "scene": 
+   {
+		"scene file" : "obj/lost_empire/lost_empire.obj",
+		"width" : 1080,
+		"height" : 720,
+		"max depth" : 4,
+		"samples per pixel" : 1,
+        "camera": 
+		{
+			"position": [
+				0.0,
+				0.0,
+				2.0
+			],
+			"look_at": [
+				 0.0,
+				 0.0,
+				 0.0
+			],
+			"up": [
+				 0.0,
+				 1.0,
+				 0.01
+			],
+			"fov": 45.0
+		}
+    }
+}
+

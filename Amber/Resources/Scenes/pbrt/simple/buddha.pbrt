@@ -1,0 +1,43 @@
+Film "image" 
+        "integer xresolution" [ 600 ] 
+        "integer yresolution" [ 1200 ] 
+        "string filename" [ "buddha.exr" ] 
+PixelFilter "box" 
+LookAt 0 0.2 0.2
+        0 0.11 0
+        0 1 0
+Scale -1 1 1
+Camera "perspective" 
+        "float fov" [ 36 ] 
+
+Sampler "halton" 
+        "integer pixelsamples" [ 32 ] 
+
+#############################################
+WorldBegin
+
+AttributeBegin
+    LightSource "infinite" 
+            "string mapname" [ "textures/doge2_latlong.exr" ] 
+            "rgb L" [ 1 1 1 ] 
+AttributeEnd
+
+AttributeBegin
+    Material "matte" 
+            "rgb Kd" [ 0.40000001 0.41999999 0.47999999 ] 
+    Shape "trianglemesh" "point P" [ -1 0 -1 1 0 -1 1 0 1 -1 0 1 ]
+	"integer indices" [ 0 1 2 2 3 0]
+    Shape "trianglemesh" "point P" [ -1 0 -1  1 0 -1  1 1 -1 -1 1 -1 ]
+	"integer indices" [ 0 1 2 2 3 0]
+AttributeEnd
+
+Material "metal" 
+        "float roughness" [ 0.0099999998 ] 
+        "rgb eta" [ 0.21221054 0.91804785 1.1000715 ] 
+        "rgb k" [ 3.9132357 2.4519274 2.1321275 ] 
+
+AttributeBegin
+    Translate 0 -0.0497500002 0
+    Shape "plymesh" "string filename" "geometry/buddha.ply" 
+AttributeEnd
+WorldEnd

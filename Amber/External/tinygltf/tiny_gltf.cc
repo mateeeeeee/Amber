@@ -1,0 +1,4 @@
+#define TINYGLTF_IMPLEMENTATION
+#define TINYGLTF_NO_EXTERNAL_IMAGE
+#define TINYGLTF_NOEXCEPTION
+#include "tiny_gltf.h"
