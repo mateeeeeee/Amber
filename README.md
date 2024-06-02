@@ -1,3 +1,2 @@
-<img align="left" src="Lavender/Resources/Icons/lavender.jpg" width="120px"/>
+<img align="left" src="Amber/Resources/Icons/amber.jpg" width="120px"/>
 
-# Lavender
