@@ -58,7 +58,7 @@ __forceinline__ __device__ T const& GetShaderParams()
 }
 
 
-__noinline__ __device__ 
+__device__ 
 void TraceRadiance(OptixTraversableHandle scene,
 	float3                 rayOrigin,
 	float3                 rayDirection,
@@ -103,7 +103,6 @@ extern "C" __global__ void RG_NAME(rg)()
 		float2 subpixelJitter = make_float2(rnd(seed), rnd(seed));
 		float2 d = (make_float2(pixel) + subpixelJitter) / make_float2(screen);
 		d = 2.0f * d - 1.0f;
-
 		const float tanFovyHalf = tan(params.cam_fovy * 0.5f);
 		const float aspectRatio = params.cam_aspect_ratio;
 
