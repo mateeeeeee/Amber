@@ -201,11 +201,6 @@ namespace lavender
 				instances.push_back(instance);
 			}
 
-			for (const auto& inst : instances) 
-			{
-				LAV_DEBUG("Instance ID: %u, Traversable Handle: %llu\n", inst.instanceId, inst.traversableHandle);
-			}
-
 			auto instance_buffer = CreateBuffer(instances);
 			OptixBuildInput geom_desc{};
 			geom_desc.type = OPTIX_BUILD_INPUT_TYPE_INSTANCES;

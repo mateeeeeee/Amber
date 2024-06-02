@@ -1,7 +1,7 @@
 {
   "scene": 
    {
-		"scene file" : "obj/pine/scrubPine.obj",
+		"scene file" : "obj/lost_empire/lost_empire.obj",
 		"width" : 1080,
 		"height" : 720,
 		"max depth" : 4,
