@@ -10,15 +10,6 @@
 #define LAV_ASSERT(expr)			assert(expr)
 #define LAV_ASSERT_MSG(expr, msg)   assert(expr && msg)
 
-#ifdef __GNUC__ 
-#define LAV_UNREACHABLE()			___builtin_unreachable();
-#elifdef _MSC_VER
-#define LAV_UNREACHABLE()			___assume(false);
-#else
-#define LAV_UNREACHABLE()	
-#endif
-
-
 
 #define LAV_NONCOPYABLE(ClassName)                 \
         ClassName(ClassName const&)            = delete; \

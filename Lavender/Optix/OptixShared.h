@@ -42,7 +42,6 @@ namespace lavender
 
 		int diffuse_tex_id;
 	};
-
 	struct MeshGPU
 	{
 		unsigned int positions_offset;
@@ -86,5 +85,17 @@ namespace lavender
 #endif
 	};
 
+	struct Payload
+	{
+		float3		 radiance;
+		float3		 emissive;
+		float3		 origin;
+		float3		 direction;
+		int			 done;
+
+		float3       attenuation;
+		unsigned int seed;
+		int          depth;
+	};
 }
 

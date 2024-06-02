@@ -1,5 +1,4 @@
 #pragma once
-#include <stdio.h>
 #include <optix.h>
 #include "OptixShared.h"
 #include "CudaMath.h"
@@ -31,11 +30,6 @@ __forceinline__ __device__ uchar4 MakeColor(const float3& c)
 	float3 srgb = ToSRGB(c);
 	return make_uchar4(QuantizeUnsigned8Bits(srgb.x), QuantizeUnsigned8Bits(srgb.y), QuantizeUnsigned8Bits(srgb.z), 255u);
 }
-
-struct Payload
-{
-	float3 color;
-};
 
 __forceinline__ __device__ void SetPayload(float3 p)
 {
@@ -80,7 +74,7 @@ void TraceRadiance(OptixTraversableHandle scene,
 		0,
 		0,
 		p0, p1, p2);
-	payload.color = make_float3(__uint_as_float(p0), __uint_as_float(p1), __uint_as_float(p2));
+	payload.radiance = make_float3(__uint_as_float(p0), __uint_as_float(p1), __uint_as_float(p2));
 }
 
 
@@ -94,37 +88,42 @@ extern "C" __global__ void RG_NAME(rg)()
 	float3 const  W = params.cam_w;
 	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
 	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
+
 	
 	int samples = params.sample_count;
+
+	unsigned int seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.sample_count);
 	float3 result = make_float3(0.0f);
 	do
 	{
-		unsigned int seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.sample_count);
-		float2 subpixelJitter = make_float2(rnd(seed), rnd(seed));
-		float2 d = (make_float2(pixel) + subpixelJitter) / make_float2(screen);
+		float2 subpixel_jitter = make_float2(rnd(seed), rnd(seed));
+		float2 d = (make_float2(pixel) + subpixel_jitter) / make_float2(screen);
 		d = 2.0f * d - 1.0f;
-		const float tanFovyHalf = tan(params.cam_fovy * 0.5f);
-		const float aspectRatio = params.cam_aspect_ratio;
+		const float tan_half_fovy = tan(params.cam_fovy * 0.5f);
+		const float aspect_ratio = params.cam_aspect_ratio;
 
-		float3 rayDirection = normalize(d.x * aspectRatio * tanFovyHalf * U + d.y * tanFovyHalf * V + W);
-		float3 rayOrigin = eye;
+		float3 ray_direction = normalize(d.x * aspect_ratio * tan_half_fovy * U + d.y * tan_half_fovy * V + W);
+		float3 ray_origin = eye;
 
 		Payload p{};
-		TraceRadiance(scene, rayOrigin, rayDirection, 1e-5f, 1e16f, p);
-		result += p.color;
+		p.attenuation = make_float3(1.0f);
+		p.seed = seed;
+		p.depth = 0;
+
+		TraceRadiance(scene, ray_origin, ray_direction, 1e-5f, 1e16f, p);
+
+		result += p.radiance;
 	} while (--samples);
 
 	result = result / params.sample_count;
 	params.image[pixel.x + pixel.y * screen.x] = MakeColor(result);
 }
 
-
 extern "C" __global__ void __miss__ms()
 {
 	MissData const& miss_data = GetShaderParams<MissData>(); 
 	SetPayload(make_float3(0.0f, 0.0f, 1.0f));
 }
-
 
 struct VertexData
 {
@@ -137,7 +136,7 @@ __forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, 
 {
 	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
 }
-__device__ VertexData LoadVertexData(MeshGPU mesh, unsigned int primitive_idx, float2 barycentrics)
+__device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive_idx, float2 barycentrics)
 {
 	VertexData vertex{};
 	uint3* mesh_indices = params.indices + mesh.indices_offset;
