@@ -128,10 +128,9 @@ namespace lavender
 			indices_buffer		= CreateBuffer(indices);
 			blas_handles.reserve(gpu_meshes.size());
 
-			std::vector<OptixBuildInput> build_inputs;
 			for (MeshGPU const& gpu_mesh : gpu_meshes)
 			{
-				OptixBuildInput& build_input = build_inputs.emplace_back();
+				OptixBuildInput build_input{};
 				uint32 build_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
 				CUdeviceptr vertex_buffers[] = { vertices_buffer->GetDevicePtr() + gpu_mesh.positions_offset * sizeof(Vector3) }; 
 				
@@ -157,8 +156,8 @@ namespace lavender
 				OptixCheck(optixAccelComputeMemoryUsage(
 					optix_context,
 					&accel_build_options,
-					build_inputs.data(),
-					build_inputs.size(),
+					&build_input,
+					1,
 					&as_buffer_sizes
 				));
 
@@ -170,8 +169,8 @@ namespace lavender
 					optix_context,
 					0,
 					&accel_build_options,
-					build_inputs.data(),
-					build_inputs.size(),
+					&build_input,
+					1,
 					scratch_buffer.GetDevicePtr(),
 					scratch_buffer.GetSize(),
 					as_output->GetDevicePtr(),
@@ -202,6 +201,11 @@ namespace lavender
 				instances.push_back(instance);
 			}
 
+			for (const auto& inst : instances) 
+			{
+				LAV_DEBUG("Instance ID: %u, Traversable Handle: %llu\n", inst.instanceId, inst.traversableHandle);
+			}
+
 			auto instance_buffer = CreateBuffer(instances);
 			OptixBuildInput geom_desc{};
 			geom_desc.type = OPTIX_BUILD_INPUT_TYPE_INSTANCES;
@@ -215,7 +219,7 @@ namespace lavender
 			OptixAccelBufferSizes buf_sizes{};
 			OptixCheck(optixAccelComputeMemoryUsage(optix_context, &accel_build_options, &geom_desc, 1, &buf_sizes));
 
-			Buffer as_output(buf_sizes.outputSizeInBytes);
+			std::unique_ptr<Buffer> as_output = std::make_unique<Buffer>(buf_sizes.outputSizeInBytes);
 			Buffer scratch(buf_sizes.tempSizeInBytes);
 
 			OptixCheck(optixAccelBuild(optix_context,
@@ -225,11 +229,13 @@ namespace lavender
 				1,
 				scratch.GetDevicePtr(),
 				scratch.GetSize(),
-				as_output.GetDevicePtr(),
-				as_output.GetSize(),
+				as_output->GetDevicePtr(),
+				as_output->GetSize(),
 				&tlas_handle,
 				nullptr,
 				0));
+			CudaSyncCheck();
+			as_outputs.push_back(std::move(as_output));
 
 			std::vector<cudaTextureObject_t> texture_handles;
 			texture_handles.reserve(scene->textures.size());
