@@ -264,7 +264,7 @@ namespace amber
 			return scene;
 		}
 
-		std::unique_ptr<Scene> LoadObjScene(std::string_view scene_file)
+		std::unique_ptr<Scene> LoadObjScene(std::string_view scene_file, float scale)
 		{
 			tinyobj::ObjReaderConfig reader_config{};
 			tinyobj::ObjReader reader;
@@ -303,9 +303,9 @@ namespace amber
 					for (uint64 v = 0; v < 3; v++)
 					{
 						tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-						tinyobj::real_t vx = attrib.vertices[3 * uint64(idx.vertex_index) + 0] * 0.01f;
-						tinyobj::real_t vy = attrib.vertices[3 * uint64(idx.vertex_index) + 1] * 0.01f;
-						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2] * 0.01f;
+						tinyobj::real_t vx = attrib.vertices[3 * uint64(idx.vertex_index) + 0] * scale;
+						tinyobj::real_t vy = attrib.vertices[3 * uint64(idx.vertex_index) + 1] * scale;
+						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2] * scale;
 
 						geometry.vertices.emplace_back(vx, vy, vz);
 
@@ -363,13 +363,13 @@ namespace amber
 			return obj_scene;
 		}
 
-		std::unique_ptr<Scene> LoadGltfScene(std::string_view scene_file)
+		std::unique_ptr<Scene> LoadGltfScene(std::string_view scene_file, float scale)
 		{
 			return nullptr;
 		}
 	}
 
-	std::unique_ptr<Scene> LoadScene(char const* _scene_file)
+	std::unique_ptr<Scene> LoadScene(char const* _scene_file, float scale)
 	{
 		std::string_view scene_file(_scene_file);
 		SceneFormat scene_format = GetSceneFormat(scene_file);
@@ -377,13 +377,13 @@ namespace amber
 		{
 		case SceneFormat::OBJ:
 		{
-			return LoadObjScene(scene_file);
+			return LoadObjScene(scene_file, scale);
 		}
 		break;
 		case SceneFormat::GLTF:
 		case SceneFormat::GLB:
 		{
-			return LoadGltfScene(scene_file);
+			return LoadGltfScene(scene_file, scale);
 		}
 		break;
 		case SceneFormat::PBRT:
