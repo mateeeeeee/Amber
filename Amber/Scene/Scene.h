@@ -22,5 +22,5 @@ namespace amber
 		}
 	};
 
-	std::unique_ptr<Scene> LoadScene(char const* scene_file);
+	std::unique_ptr<Scene> LoadScene(char const* scene_file, float scale = 1.0f);
 }

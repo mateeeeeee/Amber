@@ -18,6 +18,7 @@ using namespace amber;
 struct Config
 {
 	std::string scene_file;
+	float  scene_scale;
 	uint32 width;
 	uint32 height;
 	uint32 max_depth;
@@ -55,7 +56,7 @@ int main(int argc, char* argv[])
 	std::unique_ptr<Scene> scene = nullptr;
 	try
 	{
-		scene = LoadScene(cfg.scene_file.c_str());
+		scene = LoadScene(cfg.scene_file.c_str(), cfg.scene_scale);
 		if (!scene)
 		{
 			LAV_ERROR("Scene loading failed!");
@@ -116,6 +117,7 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	}
 
 	cfg.scene_file = paths::SceneDir() + scene_file;
+	cfg.scene_scale = scene_params.FindOr<float>("scene scale", 1.0f);
 	cfg.width = scene_params.FindOr<uint32>("width", 1080);
 	cfg.height = scene_params.FindOr<uint32>("height", 720);
 	cfg.max_depth = scene_params.FindOr<uint32>("max depth", 4);
