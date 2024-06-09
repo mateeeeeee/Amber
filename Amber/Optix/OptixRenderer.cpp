@@ -232,12 +232,15 @@ namespace amber
 			CudaSyncCheck();
 			as_outputs.push_back(std::move(as_output));
 
+			sky_texture = MakeTexture2D<uchar4>(scene->environment->GetWidth(), scene->environment->GetHeight());
+			sky_texture->Update(scene->environment->GetData());
+
 			std::vector<cudaTextureObject_t> texture_handles;
 			texture_handles.reserve(scene->textures.size());
 			for (Image const& texture : scene->textures)
 			{
-				textures.push_back(MakeTexture2D<uchar4>(texture.width, texture.height));
-				textures.back()->Update(texture.data.data());
+				textures.push_back(MakeTexture2D<uchar4>(texture.GetWidth(), texture.GetHeight()));
+				textures.back()->Update(texture.GetData());
 				texture_handles.push_back(textures.back()->GetHandle());
 			}
 
@@ -312,6 +315,7 @@ namespace amber
 		params.materials = material_list_buffer->GetDevicePtr();
 		params.meshes = mesh_list_buffer->GetDevicePtr();
 		params.textures = texture_list_buffer->GetDevicePtr();
+		params.sky = sky_texture->GetHandle();
 
 		Vector3 u, v, w;
 		camera.GetFrame(u, v, w);

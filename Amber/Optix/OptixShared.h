@@ -67,13 +67,13 @@ namespace amber
 		float					cam_fovy;
 		float					cam_aspect_ratio;
 #ifdef __CUDACC__
-		float3* vertices;
-		float3* normals;
-		float2* uvs;
-		uint3* indices;
-		cudaTextureObject_t* textures;
-		MaterialGPU* materials;
-		MeshGPU* meshes;
+		float3*					vertices;
+		float3*					normals;
+		float2*					uvs;
+		uint3*					indices;
+		cudaTextureObject_t*	textures;
+		MaterialGPU*			materials;
+		MeshGPU*				meshes;
 #else
 		CUdeviceptr				vertices;
 		CUdeviceptr				normals;
@@ -83,6 +83,7 @@ namespace amber
 		CUdeviceptr				materials;
 		CUdeviceptr				meshes;
 #endif
+		cudaTextureObject_t		sky;
 	};
 
 	struct Payload
