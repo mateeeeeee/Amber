@@ -17,6 +17,7 @@ namespace amber
 		PBF,
 		Unknown
 	};
+
 	SceneFormat GetSceneFormat(std::string_view scene_file)
 	{
 		if (scene_file.ends_with(".pbrt")) return SceneFormat::PBRT;
@@ -168,7 +169,6 @@ namespace amber
 				pbrt::vec3f pbrt_extents = (pbrt_bounds.upper - pbrt_bounds.lower) * 0.5f;
 				Vector3 center(&pbrt_center.x);
 				Vector3 extents(&pbrt_extents.x);
-				scene->bounding_box = BoundingBox(center, extents);
 			}
 			for (auto const& pbrt_light : pbrt_world->lightSources)
 			{
@@ -181,7 +181,7 @@ namespace amber
 				}
 				else
 				{
-					LAV_WARN("Light source type %s not yet supported", pbrt_light->toString().c_str());
+					AMBER_WARN("Light source type %s not yet supported", pbrt_light->toString().c_str());
 				}
 			}
 
@@ -272,13 +272,13 @@ namespace amber
 			{
 				if (!reader.Error().empty())
 				{
-					LAV_ERROR("TinyOBJ error: %s", reader.Error().c_str());
+					AMBER_ERROR("TinyOBJ error: %s", reader.Error().c_str());
 				}
 				return nullptr;
 			}
 			if (!reader.Warning().empty())
 			{
-				LAV_WARN("TinyOBJ warning: %s", reader.Warning().c_str());
+				AMBER_WARN("TinyOBJ warning: %s", reader.Warning().c_str());
 			}
 
 			std::string obj_base_dir = std::string(scene_file.substr(0, scene_file.rfind('/')));
@@ -360,49 +360,59 @@ namespace amber
 				}
 				obj_scene->materials.push_back(material);
 			}
+
 			return obj_scene;
 		}
 
 		std::unique_ptr<Scene> LoadGltfScene(std::string_view scene_file, float scale)
 		{
+			AMBER_ASSERT(false);
 			return nullptr;
 		}
 	}
 
-	std::unique_ptr<Scene> LoadScene(char const* _scene_file, float scale)
+	std::unique_ptr<Scene> LoadScene(char const* _scene_file, char const* _environment_texture, float scale)
 	{
 		std::string_view scene_file(_scene_file);
+		std::string_view environment_texture(_environment_texture);
 		SceneFormat scene_format = GetSceneFormat(scene_file);
+
+		std::unique_ptr<Scene> scene = nullptr;
 		switch (scene_format)
 		{
 		case SceneFormat::OBJ:
 		{
-			return LoadObjScene(scene_file, scale);
+			scene = LoadObjScene(scene_file, scale);
 		}
 		break;
 		case SceneFormat::GLTF:
 		case SceneFormat::GLB:
 		{
-			return LoadGltfScene(scene_file, scale);
+			scene = LoadGltfScene(scene_file, scale);
 		}
 		break;
 		case SceneFormat::PBRT:
 		{
 			std::shared_ptr<pbrt::Scene> pbrt_scene = pbrt::importPBRT(_scene_file);
-			return ConvertPBRTScene(pbrt_scene, scene_file);
+			scene = ConvertPBRTScene(pbrt_scene, scene_file);
 		}
 		break;
 		case SceneFormat::PBF:
 		{
 			std::shared_ptr<pbrt::Scene> pbrt_scene = pbrt::Scene::loadFrom(_scene_file);
-			return ConvertPBRTScene(pbrt_scene, scene_file);
+			scene = ConvertPBRTScene(pbrt_scene, scene_file);
 		}
 		break;
 		case SceneFormat::Unknown:
 		default:
-			LAV_ERROR("Invalid scene format: %s", scene_file);
+			AMBER_ERROR("Invalid scene format: %s", scene_file);
 		}
-		return nullptr;
+
+		if (scene && !environment_texture.empty())
+		{
+			//scene->environment = std::make_unique<Image>(environment_texture.data());
+		}
+		return scene;
 	}
 
 }

@@ -21,6 +21,8 @@ namespace amber
 
 	class OptixRenderer : public OptixInitializer
 	{
+		static constexpr uint32 MAX_DEPTH = 3;
+
 	public:
 		OptixRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene);
 		~OptixRenderer();
@@ -32,6 +34,7 @@ namespace amber
 		void WriteFramebuffer(char const* outfile);
 
 		auto const& GetFramebuffer() const { return framebuffer; }
+		uint32 GetMaxDepth() const { return MAX_DEPTH; }
 
 	private:
 		std::unique_ptr<Scene>		scene;

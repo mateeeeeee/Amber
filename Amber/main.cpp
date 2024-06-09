@@ -19,6 +19,7 @@ struct Config
 {
 	std::string scene_file;
 	float  scene_scale;
+	std::string scene_environment;
 	uint32 width;
 	uint32 height;
 	uint32 max_depth;
@@ -47,25 +48,25 @@ int main(int argc, char* argv[])
 	g_LogManager.Initialize(log_file.c_str(), LogLevel::Debug);
 
 	Config cfg{};
-	bool config_parsed = ParseConfig(config_file.c_str(), cfg);
-	if (!config_parsed)
+	if (!ParseConfig(config_file.c_str(), cfg))
 	{
+		AMBER_ERROR("Config parsing failed!");
 		return EXIT_FAILURE;
 	}
 	
 	std::unique_ptr<Scene> scene = nullptr;
 	try
 	{
-		scene = LoadScene(cfg.scene_file.c_str(), cfg.scene_scale);
+		scene = LoadScene(cfg.scene_file.c_str(), cfg.scene_environment.c_str(), cfg.scene_scale);
 		if (!scene)
 		{
-			LAV_ERROR("Scene loading failed!");
+			AMBER_ERROR("Scene loading failed!");
 			return EXIT_FAILURE;
 		}
 	}
 	catch (std::runtime_error const& e)
 	{
-		LAV_ERROR("{}", e.what());
+		AMBER_ERROR("{}", e.what());
 		return EXIT_FAILURE;
 	}
 
@@ -77,7 +78,7 @@ int main(int argc, char* argv[])
 		if (maximize_window) window.Maximize();
 		Editor editor(window, camera, renderer);
 		editor.SetEditorSink(g_LogManager.GetEditorSink());
-		editor.SetDefaultRendererOptions(cfg.samples_per_pixel, cfg.max_depth);
+		editor.SetDefaultOptions(cfg.samples_per_pixel, cfg.max_depth);
 		while (window.Loop())
 		{
 			editor.Run();
@@ -103,7 +104,7 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	}
 	catch (json::parse_error const& e)
 	{
-		LAV_ERROR("JSON parsing error: {}! ", e.what());
+		AMBER_ERROR("JSON parsing error: {}! ", e.what());
 		return false;
 	}
 	JsonParams scene_params(json_scene);
@@ -112,12 +113,15 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	bool scene_file_found = scene_params.Find<std::string>("scene file", scene_file);
 	if (!scene_file_found)
 	{
-		LAV_ERROR("Scene file not specified in config file!");
+		AMBER_ERROR("Scene file not specified in config file!");
 		return false;
 	}
+	std::string scene_environment;
+	scene_params.Find<std::string>("scene environment", scene_environment);
 
 	cfg.scene_file = paths::SceneDir() + scene_file;
 	cfg.scene_scale = scene_params.FindOr<float>("scene scale", 1.0f);
+	cfg.scene_environment = paths::SceneDir() + scene_environment;
 	cfg.width = scene_params.FindOr<uint32>("width", 1080);
 	cfg.height = scene_params.FindOr<uint32>("height", 720);
 	cfg.max_depth = scene_params.FindOr<uint32>("max depth", 4);
@@ -126,7 +130,7 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	json camera_json = scene_params.FindJson("camera");
 	if (camera_json.is_null())
 	{
-		LAV_ERROR("Missing camera parameters in config file!");
+		AMBER_ERROR("Missing camera parameters in config file!");
 		return false;
 	}
 

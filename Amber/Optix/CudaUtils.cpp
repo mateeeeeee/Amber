@@ -9,7 +9,7 @@ namespace amber::optix
 	{
 		if (code != cudaError::cudaSuccess)
 		{
-			LAV_ERROR("%s", cudaGetErrorString(code));
+			AMBER_ERROR("%s", cudaGetErrorString(code));
 			std::exit(EXIT_FAILURE);
 		}
 	}
@@ -18,7 +18,7 @@ namespace amber::optix
 		cudaError_t code = cudaDeviceSynchronize();
 		if (code != cudaError::cudaSuccess)
 		{
-			LAV_ERROR("Kernel launch failed: %s", cudaGetErrorString(code));
+			AMBER_ERROR("Kernel launch failed: %s", cudaGetErrorString(code));
 			std::exit(EXIT_FAILURE);
 		}
 	}
