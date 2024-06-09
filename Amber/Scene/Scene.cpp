@@ -410,7 +410,7 @@ namespace amber
 
 		if (scene && !environment_texture.empty())
 		{
-			//scene->environment = std::make_unique<Image>(environment_texture.data());
+			scene->environment = std::make_unique<Image>(environment_texture.data());
 		}
 		return scene;
 	}

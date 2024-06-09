@@ -47,6 +47,7 @@ namespace amber
 		OptixTraversableHandle tlas_handle;
 		std::vector<std::unique_ptr<optix::Buffer>> as_outputs; //is it necessary to keep this alive?
 
+		std::unique_ptr<optix::Texture2D> sky_texture;
 		std::vector<std::unique_ptr<optix::Texture2D>> textures;
 		std::unique_ptr<optix::Buffer> texture_list_buffer;
 		std::unique_ptr<optix::Buffer> material_list_buffer;

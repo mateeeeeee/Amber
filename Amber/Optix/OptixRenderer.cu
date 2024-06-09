@@ -119,10 +119,21 @@ extern "C" __global__ void RG_NAME(rg)()
 	params.image[pixel.x + pixel.y * screen.x] = MakeColor(result);
 }
 
+#define M_PIF 3.14159265358979323846f
+#define M_1_PIF 0.318309886183790671538f
+
 extern "C" __global__ void __miss__ms()
 {
-	MissData const& miss_data = GetShaderParams<MissData>(); 
-	SetPayload(miss_data.bg_color);
+	float3 dir = optixGetWorldRayDirection();
+	// Apply our miss "shader" to draw the checkerboard background
+	float u = (1.f + atan2(dir.x, -dir.z) * M_1_PIF) * 0.5f;
+	float v = 1.0f - acos(dir.y) * M_1_PIF;
+
+	float4 sampled = tex2D<float4>(params.sky, u, v);
+	SetPayload(make_float3(sampled));
+
+	//MissData const& miss_data = GetShaderParams<MissData>(); 
+	//SetPayload(miss_data.bg_color);
 }
 
 struct VertexData
