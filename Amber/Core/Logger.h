@@ -39,7 +39,7 @@ namespace amber
 		EditorSink* GetEditorSink();
 
 	private:
-		LogCallbackType callbacks[(uint32)LogLevel::Count];
+		LogCallbackType callbacks[(uint32)LogLevel::Count] = {};
 
 	private:
 		LogManager() = default;
@@ -51,8 +51,8 @@ namespace amber
 	};
 	#define g_LogManager amber::LogManager::Get() 
 
-	#define LAV_DEBUG(fmt, ...)  g_LogManager.CLog(amber::LogLevel::Debug, fmt,  __VA_ARGS__)
-	#define LAV_INFO(fmt, ...)   g_LogManager.CLog(amber::LogLevel::Info, fmt,  __VA_ARGS__)
-	#define LAV_WARN(fmt, ...)   g_LogManager.CLog(amber::LogLevel::Warning, fmt,  __VA_ARGS__)
-	#define LAV_ERROR(fmt, ...)  g_LogManager.CLog(amber::LogLevel::Error, fmt,  __VA_ARGS__)
+	#define AMBER_DEBUG(fmt, ...)  g_LogManager.CLog(amber::LogLevel::Debug, fmt,  __VA_ARGS__)
+	#define AMBER_INFO(fmt, ...)   g_LogManager.CLog(amber::LogLevel::Info, fmt,  __VA_ARGS__)
+	#define AMBER_WARN(fmt, ...)   g_LogManager.CLog(amber::LogLevel::Warning, fmt,  __VA_ARGS__)
+	#define AMBER_ERROR(fmt, ...)  g_LogManager.CLog(amber::LogLevel::Error, fmt,  __VA_ARGS__)
 }

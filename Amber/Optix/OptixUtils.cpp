@@ -11,7 +11,7 @@ namespace amber::optix
 	{
 		if (code != OPTIX_SUCCESS)
 		{
-			LAV_ERROR("%s", optixGetErrorString(code));
+			AMBER_ERROR("%s", optixGetErrorString(code));
 			std::exit(EXIT_FAILURE);
 		}
 	}
@@ -57,7 +57,7 @@ namespace amber::optix
 				log, &log_size,
 				&module
 			));
-			if (log_size > 0) LAV_INFO("%s", log);
+			if (log_size > 0) AMBER_INFO("%s", log);
 		}
 	}
 
@@ -77,7 +77,7 @@ namespace amber::optix
 			log, &log_size,
 			&pipeline
 		));
-		if (log_size > 0) LAV_INFO("%s", log);
+		if (log_size > 0) AMBER_INFO("%s", log);
 
 		OptixStackSizes stack_sizes{};
 		for (auto& prog_group : program_groups)
@@ -118,7 +118,7 @@ namespace amber::optix
 			log, &log_size,
 			&prog_group
 		));
-		if (log_size > 0) LAV_INFO("%s", log);
+		if (log_size > 0) AMBER_INFO("%s", log);
 
 		return program_groups.emplace_back(prog_group);
 	}
@@ -143,7 +143,7 @@ namespace amber::optix
 			log, &log_size,
 			&prog_group
 		));
-		if (log_size > 0) LAV_INFO("%s", log);
+		if (log_size > 0) AMBER_INFO("%s", log);
 		return program_groups.emplace_back(prog_group);
 	}
 
@@ -180,7 +180,7 @@ namespace amber::optix
 			log, &log_size,
 			&prog_group
 		));
-		if (log_size > 0) LAV_INFO("%s", log);
+		if (log_size > 0) AMBER_INFO("%s", log);
 		return program_groups.emplace_back(prog_group);
 	}
 

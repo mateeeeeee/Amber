@@ -26,7 +26,7 @@ namespace amber
 		case 1:
 		case 2:
 		case 3:
-			LAV_INFO("%s", message);
+			AMBER_INFO("%s", message);
 			return;
 		}
 	}
@@ -37,7 +37,7 @@ namespace amber
 		cudaGetDeviceCount(&num_devices);
 		if (num_devices == 0) 
 		{
-			LAV_ERROR("No CUDA devices found!");
+			AMBER_ERROR("No CUDA devices found!");
 			std::exit(1);
 		}
 
@@ -47,7 +47,7 @@ namespace amber
 		CudaCheck(cudaSetDevice(device));
 		cudaDeviceProp props{};
 		CudaCheck(cudaGetDeviceProperties(&props, device));
-		LAV_INFO("Device: %s\n", props.name);
+		AMBER_INFO("Device: %s\n", props.name);
 
 		cuCtxGetCurrent(&cuda_context);
 
@@ -276,7 +276,7 @@ namespace amber
 		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup(RG_NAME_STR(rg));
 		OptixProgramGroup miss_handle = pipeline->AddMissGroup(MISS_NAME_STR(ms));
 		OptixProgramGroup ch_handle = pipeline->AddHitGroup(nullptr, CH_NAME_STR(ch), nullptr);
-		pipeline->Create();
+		pipeline->Create(MAX_DEPTH);
 
 		ShaderBindingTableBuilder sbt_builder{};
 		sbt_builder.AddHitGroup<HitGroupData>("ch", ch_handle)

@@ -7,7 +7,7 @@ namespace amber
 	{
 		if (r != 0)
 		{
-			LAV_ERROR("{}", SDL_GetError());
+			AMBER_ERROR("{}", SDL_GetError());
 			std::exit(1);
 		}
 	}
@@ -15,7 +15,7 @@ namespace amber
 	{
 		if (sdl_type == nullptr)
 		{
-			LAV_ERROR("{}", SDL_GetError());
+			AMBER_ERROR("{}", SDL_GetError());
 			std::exit(1);
 		}
 	}

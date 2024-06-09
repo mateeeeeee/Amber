@@ -3,6 +3,7 @@
    {
 		"scene file" : "obj/lost_empire/lost_empire.obj",
 		"scene scale" : 0.1,
+		"scene environment" : "environment/desertcube1024.dds",
 		"width" : 1080,
 		"height" : 720,
 		"max depth" : 4,

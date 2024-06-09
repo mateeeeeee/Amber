@@ -305,7 +305,7 @@ namespace amber
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			ImGui::SliderInt("Samples", &sample_count, 1, 64);
-			ImGui::SliderInt("Max Depth", &max_depth, 1, 8);
+			ImGui::SliderInt("Max Depth", &max_depth, 1, renderer.GetMaxDepth());
 		}
 		ImGui::End();
 	}

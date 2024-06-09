@@ -122,7 +122,7 @@ extern "C" __global__ void RG_NAME(rg)()
 extern "C" __global__ void __miss__ms()
 {
 	MissData const& miss_data = GetShaderParams<MissData>(); 
-	SetPayload(make_float3(0.0f, 0.0f, 1.0f));
+	SetPayload(miss_data.bg_color);
 }
 
 struct VertexData

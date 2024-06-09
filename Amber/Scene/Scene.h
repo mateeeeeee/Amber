@@ -7,20 +7,19 @@
 
 namespace amber
 {
-	
 	struct Scene
 	{
 		std::vector<Mesh> meshes;
 		std::vector<Instance> instances;
 		std::vector<Material> materials;
 		std::vector<Image> textures;
-		BoundingBox bounding_box;
+		std::unique_ptr<Image> environment;
 
 		void Merge(std::unique_ptr<Scene>& s)
 		{
-			s.reset();
+			//#todo 
 		}
 	};
 
-	std::unique_ptr<Scene> LoadScene(char const* scene_file, float scale = 1.0f);
+	std::unique_ptr<Scene> LoadScene(char const* scene_file, char const* environment_texture, float scale = 1.0f);
 }

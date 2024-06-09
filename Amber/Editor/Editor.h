@@ -35,7 +35,7 @@ namespace amber
 		{
 			editor_sink = sink;
 		}
-		void SetDefaultRendererOptions(uint32 _sample_count, uint32 _max_depth)
+		void SetDefaultOptions(uint32 _sample_count, uint32 _max_depth)
 		{
 			sample_count = _sample_count;
 			max_depth = _max_depth;
