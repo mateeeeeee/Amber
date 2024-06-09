@@ -5,9 +5,11 @@
 #define RG_NAME(name) __raygen__##name
 #define MISS_NAME(name) __miss__##name
 #define CH_NAME(name) __closesthit__##name
+#define AH_NAME(name) __anyhit__##name
 #define RG_NAME_STR(name) AMBER_STRINGIFY(RG_NAME(name)) 
 #define MISS_NAME_STR(name) AMBER_STRINGIFY(MISS_NAME(name)) 
 #define CH_NAME_STR(name) AMBER_STRINGIFY(CH_NAME(name)) 
+#define AH_NAME_STR(name) AMBER_STRINGIFY(AH_NAME(name)) 
 
 namespace amber
 {
