@@ -122,18 +122,22 @@ extern "C" __global__ void RG_NAME(rg)()
 #define M_PIF 3.14159265358979323846f
 #define M_1_PIF 0.318309886183790671538f
 
-extern "C" __global__ void __miss__ms()
+extern "C" __global__ void MISS_NAME(ms)()
 {
 	float3 dir = optixGetWorldRayDirection();
-	// Apply our miss "shader" to draw the checkerboard background
 	float u = (1.f + atan2(dir.x, -dir.z) * M_1_PIF) * 0.5f;
 	float v = 1.0f - acos(dir.y) * M_1_PIF;
 
-	float4 sampled = tex2D<float4>(params.sky, u, v);
-	SetPayload(make_float3(sampled));
-
-	//MissData const& miss_data = GetShaderParams<MissData>(); 
-	//SetPayload(miss_data.bg_color);
+	if (params.sky)
+	{
+		float4 sampled = tex2D<float4>(params.sky, u, v);
+		SetPayload(make_float3(sampled));
+	}
+	else
+	{
+		MissData const& miss_data = GetShaderParams<MissData>();
+		SetPayload(miss_data.bg_color);
+	}
 }
 
 struct VertexData
@@ -177,7 +181,24 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 	return vertex;
 }
 
-extern "C" __global__ void __closesthit__ch()
+
+extern "C" __global__ void AH_NAME(ah)()
+{
+	unsigned int instance_idx = optixGetInstanceIndex();
+	unsigned int primitive_idx = optixGetPrimitiveIndex();
+
+	MeshGPU mesh = params.meshes[instance_idx];
+	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
+	MaterialGPU material = params.materials[mesh.material_idx];
+
+	if (material.diffuse_tex_id >= 0)
+	{
+		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
+		if(sampled.w < 0.5f) optixIgnoreIntersection();
+	}
+}
+
+extern "C" __global__ void CH_NAME(ch)()
 {
 	unsigned int instance_idx = optixGetInstanceIndex();
 	unsigned int primitive_idx = optixGetPrimitiveIndex();

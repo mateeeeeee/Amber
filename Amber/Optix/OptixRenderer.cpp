@@ -278,7 +278,7 @@ namespace amber
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
 		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup(RG_NAME_STR(rg));
 		OptixProgramGroup miss_handle = pipeline->AddMissGroup(MISS_NAME_STR(ms));
-		OptixProgramGroup ch_handle = pipeline->AddHitGroup(nullptr, CH_NAME_STR(ch), nullptr);
+		OptixProgramGroup ch_handle = pipeline->AddHitGroup(AH_NAME_STR(ah), CH_NAME_STR(ch), nullptr);
 		pipeline->Create(MAX_DEPTH);
 
 		ShaderBindingTableBuilder sbt_builder{};
@@ -286,7 +286,7 @@ namespace amber
 				   .AddMiss<MissData>("ms", miss_handle)
 				   .SetRaygen<RayGenData>("rg", rg_handle);
 		sbt = sbt_builder.Build();
-		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(0.0f, 0.0f, 1.0f);
+		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(0.529f, 0.808f, 0.980f);
 		sbt.Commit();
 	}
 
