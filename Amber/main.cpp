@@ -72,6 +72,7 @@ int main(int argc, char* argv[])
 
 	Camera camera = std::move(cfg.camera);
 	OptixRenderer renderer(cfg.width, cfg.height, std::move(scene));
+	use_editor = true; //tmp
 	if(use_editor)
 	{
 		Window window(cfg.width, cfg.height, "lavender");

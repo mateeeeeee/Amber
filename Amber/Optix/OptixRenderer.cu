@@ -89,7 +89,6 @@ extern "C" __global__ void RG_NAME(rg)()
 	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
 	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
 
-	
 	int samples = params.sample_count;
 
 	unsigned int seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.sample_count);
@@ -181,7 +180,6 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 	return vertex;
 }
 
-
 extern "C" __global__ void AH_NAME(ah)()
 {
 	unsigned int instance_idx = optixGetInstanceIndex();
@@ -197,7 +195,6 @@ extern "C" __global__ void AH_NAME(ah)()
 		if(sampled.w < 0.5f) optixIgnoreIntersection();
 	}
 }
-
 extern "C" __global__ void CH_NAME(ch)()
 {
 	unsigned int instance_idx = optixGetInstanceIndex();
