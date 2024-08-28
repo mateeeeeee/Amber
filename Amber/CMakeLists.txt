@@ -17,13 +17,9 @@ set(CORE_FILES
     Core/Input.cpp
     Core/Paths.h
     Core/Paths.cpp
-
+    Core/IConsoleManager.h
     Core/ConsoleManager.h
     Core/ConsoleManager.cpp
-    Core/ConsoleVariable.h
-    Core/ConsoleVariable.cpp
-    Core/ConsoleCommand.h
-    Core/ConsoleCommand.cpp
 )
 
 set(UTILITY_FILES

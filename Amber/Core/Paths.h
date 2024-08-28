@@ -3,13 +3,13 @@
 
 namespace amber::paths
 {
-	std::string MainDir();
-	std::string ResourcesDir();
-	std::string SavedDir();
-	std::string FontsDir();
-	std::string IconsDir();
-	std::string ResultDir();
-	std::string LogDir();
-	std::string ConfigDir();
-	std::string SceneDir();
+	extern std::string const MainDir;
+	extern std::string const ResourcesDir;
+	extern std::string const SavedDir;
+	extern std::string const FontsDir;
+	extern std::string const IconsDir;
+	extern std::string const ResultDir;
+	extern std::string const LogDir;
+	extern std::string const ConfigDir;
+	extern std::string const SceneDir;
 }

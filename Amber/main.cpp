@@ -100,7 +100,7 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	json json_scene;
 	try
 	{
-		JsonParams scene_params = json::parse(std::ifstream(paths::ConfigDir() + config_file));
+		JsonParams scene_params = json::parse(std::ifstream(paths::ConfigDir + config_file));
 		json_scene = scene_params.FindJson("scene");
 	}
 	catch (json::parse_error const& e)
@@ -120,9 +120,9 @@ bool ParseConfig(char const* config_file, Config& cfg)
 	std::string scene_environment;
 	scene_params.Find<std::string>("scene environment", scene_environment);
 
-	cfg.scene_file = paths::SceneDir() + scene_file;
+	cfg.scene_file = paths::SceneDir + scene_file;
 	cfg.scene_scale = scene_params.FindOr<float>("scene scale", 1.0f);
-	cfg.scene_environment = paths::SceneDir() + scene_environment;
+	cfg.scene_environment = paths::SceneDir + scene_environment;
 	cfg.width = scene_params.FindOr<uint32>("width", 1080);
 	cfg.height = scene_params.FindOr<uint32>("height", 720);
 	cfg.max_depth = scene_params.FindOr<uint32>("max depth", 4);

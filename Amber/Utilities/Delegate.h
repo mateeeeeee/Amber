@@ -1,31 +1,27 @@
 #pragma once
 #include <functional>
 #include <vector>
-#ifdef __cpp_concepts
 #include <concepts>
-#else 
-#include <type_traits>
-#endif
 
 namespace amber
 {
 #define DECLARE_DELEGATE(name, ...) \
-	using name = Delegate<void(__VA_ARGS__)>
+	using name = Delegate<void(__VA_ARGS__)>;
 
 #define DECLARE_DELEGATE_RETVAL(name, retval, ...) \
-	using name = Delegate<retval(__VA_ARGS__)>
+	using name = Delegate<retval(__VA_ARGS__)>;
 
 #define DECLARE_MULTICAST_DELEGATE(name, ...) \
-	using name = MultiCastDelegate<__VA_ARGS__> \
+	using name = MultiCastDelegate<__VA_ARGS__>; \
 
 #define DECLARE_EVENT(name, owner, ...) \
 	class name : public MultiCastDelegate<__VA_ARGS__> \
 	{ \
 	private: \
 		friend class owner; \
-		using MultiCastDelegate::Broadcast; \
-		using MultiCastDelegate::RemoveAll; \
-		using MultiCastDelegate::Remove; \
+		using MultiCastDelegate<__VA_ARGS__>::Broadcast; \
+		using MultiCastDelegate<__VA_ARGS__>::RemoveAll; \
+		using MultiCastDelegate<__VA_ARGS__>::Remove; \
 	};
 
 	template<typename...>
@@ -35,23 +31,20 @@ namespace amber
 	class Delegate<R(Args...)>
 	{
 		using DelegateType = std::function<R(Args...)>;
-
 	public:
 		Delegate() = default;
-		Delegate(Delegate const&) = default;
-		Delegate(Delegate&&) noexcept = default;
+		AMBER_DEFAULT_COPYABLE_MOVABLE(Delegate)
 		~Delegate() = default;
-		Delegate& operator=(Delegate const&) = default;
-		Delegate& operator=(Delegate&&) noexcept = default;
 
-#ifdef __cpp_concepts
 		template<typename F> requires std::is_constructible_v<DelegateType, F>
-#else 
-		template<typename F, std::enable_if_t<std::is_constructible_v<DelegateType, F>>* = nullptr>
-#endif
-		void Bind(F&& callable)
+		void BindLambda(F&& lambda)
 		{
-			callback = callable;
+			callback = lambda;
+		}
+
+		void BindStatic(R(*pf)(Args...))
+		{
+			callback = pf;
 		}
 
 		template<typename T>
@@ -60,17 +53,47 @@ namespace amber
 			callback = [&instance, mem_pfn](Args&&... args) mutable -> R {return (instance.*mem_pfn)(std::forward<Args>(args)...); };
 		}
 
-		void UnBind()
+		void Unbind()
 		{
 			callback = nullptr;
 		}
 
-		R Execute(Args&&... args)
+		R Execute(Args... args) const
 		{
-			return callback(std::forward<Args>(args)...);
+			return callback(args...);
+		}
+		R ExecuteIfBound(Args... args) const
+		{
+			return IsBound() ? callback(args...) : R();
+		}
+
+		R operator()(Args... args) const
+		{
+			return callback(args...);
 		}
 
 		bool IsBound() const { return callback != nullptr; }
+
+		template<typename F> requires std::is_constructible_v<DelegateType, F>
+		static Delegate CreateLambda(F&& lambda)
+		{
+			Delegate delegate;
+			delegate.BindLambda(std::forward<F>(lambda));
+			return delegate;
+		}
+		static Delegate CreateStatic(R(*pf)(Args...))
+		{
+			Delegate delegate;
+			delegate.BindStatic(pf);
+			return delegate;
+		}
+		template<typename T>
+		static Delegate CreateMember(R(T::* mem_pfn)(Args...), T& instance)
+		{
+			Delegate delegate;
+			delegate.BindMember(mem_pfn, instance);
+			return delegate;
+		}
 
 	private:
 		DelegateType callback = nullptr;
@@ -81,19 +104,18 @@ namespace amber
 	public:
 		DelegateHandle() : id(INVALID_ID) {}
 		explicit DelegateHandle(int) : id(GenerateID()) {}
-		~DelegateHandle() noexcept = default;
-		DelegateHandle(DelegateHandle const&) = default;
-		DelegateHandle(DelegateHandle&& that) noexcept : id(that.id)
+		AMBER_DEFAULT_COPYABLE(DelegateHandle)
+			DelegateHandle(DelegateHandle&& that) noexcept : id(that.id)
 		{
 			that.Reset();
 		}
-		DelegateHandle& operator=(DelegateHandle const&) = default;
 		DelegateHandle& operator=(DelegateHandle&& that) noexcept
 		{
 			id = that.id;
 			that.Reset();
 			return *this;
 		}
+		~DelegateHandle() noexcept = default;
 
 		operator bool() const
 		{
@@ -136,51 +158,44 @@ namespace amber
 	template<typename... Args>
 	class MultiCastDelegate
 	{
-		using DelegateType = std::function<void(Args...)>;
+		using DelegateType = Delegate<void(Args...)>;
 		using HandleDelegatePair = std::pair<DelegateHandle, DelegateType>;
 
 	public:
 		MultiCastDelegate() = default;
-		MultiCastDelegate(MultiCastDelegate const&) = default;
-		MultiCastDelegate(MultiCastDelegate&&) noexcept = default;
+		AMBER_DEFAULT_COPYABLE_MOVABLE(MultiCastDelegate)
 		~MultiCastDelegate() = default;
-		MultiCastDelegate& operator=(MultiCastDelegate const&) = default;
-		MultiCastDelegate& operator=(MultiCastDelegate&&) noexcept = default;
 
-#ifdef __cpp_concepts
-		template<typename F> requires std::is_constructible_v<DelegateType, F>
-#else 
-		template<typename F, std::enable_if_t<std::is_constructible_v<DelegateType, F>>* = nullptr>
-#endif
-		[[maybe_unused]] DelegateHandle Add(F&& callable)
+		AMBER_MAYBE_UNUSED DelegateHandle Add(DelegateType&& handler)
 		{
-			delegate_array.emplace_back(DelegateHandle(0), std::forward<F>(callable));
+			delegate_array.emplace_back(DelegateHandle(0), std::forward<DelegateType>(handler));
 			return delegate_array.back().first;
+		}
+		AMBER_MAYBE_UNUSED DelegateHandle Add(DelegateType const& handler)
+		{
+			delegate_array.emplace_back(DelegateHandle(0), handler);
+			return delegate_array.back().first;
+		}
+
+		template<typename F>
+		AMBER_MAYBE_UNUSED DelegateHandle AddLambda(F&& lambda)
+		{
+			return Add(DelegateType::CreateLambda(std::forward<F>(lambda)));
+		}
+
+		template<typename R>
+		AMBER_MAYBE_UNUSED DelegateHandle AddStatic(R(*pf)(Args...))
+		{
+			return Add(DelegateType::CreateStatic(pf));
 		}
 
 		template<typename T>
-		[[maybe_unused]] DelegateHandle AddMember(void(T::* mem_pfn)(Args...), T& instance)
+		AMBER_MAYBE_UNUSED DelegateHandle AddMember(void(T::* mem_pfn)(Args...), T& instance)
 		{
-			delegate_array.emplace_back(DelegateHandle(0), [&instance, mem_pfn](Args&&... args) mutable -> void {return (instance.*mem_pfn)(std::forward<Args>(args)...); });
-			return delegate_array.back().first;
+			return Add(DelegateType::CreateMember(mem_pfn, instance));
 		}
 
-#ifdef __cpp_concepts
-		template<typename F> requires std::is_constructible_v<DelegateType, F>
-#else 
-		template<typename F, std::enable_if_t<std::is_constructible_v<DelegateType, F>>* = nullptr>
-#endif
-		[[maybe_unused]] DelegateHandle operator+=(F&& callable) noexcept
-		{
-			return Add(std::forward<F>(callable));
-		}
-
-		[[maybe_unused]] bool operator-=(DelegateHandle& handle)
-		{
-			return Remove(handle);
-		}
-
-		[[maybe_unused]] bool Remove(DelegateHandle& handle)
+		AMBER_MAYBE_UNUSED bool Remove(DelegateHandle& handle)
 		{
 			if (handle.IsValid())
 			{
@@ -207,7 +222,7 @@ namespace amber
 		{
 			for (uint64 i = 0; i < delegate_array.size(); ++i)
 			{
-				if (delegate_array[i].first.IsValid()) delegate_array[i].second(std::forward<Args>(args)...);
+				if (delegate_array[i].first.IsValid()) delegate_array[i].second.ExecuteIfBound(std::forward<Args>(args)...);
 			}
 		}
 

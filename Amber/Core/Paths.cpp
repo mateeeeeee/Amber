@@ -2,51 +2,15 @@
 
 namespace amber
 {
-
-	std::string paths::MainDir()
-	{
-		return AMBER_PATH"/";
-	}
-
-	std::string paths::SavedDir()
-	{
-		return MainDir() + "Saved/";
-	}
-
-	std::string paths::ResourcesDir()
-	{
-		return MainDir() + "Resources/";
-	}
-
-	std::string paths::FontsDir()
-	{
-		return ResourcesDir() + "Fonts/";
-	}
-
-	std::string paths::IconsDir()
-	{
-		return ResourcesDir() + "Icons/";
-	}
-
-	std::string paths::ResultDir()
-	{
-		return SavedDir() + "Result/";
-	}
-
-	std::string paths::LogDir()
-	{
-		return SavedDir() + "Log/";
-	}
-
-	std::string paths::ConfigDir()
-	{
-		return SavedDir() + "Config/";
-	}
-
-	std::string paths::SceneDir()
-	{
-		return ResourcesDir() + "Scenes/";
-	}
+	std::string const paths::MainDir = AMBER_PATH"/";
+	std::string const paths::SavedDir = MainDir + "Saved/";
+	std::string const paths::ResourcesDir = MainDir + "Resources/";
+	std::string const paths::FontsDir = ResourcesDir + "Fonts/";
+	std::string const paths::IconsDir = ResourcesDir + "Icons/";
+	std::string const paths::ResultDir = SavedDir + "Result/";
+	std::string const paths::LogDir = SavedDir + "Log/";
+	std::string const paths::ConfigDir = SavedDir + "Config/";
+	std::string const paths::SceneDir = ResourcesDir + "Scenes/";
 
 }
 
