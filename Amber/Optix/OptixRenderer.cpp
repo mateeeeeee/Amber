@@ -327,7 +327,7 @@ namespace amber
 		params.cam_fovy = camera.GetFovY();
 		params.cam_aspect_ratio = camera.GetAspectRatio();
 
-		TypedBuffer<Params> gpu_params{};
+		TBuffer<Params> gpu_params{};
 		gpu_params.Update(params);
 
 		OptixShaderBindingTable optix_sbt = sbt;
@@ -349,7 +349,7 @@ namespace amber
 
 	void OptixRenderer::WriteFramebuffer(char const* outfile)
 	{
-		std::string output_path = paths::ResultDir() + outfile;
+		std::string output_path = paths::ResultDir + outfile;
 		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), sizeof(uchar4));
 	}
 

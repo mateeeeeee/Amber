@@ -1,8 +1,44 @@
 #include <algorithm>
+#include <sstream>
 #include "StringUtil.h"
 
 namespace amber
 {
+	std::wstring ToWideString(std::string const& in)
+	{
+		std::wstring out{};
+		out.reserve(in.length());
+		const char* ptr = in.data();
+		const char* const end = in.data() + in.length();
+
+		mbstate_t state{};
+		wchar_t wc;
+		while (size_t len = mbrtowc(&wc, ptr, end - ptr, &state))
+		{
+			if (len == static_cast<size_t>(-1)) // bad encoding
+				return std::wstring{};
+			if (len == static_cast<size_t>(-2))
+				break;
+			out.push_back(wc);
+			ptr += len;
+		}
+		return out;
+	}
+	std::string ToString(std::wstring const& in)
+	{
+		std::string out{};
+		out.reserve(MB_CUR_MAX * in.length());
+
+		mbstate_t state{};
+		for (wchar_t wc : in)
+		{
+			char mb[8]{}; // ensure null-terminated for UTF-8 (maximum 4 byte)
+			const auto len = wcrtomb(mb, wc, &state);
+			out += std::string_view{ mb, len };
+		}
+		return out;
+	}
+
 	std::string ToLower(std::string const& in)
 	{
 		std::string out; out.resize(in.size());
@@ -16,91 +52,51 @@ namespace amber
 		return out;
 	}
 
+
 	bool FromCString(const char* in, int& out)
 	{
-		size_t idx = 0;
-		char sign = 1;
-		out = 0;
-		while (*in != '\0')
-		{
-			if (idx == 0 && *in == '-')
-			{
-				sign = -1;
-			}
-			else if (*in && *in >= '0' && *in <= '9')
-			{
-				out *= 10;
-				out += *in - '0';
-			}
-			else
-			{
-				return false;
-			}
-
-			++in;
-			++idx;
-		}
-		out *= sign;
-		return true;
+		std::istringstream iss(in);
+		iss >> out;
+		return !iss.fail() && iss.eof();
 	}
+
 	bool FromCString(const char* in, float& out)
 	{
-		size_t idx = 0;
-		char sign = 1;
-		char comma = 0;
-		int divisor = 1;
-		out = 0.0f;
-		while (*in != '\0')
-		{
-			if (idx == 0 && *in == '-')
-			{
-				sign = -1;
-			}
-			else if (*in == '.' && comma == 0)
-			{
-				comma = 1;
-			}
-			else if (*in && *in >= '0' && *in <= '9')
-			{
-				out *= 10;
-				out += *in - '0';
-				if (comma)
-				{
-					divisor *= 10;
-				}
-			}
-			else if (*in == 'f' && in[1] == '\0')
-			{
-
-			}
-			else
-			{
-				return false;
-			}
-
-			++in;
-			++idx;
-		}
-		out *= sign;
-		out /= divisor;
-		return true;
+		std::istringstream iss(in);
+		iss >> out;
+		return !iss.fail() && iss.eof();
 	}
-	bool FromCString(const char* in, const char*& out)
+
+	bool FromCString(const char* in, std::string& out)
 	{
 		out = in;
 		return true;
 	}
+
 	bool FromCString(const char* in, bool& out)
 	{
-		if (*in == '0' || !strcmp(in, "false"))
+		std::string str(in);
+		std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+		if (str == "0" || str == "false")
 		{
 			out = false;
 			return true;
 		}
-		else if (*in == '1' || !strcmp(in, "true"))
+		else if (str == "1" || str == "true")
 		{
 			out = true;
 			return true;
+		}
+		return false;
+	}
+
+	bool FromCString(char const* in, Vector3& out)
+	{
+		std::istringstream iss(in);
+		char open_parenthesis, comma1, comma2, close_parenthesis;
+		if (iss >> open_parenthesis >> out.x >> comma1 >> out.y >> comma2 >> out.z >> close_parenthesis)
+		{
+			return open_parenthesis == '(' && comma1 == ',' && comma2 == ',' && close_parenthesis == ')' && iss.eof();
 		}
 		return false;
 	}
@@ -120,6 +116,11 @@ namespace amber
 	std::string BoolToString(bool val)
 	{
 		return val ? "true" : "false";
+	}
+
+	std::string Vector3ToString(Vector3 const& val)
+	{
+		return "(" + std::to_string(val.x) + "," + std::to_string(val.y) + "," + std::to_string(val.z) + ")";
 	}
 
 	std::vector<std::string> SplitString(const std::string& text, char delimeter)

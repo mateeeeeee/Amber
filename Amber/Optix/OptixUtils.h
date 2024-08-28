@@ -192,10 +192,10 @@ namespace amber::optix
 		uint64 alloc_size = 0;
 	};
 	template<typename T>
-	class TypedBuffer : public Buffer
+	class TBuffer : public Buffer
 	{
 	public:
-		explicit TypedBuffer(uint64 count = 1) : Buffer(count * sizeof(T)) {}
+		explicit TBuffer(uint64 count = 1) : Buffer(count * sizeof(T)) {}
 		uint64 GetCount() const { return GetSize() / sizeof(T); }
 
 		template<typename U = T>

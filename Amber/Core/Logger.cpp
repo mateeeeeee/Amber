@@ -29,7 +29,7 @@ namespace amber
 		auto editor_sink = std::make_shared<EditorSink>();
 		editor_sink->set_level(spdlog_level);
 		editor_sink->set_pattern("[%^%l%$] %v");
-		auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(paths::LogDir() + log_file);
+		auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(paths::LogDir + log_file);
 		file_sink->set_level(spdlog_level);
 		file_sink->set_pattern("[%^%l%$] %v");
 		std::shared_ptr<spdlog::logger> amber_logger = std::make_shared<spdlog::logger>(std::string("amber logger"), spdlog::sinks_init_list{ console_sink, editor_sink, file_sink });

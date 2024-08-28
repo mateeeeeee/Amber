@@ -25,6 +25,12 @@ elseif()
 	message("Single-configuration generator")
 endif()
 
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif()
+
 add_compile_definitions(
   "$<$<CONFIG:DEBUG>:AMBER_DEBUG_BUILD>"
   "$<$<CONFIG:RELEASE>: AMBER_RELEASE_BUILD>"
