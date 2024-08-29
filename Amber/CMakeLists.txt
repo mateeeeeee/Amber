@@ -97,6 +97,7 @@ set(EXTERNAL_FILES
 )
 
 set(OPTIX_BACKEND_FILES
+    Optix/CudaDefines.h
     Optix/CudaUtils.h
     Optix/CudaUtils.cpp
     Optix/CudaMath.h
