@@ -3,14 +3,15 @@
 #include "OptixShared.h"
 #include "CudaMath.h"
 #include "CudaRandom.h"
+#include "CudaDefines.h"
 
 using namespace amber;
 extern "C" 
 {
-	__constant__ Params params;
+	AMBER_CONSTANT Params params;
 }
 
-__forceinline__ __device__ float3 ToSRGB(float3 const& color)
+__forceinline__ AMBER_DEVICE float3 ToSRGB(float3 const& color)
 {
 	static constexpr float INV_GAMMA = 1.0f / 2.2f;
 	float3 gamma_corrected_color = make_float3(powf(color.x, INV_GAMMA), powf(color.y, INV_GAMMA), powf(color.z, INV_GAMMA));
@@ -19,25 +20,25 @@ __forceinline__ __device__ float3 ToSRGB(float3 const& color)
 		color.y < 0.0031308f ? 12.92f * color.y : 1.055f * gamma_corrected_color.y - 0.055f,
 		color.z < 0.0031308f ? 12.92f * color.z : 1.055f * gamma_corrected_color.z - 0.055f);
 }
-__forceinline__ __device__ unsigned char QuantizeUnsigned8Bits(float x)
+__forceinline__ AMBER_DEVICE unsigned char QuantizeUnsigned8Bits(float x)
 {
 	x = clamp(x, 0.0f, 1.0f);
 	enum { N = (1 << 8) - 1, Np1 = (1 << 8) };
 	return (unsigned char)min((unsigned int)(x * (float)Np1), (unsigned int)N);
 }
-__forceinline__ __device__ uchar4 MakeColor(const float3& c)
+__forceinline__ AMBER_DEVICE uchar4 MakeColor(const float3& c)
 {
 	float3 srgb = ToSRGB(c);
 	return make_uchar4(QuantizeUnsigned8Bits(srgb.x), QuantizeUnsigned8Bits(srgb.y), QuantizeUnsigned8Bits(srgb.z), 255u);
 }
 
-__forceinline__ __device__ void SetPayload(float3 p)
+__forceinline__ AMBER_DEVICE void SetPayload(float3 p)
 {
 	optixSetPayload_0(__float_as_uint(p.x));
 	optixSetPayload_1(__float_as_uint(p.y));
 	optixSetPayload_2(__float_as_uint(p.z));
 }
-__forceinline__ __device__ float3 GetPayload(unsigned int p0, unsigned int p1, unsigned int p2)
+__forceinline__ AMBER_DEVICE float3 GetPayload(unsigned int p0, unsigned int p1, unsigned int p2)
 {
 	float3 p;
 	p.x = __uint_as_float(p0);
@@ -46,14 +47,13 @@ __forceinline__ __device__ float3 GetPayload(unsigned int p0, unsigned int p1, u
 	return p;
 }
 template<typename T>
-__forceinline__ __device__ T const& GetShaderParams()
+__forceinline__ AMBER_DEVICE T const& GetShaderParams()
 {
 	return *reinterpret_cast<T const*>(optixGetSbtDataPointer());
 }
 
 
-__device__ 
-void TraceRadiance(OptixTraversableHandle scene,
+AMBER_DEVICE void TraceRadiance(OptixTraversableHandle scene,
 	float3                 rayOrigin,
 	float3                 rayDirection,
 	float                  tmin,
@@ -78,9 +78,8 @@ void TraceRadiance(OptixTraversableHandle scene,
 }
 
 
-extern "C" __global__ void RG_NAME(rg)()
+extern "C" AMBER_KERNEL void RG_NAME(rg)()
 {
-
 	OptixTraversableHandle scene = params.handle;
 	float3 const  eye = params.cam_eye;
 	float3 const  U = params.cam_u;
@@ -118,14 +117,11 @@ extern "C" __global__ void RG_NAME(rg)()
 	params.image[pixel.x + pixel.y * screen.x] = MakeColor(result);
 }
 
-#define M_PIF 3.14159265358979323846f
-#define M_1_PIF 0.318309886183790671538f
-
-extern "C" __global__ void MISS_NAME(ms)()
+extern "C" AMBER_KERNEL void MISS_NAME(ms)()
 {
 	float3 dir = optixGetWorldRayDirection();
-	float u = (1.f + atan2(dir.x, -dir.z) * M_1_PIF) * 0.5f;
-	float v = 1.0f - acos(dir.y) * M_1_PIF;
+	float u = (1.f + atan2(dir.x, -dir.z) * M_1_PIf) * 0.5f;
+	float v = 1.0f - acos(dir.y) * M_1_PIf;
 
 	if (params.sky)
 	{
@@ -146,11 +142,11 @@ struct VertexData
 	float2 uv;
 };
 template<typename T>
-__forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
+__forceinline__ AMBER_DEVICE T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
 {
 	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
 }
-__device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive_idx, float2 barycentrics)
+AMBER_DEVICE VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive_idx, float2 barycentrics)
 {
 	VertexData vertex{};
 	uint3* mesh_indices = params.indices + mesh.indices_offset;
@@ -180,7 +176,7 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 	return vertex;
 }
 
-extern "C" __global__ void AH_NAME(ah)()
+extern "C" AMBER_KERNEL void AH_NAME(ah)()
 {
 	unsigned int instance_idx = optixGetInstanceIndex();
 	unsigned int primitive_idx = optixGetPrimitiveIndex();
@@ -195,7 +191,7 @@ extern "C" __global__ void AH_NAME(ah)()
 		if(sampled.w < 0.5f) optixIgnoreIntersection();
 	}
 }
-extern "C" __global__ void CH_NAME(ch)()
+extern "C" AMBER_KERNEL void CH_NAME(ch)()
 {
 	unsigned int instance_idx = optixGetInstanceIndex();
 	unsigned int primitive_idx = optixGetPrimitiveIndex();
