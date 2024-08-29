@@ -272,7 +272,7 @@ namespace amber
 		}
 
 		CompileOptions comp_opts{};
-		comp_opts.input_file_name = "PTX.dir\\Debug\\OptixRenderer.ptx";
+		comp_opts.input_file_name = "PTX.dir\\Debug\\PathTracingKernel.ptx";
 		comp_opts.launch_params_name = "params";
 		comp_opts.payload_values = sizeof(Payload) / sizeof(uint32);
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
@@ -307,6 +307,7 @@ namespace amber
 		params.image = device_memory.As<uchar4>();
 		params.handle = tlas_handle;
 		params.sample_count = sample_count;
+		params.max_bounces = MAX_DEPTH;
 		params.frame_index = frame_index;
 		params.vertices = vertices_buffer->GetDevicePtr();
 		params.indices = indices_buffer->GetDevicePtr();

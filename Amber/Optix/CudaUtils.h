@@ -1,6 +1,5 @@
 #pragma once
 #include <type_traits>
-#include <driver_types.h>
 #include "CudaDefines.h"
 
 #define AMBER_CUDA_ASSERT(code) AMBER_ASSERT(code == cudaError::cudaSuccess)
