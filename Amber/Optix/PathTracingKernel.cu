@@ -74,7 +74,22 @@ AMBER_DEVICE void TraceRadiance(OptixTraversableHandle scene,
 		0,
 		0,
 		p0, p1, p2);
-	payload.radiance = make_float3(__uint_as_float(p0), __uint_as_float(p1), __uint_as_float(p2));
+	payload.radiance = GetPayload(p0, p1, p2);
+}
+
+__forceinline__ AMBER_DEVICE float3 GetRayDirection(uint2 pixel, uint2 screen, unsigned int seed)
+{
+	float3 const  U = params.cam_u;
+	float3 const  V = params.cam_v;
+	float3 const  W = params.cam_w;
+
+	float2 subpixel_jitter = make_float2(rnd(seed), rnd(seed));
+	float2 d = (make_float2(pixel) + subpixel_jitter) / make_float2(screen);
+	d = 2.0f * d - 1.0f;
+	const float tan_half_fovy = tan(params.cam_fovy * 0.5f);
+	const float aspect_ratio = params.cam_aspect_ratio;
+	float3 ray_direction = normalize(d.x * aspect_ratio * tan_half_fovy * U + d.y * tan_half_fovy * V + W);
+	return ray_direction;
 }
 
 
@@ -82,39 +97,37 @@ extern "C" AMBER_KERNEL void RG_NAME(rg)()
 {
 	OptixTraversableHandle scene = params.handle;
 	float3 const  eye = params.cam_eye;
-	float3 const  U = params.cam_u;
-	float3 const  V = params.cam_v;
-	float3 const  W = params.cam_w;
 	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
 	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
-
 	int samples = params.sample_count;
 
-	unsigned int seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.sample_count);
-	float3 result = make_float3(0.0f);
+	float3 final_color = make_float3(0.0f);
 	do
 	{
-		float2 subpixel_jitter = make_float2(rnd(seed), rnd(seed));
-		float2 d = (make_float2(pixel) + subpixel_jitter) / make_float2(screen);
-		d = 2.0f * d - 1.0f;
-		const float tan_half_fovy = tan(params.cam_fovy * 0.5f);
-		const float aspect_ratio = params.cam_aspect_ratio;
-
-		float3 ray_direction = normalize(d.x * aspect_ratio * tan_half_fovy * U + d.y * tan_half_fovy * V + W);
+		unsigned int seed = tea<4>(pixel.y * screen.x + pixel.x, samples);
 		float3 ray_origin = eye;
+		float3 ray_direction = GetRayDirection(pixel, screen, seed);
 
 		Payload p{};
 		p.attenuation = make_float3(1.0f);
 		p.seed = seed;
 		p.depth = 0;
+		p.done = false;
 
-		TraceRadiance(scene, ray_origin, ray_direction, 1e-5f, 1e16f, p);
+		for (unsigned int bounce = 0; bounce < params.max_bounces; ++bounce)
+		{
+			TraceRadiance(scene, ray_origin, ray_direction, 1e-5f, 1e16f, p);
+			final_color += p.attenuation * p.radiance;
 
-		result += p.radiance;
+			ray_origin = p.origin;
+			ray_direction = p.direction;
+
+			if (p.done) break;
+		}
 	} while (--samples);
 
-	result = result / params.sample_count;
-	params.image[pixel.x + pixel.y * screen.x] = MakeColor(result);
+	final_color = final_color / params.sample_count;
+	params.image[pixel.x + pixel.y * screen.x] = MakeColor(final_color);
 }
 
 extern "C" AMBER_KERNEL void MISS_NAME(ms)()

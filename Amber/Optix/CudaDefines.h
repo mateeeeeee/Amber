@@ -1,5 +1,5 @@
 #pragma once
-#include <host_defines.h>
+#include <driver_types.h>
 
 
 #define AMBER_KERNEL __global__
