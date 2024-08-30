@@ -6,12 +6,59 @@
 #include "CudaDefines.h"
 
 using namespace amber;
+
 extern "C" 
 {
 	AMBER_CONSTANT Params params;
 }
 
-__forceinline__ AMBER_DEVICE float3 ToSRGB(float3 const& color)
+struct Address
+{
+	uint32 low;
+	uint32 high;
+};
+
+AMBER_DEVICE inline Address DecomposeAddress(void* ptr)
+{
+	uintptr addr = reinterpret_cast<uintptr>(ptr);
+	uint32 low = static_cast<uint32>(addr & 0xFFFFFFFF);
+	uint32 high = static_cast<uint32>((addr >> 32) & 0xFFFFFFFF);
+	Address result;
+	result.low = low;
+	result.high = high;
+	return result;
+}
+
+template <typename T>
+AMBER_DEVICE __forceinline__ T* GetPayload()
+{
+    uint32 p0 = optixGetPayload_0(), p1 = optixGetPayload_1();
+    const uintptr uptr = (uintptr(p0) << 32) | p1;
+    return reinterpret_cast<T *>(uptr);
+}
+
+template <typename... Args>
+AMBER_DEVICE __forceinline__ void Trace(OptixTraversableHandle traversable,
+	float3 ray_origin, float3 ray_direction,
+	float tmin,float tmax, Args&&... payload)
+{
+	optixTrace(traversable, ray_origin, ray_direction, 
+		tmin, tmax, 0.0f,
+		OptixVisibilityMask(255), OPTIX_RAY_FLAG_NONE, 0,
+		0, //or 1?
+		0,
+		std::forward<Args>(payload)...);
+}
+
+template<typename T>
+AMBER_DEVICE __forceinline__ T const& GetShaderParams()
+{
+	return *reinterpret_cast<T const*>(optixGetSbtDataPointer());
+}
+
+//color utility
+
+AMBER_DEVICE __forceinline__ float3 ToSRGB(float3 const& color)
 {
 	static constexpr float INV_GAMMA = 1.0f / 2.2f;
 	float3 gamma_corrected_color = make_float3(powf(color.x, INV_GAMMA), powf(color.y, INV_GAMMA), powf(color.z, INV_GAMMA));
@@ -20,62 +67,44 @@ __forceinline__ AMBER_DEVICE float3 ToSRGB(float3 const& color)
 		color.y < 0.0031308f ? 12.92f * color.y : 1.055f * gamma_corrected_color.y - 0.055f,
 		color.z < 0.0031308f ? 12.92f * color.z : 1.055f * gamma_corrected_color.z - 0.055f);
 }
-__forceinline__ AMBER_DEVICE unsigned char QuantizeUnsigned8Bits(float x)
+AMBER_DEVICE __forceinline__ uint8 QuantizeUnsigned8Bits(float x)
 {
 	x = clamp(x, 0.0f, 1.0f);
-	enum { N = (1 << 8) - 1, Np1 = (1 << 8) };
-	return (unsigned char)min((unsigned int)(x * (float)Np1), (unsigned int)N);
+	static constexpr uint32 N = (1 << 8) - 1;
+	static constexpr uint32 Np1 = (1 << 8);
+	return (uint8)min((uint32)(x * (float)Np1), (uint32)N);
 }
-__forceinline__ AMBER_DEVICE uchar4 MakeColor(const float3& c)
+AMBER_DEVICE __forceinline__ uchar4 MakeColor(float3 const& c)
 {
 	float3 srgb = ToSRGB(c);
 	return make_uchar4(QuantizeUnsigned8Bits(srgb.x), QuantizeUnsigned8Bits(srgb.y), QuantizeUnsigned8Bits(srgb.z), 255u);
 }
-
-__forceinline__ AMBER_DEVICE void SetPayload(float3 p)
-{
-	optixSetPayload_0(__float_as_uint(p.x));
-	optixSetPayload_1(__float_as_uint(p.y));
-	optixSetPayload_2(__float_as_uint(p.z));
-}
-__forceinline__ AMBER_DEVICE float3 GetPayload(unsigned int p0, unsigned int p1, unsigned int p2)
-{
-	float3 p;
-	p.x = __uint_as_float(p0);
-	p.y = __uint_as_float(p1);
-	p.z = __uint_as_float(p2);
-	return p;
-}
-template<typename T>
-__forceinline__ AMBER_DEVICE T const& GetShaderParams()
-{
-	return *reinterpret_cast<T const*>(optixGetSbtDataPointer());
-}
+//end color utility
 
 
-AMBER_DEVICE void TraceRadiance(OptixTraversableHandle scene,
-	float3                 rayOrigin,
-	float3                 rayDirection,
-	float                  tmin,
-	float                  tmax,
-	Payload& payload)
-{
-	unsigned int p0, p1, p2;
-	optixTrace(
-		scene,
-		rayOrigin,
-		rayDirection,
-		tmin,
-		tmax,
-		0.0f,
-		OptixVisibilityMask(255),
-		OPTIX_RAY_FLAG_NONE,
-		0,
-		0,
-		0,
-		p0, p1, p2);
-	payload.radiance = GetPayload(p0, p1, p2);
-}
+//AMBER_DEVICE void TraceRadiance(OptixTraversableHandle scene,
+//	float3                 rayOrigin,
+//	float3                 rayDirection,
+//	float                  tmin,
+//	float                  tmax,
+//	Payload& payload)
+//{
+//	unsigned int p0, p1, p2;
+//	optixTrace(
+//		scene,
+//		rayOrigin,
+//		rayDirection,
+//		tmin,
+//		tmax,
+//		0.0f,
+//		OptixVisibilityMask(255),
+//		OPTIX_RAY_FLAG_NONE,
+//		0,
+//		0,
+//		0,
+//		p0, p1, p2);
+//	payload.radiance = GetPayload(p0, p1, p2);
+//}
 
 __forceinline__ AMBER_DEVICE float3 GetRayDirection(uint2 pixel, uint2 screen, unsigned int seed)
 {
@@ -113,10 +142,11 @@ extern "C" AMBER_KERNEL void RG_NAME(rg)()
 		p.seed = seed;
 		p.depth = 0;
 		p.done = false;
-
+		
+		Address addr = DecomposeAddress(&p);
 		for (unsigned int bounce = 0; bounce < params.max_bounces; ++bounce)
 		{
-			TraceRadiance(scene, ray_origin, ray_direction, 1e-5f, 1e16f, p);
+			Trace(scene, ray_origin, ray_direction, 1e-5f, 1e16f, addr.low, addr.high);
 			final_color += p.attenuation * p.radiance;
 
 			ray_origin = p.origin;
@@ -139,12 +169,12 @@ extern "C" AMBER_KERNEL void MISS_NAME(ms)()
 	if (params.sky)
 	{
 		float4 sampled = tex2D<float4>(params.sky, u, v);
-		SetPayload(make_float3(sampled));
+		GetPayload<Payload>()->radiance = make_float3(sampled.x, sampled.y, sampled.z);
 	}
 	else
 	{
 		MissData const& miss_data = GetShaderParams<MissData>();
-		SetPayload(miss_data.bg_color);
+		GetPayload<Payload>()->radiance = miss_data.bg_color;
 	}
 }
 
@@ -222,6 +252,6 @@ extern "C" AMBER_KERNEL void CH_NAME(ch)()
 	{
 		result = material.base_color;
 	}
-	SetPayload(result);
+	GetPayload<Payload>()->radiance = result;
 }
 

@@ -167,14 +167,7 @@ else()
     )
 endif()
 
-target_compile_options(Amber
-    PRIVATE
-    $<$<COMPILE_LANGUAGE:CUDA>:
-        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Core/CoreTypes.h
-        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Core/Defines.h
-        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Math/MathTypes.h
-    >
-)
+
 
 
 set(AMBER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
@@ -214,6 +207,15 @@ set_property(TARGET Kernels PROPERTY CUDA_PTX_COMPILATION ON)
 target_include_directories(Kernels PRIVATE ${OPTIX_INSTALL_DIR}/include)
 target_include_directories(Kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Kernels PRIVATE ${CUDA_INCLUDE_DIRS})
+
+target_compile_options(Kernels
+    PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:
+        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Core/CoreTypes.h
+        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Core/Defines.h
+        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Math/MathTypes.h
+    >
+)
 
 target_compile_options(Kernels PRIVATE "--use_fast_math" "--generate-line-info" "-O0")
 
