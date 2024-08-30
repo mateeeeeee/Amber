@@ -18,6 +18,7 @@ namespace amber
 		float3 base_color = make_float3(0.9f, 0.9f, 0.9f);
 		float metallic = 0.0f;
 
+		//float3 emissive_color = make_float3(0.0f, 0.0f, 0.0f);
 		float specular = 0.0f;
 		float roughness = 1.0f;
 		float specular_tint = 0.0f;
@@ -87,6 +88,7 @@ namespace amber
 
 		float3       attenuation;
 		uint32		 seed;
+		uint32       depth;
 		uint32       done;
 	};
 }

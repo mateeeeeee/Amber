@@ -1,7 +1,7 @@
 #pragma once
 #include <optix.h>
-#include "CudaMath.cuh"
 #include "CudaRandom.cuh"
+#include "CudaUtils.cuh"
 #include "Optix/OptixShared.h"
 
 using namespace amber;
@@ -11,21 +11,15 @@ extern "C"
 	__constant__ LaunchParams params;
 }
 
-struct Address
+__device__ inline uint32 PackPointer0(void* ptr) 
 {
-	uint32 low;
-	uint32 high;
-};
-
-__device__ inline Address DecomposeAddress(void* ptr)
+	uintptr uptr = reinterpret_cast<uintptr>(ptr);
+	return static_cast<uint32>(uptr >> 32);
+}
+__device__ inline uint32 PackPointer1(void* ptr) 
 {
-	uintptr addr = reinterpret_cast<uintptr>(ptr);
-	uint32 low = static_cast<uint32>(addr & 0xFFFFFFFF);
-	uint32 high = static_cast<uint32>((addr >> 32) & 0xFFFFFFFF);
-	Address result;
-	result.low = low;
-	result.high = high;
-	return result;
+	uintptr uptr = reinterpret_cast<uintptr>(ptr);
+	return static_cast<uint32>(uptr);
 }
 
 template <typename T>
@@ -48,31 +42,6 @@ __device__ __forceinline__ void Trace(OptixTraversableHandle traversable,
 		0,
 		std::forward<Args>(payload)...);
 }
-
-//color utility
-
-__device__ __forceinline__ float3 ToSRGB(float3 const& color)
-{
-	static constexpr float INV_GAMMA = 1.0f / 2.2f;
-	float3 gamma_corrected_color = make_float3(powf(color.x, INV_GAMMA), powf(color.y, INV_GAMMA), powf(color.z, INV_GAMMA));
-	return make_float3(
-		color.x < 0.0031308f ? 12.92f * color.x : 1.055f * gamma_corrected_color.x - 0.055f,
-		color.y < 0.0031308f ? 12.92f * color.y : 1.055f * gamma_corrected_color.y - 0.055f,
-		color.z < 0.0031308f ? 12.92f * color.z : 1.055f * gamma_corrected_color.z - 0.055f);
-}
-__device__ __forceinline__ uint8 QuantizeUnsigned8Bits(float x)
-{
-	x = clamp(x, 0.0f, 1.0f);
-	static constexpr uint32 N = (1 << 8) - 1;
-	static constexpr uint32 Np1 = (1 << 8);
-	return (uint8)min((uint32)(x * (float)Np1), (uint32)N);
-}
-__device__ __forceinline__ uchar4 MakeColor(float3 const& c)
-{
-	float3 srgb = ToSRGB(c);
-	return make_uchar4(QuantizeUnsigned8Bits(srgb.x), QuantizeUnsigned8Bits(srgb.y), QuantizeUnsigned8Bits(srgb.z), 255u);
-}
-//end color utility
 
 __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, unsigned int seed)
 {
@@ -109,11 +78,12 @@ __global__ void RG_NAME(rg)()
 		RadiancePRD prd{};
 		prd.attenuation = make_float3(1.0f);
 		prd.seed = seed;
+		prd.depth = 0;
 		
-		Address addr = DecomposeAddress(&prd);
+		uint32 p0 = PackPointer0(&prd), p1 = PackPointer0(&prd);
 		for (uint32 bounce = 0; bounce < params.max_bounces; ++bounce)
 		{
-			Trace(scene, ray_origin, ray_direction, 1e-5f, 1e16f, addr.low, addr.high);
+			Trace(scene, ray_origin, ray_direction, 1e-5f, 1e16f, p0, p1);
 
 			final_color += prd.emissive;
 			final_color += prd.radiance * prd.attenuation;
@@ -123,7 +93,7 @@ __global__ void RG_NAME(rg)()
 			if (done) break;
 
 			prd.attenuation /= p;
-
+			prd.depth++;
 			ray_origin = prd.origin;
 			ray_direction = prd.direction;
 		}
@@ -140,14 +110,15 @@ __global__ void MISS_NAME(ms)()
 	float u = (1.f + atan2(dir.x, -dir.z) * M_INV_PI) * 0.5f;
 	float v = 1.0f - acos(dir.y) * M_INV_PI;
 
-	GetPayload<RadiancePRD>()->radiance = make_float3(0.0f);
+	RadiancePRD* prd = GetPayload<RadiancePRD>();
+	prd->radiance = make_float3(0.0f);
 	if (params.sky)
 	{
 		float4 sampled = tex2D<float4>(params.sky, u, v);
-		GetPayload<RadiancePRD>()->radiance = make_float3(sampled.x, sampled.y, sampled.z);
+		prd->radiance = make_float3(sampled.x, sampled.y, sampled.z);
 	}
-	GetPayload<RadiancePRD>()->emissive = make_float3(0.0f);
-	GetPayload<RadiancePRD>()->done = true;
+	prd->emissive = make_float3(0.0f);
+	prd->done = true;
 }
 
 struct VertexData
@@ -156,11 +127,7 @@ struct VertexData
 	float3 nor;
 	float2 uv;
 };
-template<typename T>
-__forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
-{
-	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
-}
+
 __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive_idx, float2 barycentrics)
 {
 	VertexData vertex{};
@@ -216,16 +183,19 @@ __global__ void CH_NAME(ch)()
 	MeshGPU mesh = params.meshes[instance_idx];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 	MaterialGPU material = params.materials[mesh.material_idx];
-	float3 result{};
+
+	RadiancePRD* prd = GetPayload<RadiancePRD>();
 	if (material.diffuse_tex_id >= 0)
 	{
 		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-		result = make_float3(sampled);
+		prd->radiance = make_float3(sampled);
 	}
 	else
 	{
-		result = material.base_color;
+		prd->radiance = material.base_color;
 	}
-	GetPayload<RadiancePRD>()->radiance = result;
+
+	//if (prd->depth == 0) prd->emissive = material.emissive_color;
+	//else prd->emissive = make_float3(0.0f);
 }
 
