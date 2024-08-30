@@ -50,12 +50,6 @@ AMBER_DEVICE __forceinline__ void Trace(OptixTraversableHandle traversable,
 		std::forward<Args>(payload)...);
 }
 
-template<typename T>
-AMBER_DEVICE __forceinline__ T const& GetShaderParams()
-{
-	return *reinterpret_cast<T const*>(optixGetSbtDataPointer());
-}
-
 //color utility
 
 AMBER_DEVICE __forceinline__ float3 ToSRGB(float3 const& color)
@@ -170,11 +164,6 @@ extern "C" AMBER_KERNEL void MISS_NAME(ms)()
 	{
 		float4 sampled = tex2D<float4>(params.sky, u, v);
 		GetPayload<Payload>()->radiance = make_float3(sampled.x, sampled.y, sampled.z);
-	}
-	else
-	{
-		MissData const& miss_data = GetShaderParams<MissData>();
-		GetPayload<Payload>()->radiance = miss_data.bg_color;
 	}
 }
 
