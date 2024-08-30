@@ -195,7 +195,7 @@ __global__ void CH_NAME(ch)()
 		prd->radiance = material.base_color;
 	}
 
-	//if (prd->depth == 0) prd->emissive = material.emissive_color;
-	//else prd->emissive = make_float3(0.0f);
+	if (prd->depth == 0) prd->emissive = make_float3(1.0f);
+	else prd->emissive = make_float3(0.0f);
 }
 
