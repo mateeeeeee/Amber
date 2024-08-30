@@ -264,6 +264,8 @@ namespace amber
 				optix_material.ior = m.ior;
 				optix_material.specular_transmission = m.specular_transmission;
 				optix_material.diffuse_tex_id = m.diffuse_tex_id;
+				//optix_material.emissive_tex_id = m.emissive_tex_id;
+				//optix_material.emissive_color = make_float3(m.emissive_color.x, m.emissive_color.y, m.emissive_color.z);
 				materials.push_back(optix_material);
 			}
 			material_list_buffer = std::make_unique<Buffer>(materials.size() * sizeof(MaterialGPU));
