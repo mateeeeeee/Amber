@@ -46,7 +46,7 @@ namespace amber
 		uint32 material_idx;
 	};
 
-	struct Params
+	struct LaunchParams
 	{
 		OptixTraversableHandle	handle;
 		uchar4*					image;
@@ -78,7 +78,7 @@ namespace amber
 		cudaTextureObject_t		sky;
 	};
 
-	struct Payload
+	struct RadiancePRD
 	{
 		float3		 radiance;
 		float3		 emissive;
@@ -87,6 +87,7 @@ namespace amber
 
 		float3       attenuation;
 		uint32		 seed;
+		uint32       done;
 	};
 }
 

@@ -2,11 +2,27 @@
 #include <optix_stubs.h>
 #include <optix_stack_size.h>
 #include "OptixUtils.h"
-#include "CudaUtils.h"
 #include "Core/Logger.h"
 
 namespace amber::optix
 {
+	void CudaSyncCheck()
+	{
+		cudaError_t code = cudaDeviceSynchronize();
+		if (code != cudaSuccess)
+		{
+			AMBER_ERROR("Kernel launch failed: %s", cudaGetErrorString(code));
+			std::exit(EXIT_FAILURE);
+		}
+	}
+	void CudaCheck(cudaError_t code)
+	{
+		if (code != cudaSuccess)
+		{
+			AMBER_ERROR("%s", cudaGetErrorString(code));
+			std::exit(EXIT_FAILURE);
+		}
+	}
 	void OptixCheck(OptixResult code)
 	{
 		if (code != OPTIX_SUCCESS)

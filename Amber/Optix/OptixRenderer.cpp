@@ -4,7 +4,6 @@
 #include <optix_function_table_definition.h>
 #include <optix_stack_size.h>
 #include "OptixShared.h"
-#include "CudaUtils.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "OptixRenderer.h"
@@ -274,7 +273,7 @@ namespace amber
 		CompileOptions comp_opts{};
 		comp_opts.input_file_name = "PTX.dir\\Debug\\PathTracingKernel.ptx";
 		comp_opts.launch_params_name = "params";
-		comp_opts.payload_values = sizeof(Payload) / sizeof(uint32);
+		comp_opts.payload_values = sizeof(RadiancePRD) / sizeof(uint32);
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
 		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup(RG_NAME_STR(rg));
 		OptixProgramGroup miss_handle = pipeline->AddMissGroup(MISS_NAME_STR(ms));
@@ -302,7 +301,7 @@ namespace amber
 		uint64 const width = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
 
-		Params params{};
+		LaunchParams params{};
 		params.image = device_memory.As<uchar4>();
 		params.handle = tlas_handle;
 		params.sample_count = sample_count;
@@ -327,7 +326,7 @@ namespace amber
 		params.cam_fovy = camera.GetFovY();
 		params.cam_aspect_ratio = camera.GetAspectRatio();
 
-		TBuffer<Params> gpu_params{};
+		TBuffer<LaunchParams> gpu_params{};
 		gpu_params.Update(params);
 
 		OptixShaderBindingTable optix_sbt = sbt;

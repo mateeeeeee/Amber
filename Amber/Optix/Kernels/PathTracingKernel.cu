@@ -1,14 +1,14 @@
 #pragma once
 #include <optix.h>
-#include "OptixShared.h"
 #include "CudaMath.cuh"
 #include "CudaRandom.cuh"
+#include "Optix/OptixShared.h"
 
 using namespace amber;
 
 extern "C" 
 {
-	__constant__ Params params;
+	__constant__ LaunchParams params;
 }
 
 struct Address
@@ -106,18 +106,26 @@ __global__ void RG_NAME(rg)()
 		float3 ray_origin = eye;
 		float3 ray_direction = GetRayDirection(pixel, screen, seed);
 
-		Payload p{};
-		p.attenuation = make_float3(1.0f);
-		p.seed = seed;
+		RadiancePRD prd{};
+		prd.attenuation = make_float3(1.0f);
+		prd.seed = seed;
 		
-		Address addr = DecomposeAddress(&p);
-		for (unsigned int bounce = 0; bounce < params.max_bounces; ++bounce)
+		Address addr = DecomposeAddress(&prd);
+		for (uint32 bounce = 0; bounce < params.max_bounces; ++bounce)
 		{
 			Trace(scene, ray_origin, ray_direction, 1e-5f, 1e16f, addr.low, addr.high);
-			final_color += p.attenuation * p.radiance;
 
-			ray_origin = p.origin;
-			ray_direction = p.direction;
+			final_color += prd.emissive;
+			final_color += prd.radiance * prd.attenuation;
+
+			const float p = dot(prd.attenuation, make_float3(0.30f, 0.59f, 0.11f));
+			const bool done = prd.done || rnd(prd.seed) > p;
+			if (done) break;
+
+			prd.attenuation /= p;
+
+			ray_origin = prd.origin;
+			ray_direction = prd.direction;
 		}
 	} while (--samples);
 
@@ -132,11 +140,14 @@ __global__ void MISS_NAME(ms)()
 	float u = (1.f + atan2(dir.x, -dir.z) * M_INV_PI) * 0.5f;
 	float v = 1.0f - acos(dir.y) * M_INV_PI;
 
+	GetPayload<RadiancePRD>()->radiance = make_float3(0.0f);
 	if (params.sky)
 	{
 		float4 sampled = tex2D<float4>(params.sky, u, v);
-		GetPayload<Payload>()->radiance = make_float3(sampled.x, sampled.y, sampled.z);
+		GetPayload<RadiancePRD>()->radiance = make_float3(sampled.x, sampled.y, sampled.z);
 	}
+	GetPayload<RadiancePRD>()->emissive = make_float3(0.0f);
+	GetPayload<RadiancePRD>()->done = true;
 }
 
 struct VertexData
@@ -215,6 +226,6 @@ __global__ void CH_NAME(ch)()
 	{
 		result = material.base_color;
 	}
-	GetPayload<Payload>()->radiance = result;
+	GetPayload<RadiancePRD>()->radiance = result;
 }
 
