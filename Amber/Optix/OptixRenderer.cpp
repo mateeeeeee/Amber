@@ -282,11 +282,10 @@ namespace amber
 		pipeline->Create(MAX_DEPTH);
 
 		ShaderBindingTableBuilder sbt_builder{};
-		sbt_builder.AddHitGroup<HitGroupData>("ch", ch_handle)
-				   .AddMiss<MissData>("ms", miss_handle)
-				   .SetRaygen<RayGenData>("rg", rg_handle);
+		sbt_builder.AddHitGroup("ch", ch_handle)
+				   .AddMiss("ms", miss_handle)
+				   .SetRaygen("rg", rg_handle);
 		sbt = sbt_builder.Build();
-		sbt.GetShaderParams<MissData>("ms").bg_color = make_float3(0.529f, 0.808f, 0.980f);
 		sbt.Commit();
 	}
 

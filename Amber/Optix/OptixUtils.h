@@ -117,19 +117,32 @@ namespace amber::optix
 		template<typename T>
 		ShaderBindingTableBuilder& SetRaygen(std::string_view name, OptixProgramGroup group)
 		{
-			raygen_record = ShaderRecord(name, sizeof(T), group);
-			return *this;
+			return SetRaygen(name, group, sizeof(T));
 		}
 		template<typename T>
 		ShaderBindingTableBuilder& AddMiss(std::string_view name, OptixProgramGroup group)
 		{
-			miss_records.emplace_back(name, sizeof(T), group);
-			return *this;
+			return AddMiss(name, group, sizeof(T));
 		}
 		template<typename T>
 		ShaderBindingTableBuilder& AddHitGroup(std::string_view name, OptixProgramGroup group)
 		{
-			hitgroup_records.emplace_back(name, sizeof(T), group);
+			return AddHitGroup(name, group, sizeof(T));
+		}
+
+		ShaderBindingTableBuilder& SetRaygen(std::string_view name, OptixProgramGroup group, uint32 size = 0)
+		{
+			raygen_record = ShaderRecord(name, size, group);
+			return *this;
+		}
+		ShaderBindingTableBuilder& AddMiss(std::string_view name, OptixProgramGroup group, uint32 size = 0)
+		{
+			miss_records.emplace_back(name, size, group);
+			return *this;
+		}
+		ShaderBindingTableBuilder& AddHitGroup(std::string_view name, OptixProgramGroup group, uint32 size = 0)
+		{
+			hitgroup_records.emplace_back(name, size, group);
 			return *this;
 		}
 
