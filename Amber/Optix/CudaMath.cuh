@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #if defined(__CUDACC__)
 
@@ -7,15 +7,11 @@
 #include <vector_functions.h>
 #include <vector_types.h>
 
-#ifndef M_PIf
-#define M_PIf       3.14159265358979323846f
-#endif
-#ifndef M_PI_2f
-#define M_PI_2f     1.57079632679489661923f
-#endif
-#ifndef M_1_PIf
-#define M_1_PIf     0.318309886183790671538f
-#endif
+static constexpr float M_PI = 3.14159265358979323846f;
+static constexpr float M_HALF_PI = 1.57079632679489661923f;
+static constexpr float M_INV_PI = 0.318309886183790671538f;
+static constexpr float M_TWO_PI = 2.0f * M_PI;          // 2π
+
 
 /** clamp */
 __forceinline__ __device__ float clamp(const float f, const float a, const float b)
