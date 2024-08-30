@@ -48,7 +48,7 @@ namespace amber
 				const uint32 id = scene.textures.size();
 				pbrt_textures[texture] = id;
 				//scene.textures.emplace_back(path.c_str());
-				//LAV_INFO("Loaded image texture: %s\n", t->fileName.c_str());
+				//AMBER_INFO("Loaded image texture: %s\n", t->fileName.c_str());
 				return id;
 			}
 			else if (auto t = texture->as<pbrt::ConstantTexture>())

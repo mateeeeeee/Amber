@@ -97,8 +97,6 @@ set(EXTERNAL_FILES
 )
 
 set(OPTIX_BACKEND_FILES
-    Optix/CudaUtils.h
-    Optix/CudaUtils.cpp
     Optix/OptixUtils.h
     Optix/OptixUtils.cpp
     Optix/OptixRenderer.h
@@ -196,16 +194,15 @@ add_custom_command(TARGET Amber PRE_BUILD
 
 
 set(OPTIX_KERNEL_SOURCES
-    Optix/PathTracingKernel.cu
+    Optix/Kernels/PathTracingKernel.cu
 )
 
 set(OPTIX_KERNEL_HEADERS
-    Optix/CudaMath.cuh
-    Optix/CudaRandom.cuh
+    Optix/Kernels/CudaMath.cuh
+    Optix/Kernels/CudaRandom.cuh
 )
 
-source_group("Source Files" FILES ${OPTIX_KERNEL_SOURCES})
-source_group("Header Files" FILES ${OPTIX_KERNEL_HEADERS})
+source_group("" FILES ${OPTIX_KERNEL_SOURCES} ${OPTIX_KERNEL_HEADERS})
 add_library(Kernels OBJECT ${OPTIX_KERNEL_SOURCES} ${OPTIX_KERNEL_HEADERS})
 
 set_property(TARGET Kernels PROPERTY CUDA_PTX_COMPILATION ON)

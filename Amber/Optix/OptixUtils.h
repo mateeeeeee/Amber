@@ -9,6 +9,8 @@
 
 namespace amber::optix
 {
+	void CudaSyncCheck();
+	void CudaCheck(cudaError_t code);
 	void OptixCheck(OptixResult code);
 
 	struct ModuleOptions
