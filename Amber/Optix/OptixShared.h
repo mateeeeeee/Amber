@@ -13,17 +13,6 @@
 
 namespace amber
 {
-	struct RayGenData
-	{
-	};
-	struct MissData
-	{
-		float3 bg_color;
-	};
-	struct HitGroupData
-	{
-	};
-
 	struct MaterialGPU
 	{
 		float3 base_color = make_float3(0.9f, 0.9f, 0.9f);
@@ -46,24 +35,24 @@ namespace amber
 	};
 	struct MeshGPU
 	{
-		unsigned int positions_offset;
-		unsigned int positions_count;
-		unsigned int uvs_offset;
-		unsigned int uvs_count;
-		unsigned int normals_offset;
-		unsigned int normals_count;
-		unsigned int indices_offset;
-		unsigned int indices_count;
-		unsigned int material_idx;
+		uint32 positions_offset;
+		uint32 positions_count;
+		uint32 uvs_offset;
+		uint32 uvs_count;
+		uint32 normals_offset;
+		uint32 normals_count;
+		uint32 indices_offset;
+		uint32 indices_count;
+		uint32 material_idx;
 	};
 
 	struct Params
 	{
 		OptixTraversableHandle	handle;
 		uchar4*					image;
-		unsigned int			sample_count;
-		unsigned int			frame_index;
-		unsigned int			max_bounces;
+		uint32			        sample_count;
+		uint32			        frame_index;
+		uint32			        max_bounces;
 
 		float3					cam_eye;
 		float3					cam_u, cam_v, cam_w;
@@ -95,11 +84,9 @@ namespace amber
 		float3		 emissive;
 		float3		 origin;
 		float3		 direction;
-		int			 done;
 
 		float3       attenuation;
-		unsigned int seed;
-		int          depth;
+		uint32		 seed;
 	};
 }
 
