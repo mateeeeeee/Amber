@@ -200,6 +200,7 @@ set(OPTIX_KERNEL_SOURCES
 set(OPTIX_KERNEL_HEADERS
     Optix/Kernels/CudaMath.cuh
     Optix/Kernels/CudaRandom.cuh
+    Optix/Kernels/CudaUtils.cuh
 )
 
 source_group("" FILES ${OPTIX_KERNEL_SOURCES} ${OPTIX_KERNEL_HEADERS})
