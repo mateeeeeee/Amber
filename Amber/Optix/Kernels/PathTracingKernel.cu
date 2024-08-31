@@ -55,7 +55,7 @@ __device__ __forceinline__ bool TraceOcclusion(
 	float                  tmax
 )
 {
-	optixTrace(
+	optixTraverse(
 		handle,
 		ray_origin,
 		ray_direction,
@@ -108,7 +108,7 @@ __global__ void RG_NAME(rg)()
 		prd.depth = 0;
 		
 		uint32 p0 = PackPointer0(&prd), p1 = PackPointer1(&prd);
-		for (uint32 bounce = 0; bounce < params.max_bounces; ++bounce)
+		for (uint32 bounce = 0; bounce < 1; ++bounce)
 		{
 			Trace(scene, ray_origin, ray_direction, 1e-5f, 1e16f, p0, p1);
 
@@ -255,20 +255,19 @@ __global__ void CH_NAME(ch)()
 		if (material.emissive_tex_id >= 0)
 		{
 			float4 sampled = tex2D<float4>(params.textures[material.emissive_tex_id], vertex.uv.x, vertex.uv.y);
-			prd->emissive += material.emissive_color * make_float3(sampled.x, sampled.y, sampled.z);
+			prd->emissive = material.emissive_color * make_float3(sampled.x, sampled.y, sampled.z);
 		}
 		else
 		{
-			prd->emissive += material.emissive_color;
+			prd->emissive = material.emissive_color;
 		}
 	}
 
-	//LightGPU light = params.lights[0];
-	//if (TraceOcclusion(params.traversable, vertex.P, -light.direction, 0.001f, 100000.0f))
-	//{
-	//	prd->radiance = make_float3(0.0f);
-	//	return;
-	//}
+	LightGPU light = params.lights[0];
+	if (TraceOcclusion(params.traversable, vertex.P, -light.direction, 0.001f, 100000.0f))
+	{
+		prd->radiance = make_float3(0.0f);
+	}
 
 	//OrthonormalBasis onb(vertex.N);
 	//float3 n = onb.normal;
@@ -288,19 +287,15 @@ __global__ void CH_NAME(ch)()
 	//	ray_count,
 	//	rng);
 
-	uint32 seed = prd->seed;
-	{
-		float z1 = rnd(seed);
-		float z2 = rnd(seed);
+	float z1 = rnd(prd->seed);
+	float z2 = rnd(prd->seed);
 
-		float3 w_in;
-		CosineSampleHemisphere(z1, z2, w_in);
-		OrthonormalBasis onb(vertex.N);
-		onb.InverseTransform(w_in);
-		prd->direction = w_in;
-		prd->origin = vertex.P;
-	}
-
+	float3 w_in;
+	CosineSampleHemisphere(z1, z2, w_in);
+	OrthonormalBasis onb(vertex.N);
+	onb.InverseTransform(w_in);
+	prd->direction = w_in;
+	prd->origin = vertex.P;
 	prd->done = false;
 }
 

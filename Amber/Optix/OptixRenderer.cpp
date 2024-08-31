@@ -286,7 +286,7 @@ namespace amber
 				LightGPU& optix_light = lights.emplace_back();
 				optix_light.type = LightType_Directional;
 				optix_light.color = make_float3(1.0f, 0.0f, 0.0f);
-				optix_light.direction = make_float3(0.0f, -1.0f, 0.25f);
+				optix_light.direction = make_float3(0.0f, -1.0f, 0.5f);
 				optix_light.position = make_float3(-1000.0f * optix_light.direction.x, -1000.0f * optix_light.direction.y, -1000.0f * optix_light.direction.z);
 			}
 
