@@ -2,45 +2,21 @@
 
 namespace amber
 {
-	enum class LightType : uint8
+
+	enum class LightType : uint32
 	{
 		Directional,
-		Point
-	};
-
-	struct Directional
-	{
-		Vector3 direction;
-	};
-
-	struct Point
-	{
-		Vector3 position;
+		Point,
+		Spot,
+		Area,
+		Environmental,
 	};
 
 	struct Light
 	{
-		LightType type;
-		Vector3 color;
-		union
-		{
-			Directional directional;
-			Point point;
-		};
+		LightType	type;
+		Vector3		direction;
+		Vector3		position;
+		Vector3		color;
 	};
-
-	template<LightType type, typename... Args>
-	inline Light MakeLight(Args&&... args)
-	{
-		Light l{ type };
-		if constexpr (type == LightType::Directional)
-		{
-			l.directional = Directional(std::forward<Args>(args)...);
-		}
-		else if constexpr (type == LightType::Point)
-		{
-			l.point = Point(std::forward<Args>(args)...);
-		}
-		return l;
-	}
 }

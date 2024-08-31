@@ -250,8 +250,11 @@ namespace amber
 			materials.reserve(scene->materials.size());
 			for (Material const& m : scene->materials) 
 			{
-				MaterialGPU optix_material{};
+				MaterialGPU& optix_material = materials.emplace_back();
 				optix_material.base_color = make_float3(m.base_color.x, m.base_color.y, m.base_color.z);
+				optix_material.diffuse_tex_id = m.diffuse_tex_id;
+				optix_material.emissive_color = make_float3(m.emissive_color.x, m.emissive_color.y, m.emissive_color.z);
+				optix_material.emissive_tex_id = m.emissive_tex_id;
 				optix_material.metallic = m.metallic;
 				optix_material.specular = m.specular;
 				optix_material.roughness = m.roughness;
@@ -263,17 +266,37 @@ namespace amber
 				optix_material.clearcoat_gloss = m.clearcoat_gloss;
 				optix_material.ior = m.ior;
 				optix_material.specular_transmission = m.specular_transmission;
-				optix_material.diffuse_tex_id = m.diffuse_tex_id;
-				//optix_material.emissive_tex_id = m.emissive_tex_id;
-				//optix_material.emissive_color = make_float3(m.emissive_color.x, m.emissive_color.y, m.emissive_color.z);
-				materials.push_back(optix_material);
 			}
 			material_list_buffer = std::make_unique<Buffer>(materials.size() * sizeof(MaterialGPU));
 			material_list_buffer->Update(materials.data(), material_list_buffer->GetSize());
+
+			std::vector<LightGPU> lights;
+			lights.reserve(scene->lights.size());
+			for (Light const& l : scene->lights)
+			{
+				LightGPU& optix_light = lights.emplace_back();
+				optix_light.type = static_cast<uint32>(l.type);
+				optix_light.color = make_float3(l.color.x, l.color.y, l.color.z);
+				optix_light.direction = make_float3(l.direction.x, l.direction.y, l.direction.z);
+				optix_light.position = make_float3(l.position.x, l.position.y, l.position.z);
+			}
+
+			if (lights.empty())
+			{
+				LightGPU& optix_light = lights.emplace_back();
+				optix_light.type = LightType_Directional;
+				optix_light.color = make_float3(1.0f, 0.0f, 0.0f);
+				optix_light.direction = make_float3(0.0f, -1.0f, 0.25f);
+				optix_light.position = make_float3(-1000.0f * optix_light.direction.x, -1000.0f * optix_light.direction.y, -1000.0f * optix_light.direction.z);
+			}
+
+			light_list_buffer = std::make_unique<Buffer>(lights.size() * sizeof(LightGPU));
+			light_list_buffer->Update(lights.data(), light_list_buffer->GetSize());
+
 		}
 
 		CompileOptions comp_opts{};
-		comp_opts.input_file_name = "PTX.dir\\Debug\\PathTracingKernel.ptx";
+		comp_opts.input_file_name = "Kernels.dir\\Debug\\PathTracingKernel.ptx"; 
 		comp_opts.launch_params_name = "params";
 		comp_opts.payload_values = sizeof(RadiancePRD) / sizeof(uint32);
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
@@ -304,19 +327,6 @@ namespace amber
 		uint64 const height = framebuffer.Rows();
 
 		LaunchParams params{};
-		params.image = device_memory.As<uchar4>();
-		params.handle = tlas_handle;
-		params.sample_count = sample_count;
-		params.max_bounces = MAX_DEPTH;
-		params.frame_index = frame_index;
-		params.vertices = vertices_buffer->GetDevicePtr();
-		params.indices = indices_buffer->GetDevicePtr();
-		params.normals = normals_buffer->GetDevicePtr();
-		params.uvs = uvs_buffer->GetDevicePtr();
-		params.materials = material_list_buffer->GetDevicePtr();
-		params.meshes = mesh_list_buffer->GetDevicePtr();
-		params.textures = texture_list_buffer->GetDevicePtr();
-		params.sky = sky_texture->GetHandle();
 
 		Vector3 u, v, w;
 		camera.GetFrame(u, v, w);
@@ -327,6 +337,22 @@ namespace amber
 		params.cam_w = ToFloat3(w);
 		params.cam_fovy = camera.GetFovY();
 		params.cam_aspect_ratio = camera.GetAspectRatio();
+
+		params.image = device_memory.As<uchar4>();
+		params.handle = tlas_handle;
+		params.sample_count = sample_count;
+		params.max_bounces = MAX_DEPTH;
+		params.frame_index = frame_index;
+		params.vertices = vertices_buffer->GetDevicePtr();
+		params.indices = indices_buffer->GetDevicePtr();
+		params.normals = normals_buffer->GetDevicePtr();
+		params.uvs = uvs_buffer->GetDevicePtr();
+		params.textures = texture_list_buffer->GetDevicePtr();
+		params.materials = material_list_buffer->GetDevicePtr();
+		params.meshes = mesh_list_buffer->GetDevicePtr();
+		params.lights = light_list_buffer->GetDevicePtr();
+		params.light_count = light_list_buffer->GetSize() / sizeof(LightGPU);
+		params.sky = sky_texture->GetHandle();
 
 		TBuffer<LaunchParams> gpu_params{};
 		gpu_params.Update(params);

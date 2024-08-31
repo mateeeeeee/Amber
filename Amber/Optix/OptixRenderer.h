@@ -51,6 +51,7 @@ namespace amber
 		std::vector<std::unique_ptr<optix::Texture2D>> textures;
 		std::unique_ptr<optix::Buffer> texture_list_buffer;
 		std::unique_ptr<optix::Buffer> material_list_buffer;
+		std::unique_ptr<optix::Buffer> light_list_buffer;
 		std::unique_ptr<optix::Buffer> mesh_list_buffer;
 		std::unique_ptr<optix::Buffer> vertices_buffer;
 		std::unique_ptr<optix::Buffer> normals_buffer;

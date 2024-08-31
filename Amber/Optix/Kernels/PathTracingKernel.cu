@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 #include <optix.h>
 #include "CudaRandom.cuh"
 #include "CudaUtils.cuh"
@@ -80,7 +81,7 @@ __global__ void RG_NAME(rg)()
 		prd.seed = seed;
 		prd.depth = 0;
 		
-		uint32 p0 = PackPointer0(&prd), p1 = PackPointer0(&prd);
+		uint32 p0 = PackPointer0(&prd), p1 = PackPointer1(&prd);
 		for (uint32 bounce = 0; bounce < params.max_bounces; ++bounce)
 		{
 			Trace(scene, ray_origin, ray_direction, 1e-5f, 1e16f, p0, p1);
@@ -123,8 +124,8 @@ __global__ void MISS_NAME(ms)()
 
 struct VertexData
 {
-	float3 pos;
-	float3 nor;
+	float3 P;
+	float3 N;
 	float2 uv;
 };
 
@@ -142,13 +143,13 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 	float3 pos0 = mesh_vertices[i0];
 	float3 pos1 = mesh_vertices[i1];
 	float3 pos2 = mesh_vertices[i2];
-	vertex.pos = Interpolate(pos0, pos1, pos2, barycentrics);
+	vertex.P = Interpolate(pos0, pos1, pos2, barycentrics);
 
 	float3* mesh_normals = params.normals + mesh.normals_offset;
 	float3 nor0 = mesh_normals[i0];
 	float3 nor1 = mesh_normals[i1];
 	float3 nor2 = mesh_normals[i2];
-	vertex.nor = Interpolate(nor0, nor1, nor2, barycentrics);
+	vertex.N = Interpolate(nor0, nor1, nor2, barycentrics);
 	
 	float2* mesh_uvs = params.uvs + mesh.uvs_offset;
 	float2 uv0 = mesh_uvs[i0];
@@ -188,14 +189,30 @@ __global__ void CH_NAME(ch)()
 	if (material.diffuse_tex_id >= 0)
 	{
 		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-		prd->radiance = make_float3(sampled);
+		prd->radiance = material.base_color * make_float3(sampled.x, sampled.y, sampled.z);
 	}
 	else
 	{
 		prd->radiance = material.base_color;
 	}
 
-	if (prd->depth == 0) prd->emissive = make_float3(1.0f);
+	if (prd->depth == 0) prd->emissive = material.emissive_color;
 	else prd->emissive = make_float3(0.0f);
+
+
+	uint32 seed = prd->seed;
+	{
+		float z1 = rnd(seed);
+		float z2 = rnd(seed);
+
+		float3 w_in;
+		CosineSampleHemisphere(z1, z2, w_in);
+		OrthonormalBasis onb(vertex.N);
+		onb.InverseTransform(w_in);
+		prd->direction = w_in;
+		prd->origin = vertex.P;
+	}
+	prd->attenuation *= prd->radiance;
+	prd->done = false;
 }
 
