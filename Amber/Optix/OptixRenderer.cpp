@@ -339,7 +339,7 @@ namespace amber
 		params.cam_aspect_ratio = camera.GetAspectRatio();
 
 		params.image = device_memory.As<uchar4>();
-		params.handle = tlas_handle;
+		params.traversable = tlas_handle;
 		params.sample_count = sample_count;
 		params.max_bounces = MAX_DEPTH;
 		params.frame_index = frame_index;

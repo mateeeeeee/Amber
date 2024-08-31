@@ -32,16 +32,42 @@ __device__ __forceinline__ T* GetPayload()
 }
 
 template <typename... Args>
-__device__ __forceinline__ void Trace(OptixTraversableHandle traversable,
-	float3 ray_origin, float3 ray_direction,
-	float tmin,float tmax, Args&&... payload)
+__device__ __forceinline__ void Trace(
+	OptixTraversableHandle traversable,
+	float3 ray_origin, 
+	float3 ray_direction,
+	float tmin,
+	float tmax, Args&&... payload)
 {
 	optixTrace(traversable, ray_origin, ray_direction, 
 		tmin, tmax, 0.0f,
 		OptixVisibilityMask(255), OPTIX_RAY_FLAG_NONE, 0,
-		0, //or 1?
+		0, 
 		0,
 		std::forward<Args>(payload)...);
+}
+
+__device__ __forceinline__ bool TraceOcclusion(
+	OptixTraversableHandle handle,
+	float3                 ray_origin,
+	float3                 ray_direction,
+	float                  tmin,
+	float                  tmax
+)
+{
+	optixTrace(
+		handle,
+		ray_origin,
+		ray_direction,
+		tmin,
+		tmax, 0.0f,                
+		OptixVisibilityMask(255),
+		OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT | OPTIX_RAY_FLAG_DISABLE_ANYHIT,
+		0,                          
+		1,							
+		0                           
+	);
+	return optixHitObjectIsHit();
 }
 
 __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, unsigned int seed)
@@ -63,7 +89,7 @@ __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, uns
 extern "C" 
 __global__ void RG_NAME(rg)()
 {
-	OptixTraversableHandle scene = params.handle;
+	OptixTraversableHandle scene = params.traversable;
 	float3 const  eye = params.cam_eye;
 	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
 	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
@@ -175,6 +201,34 @@ __global__ void AH_NAME(ah)()
 		if(sampled.w < 0.5f) optixIgnoreIntersection();
 	}
 }
+
+
+//__device__ float3 SampleDirectLight(MaterialGPU const& material,
+//	float3 const& P,
+//	float3 const& N,
+//	float3 const& v_x,
+//	float3 const& v_y,
+//	float3 const& w_o)
+//{
+//	float3 illum = make_float3(0.f);
+//
+//	//later, pick one light randomly and accumulate result
+//
+//	uint32 occlusion_flags = OPTIX_RAY_FLAG_DISABLE_ANYHIT |
+//							 OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT |
+//							 OPTIX_RAY_FLAG_DISABLE_CLOSESTHIT;
+//
+//	for (uint32 i = 0; i < params.light_count; ++i)
+//	{
+//		LightGPU light = params.lights[i];
+//		if (light.type == LightType_Directional)
+//		{
+//
+//		}
+//	}
+//}
+
+
 extern "C" 
 __global__ void CH_NAME(ch)()
 {
@@ -196,9 +250,43 @@ __global__ void CH_NAME(ch)()
 		prd->radiance = material.base_color;
 	}
 
-	if (prd->depth == 0) prd->emissive = material.emissive_color;
-	else prd->emissive = make_float3(0.0f);
+	if (prd->depth == 0)
+	{
+		if (material.emissive_tex_id >= 0)
+		{
+			float4 sampled = tex2D<float4>(params.textures[material.emissive_tex_id], vertex.uv.x, vertex.uv.y);
+			prd->emissive += material.emissive_color * make_float3(sampled.x, sampled.y, sampled.z);
+		}
+		else
+		{
+			prd->emissive += material.emissive_color;
+		}
+	}
 
+	//LightGPU light = params.lights[0];
+	//if (TraceOcclusion(params.traversable, vertex.P, -light.direction, 0.001f, 100000.0f))
+	//{
+	//	prd->radiance = make_float3(0.0f);
+	//	return;
+	//}
+
+	//OrthonormalBasis onb(vertex.N);
+	//float3 n = onb.normal;
+	//float3 t = onb.tangent;
+	//float3 b = onb.binormal;
+	//const float3 w_o = -prd->direction;
+
+
+	//prd->radiance += prd->attenuation * SampleDirectLight(mat,
+	//	hit_p,
+	//	v_z,
+	//	v_x,
+	//	v_y,
+	//	w_o,
+	//	params.lights,
+	//	params.num_lights,
+	//	ray_count,
+	//	rng);
 
 	uint32 seed = prd->seed;
 	{
@@ -212,7 +300,7 @@ __global__ void CH_NAME(ch)()
 		prd->direction = w_in;
 		prd->origin = vertex.P;
 	}
-	prd->attenuation *= prd->radiance;
+
 	prd->done = false;
 }
 
