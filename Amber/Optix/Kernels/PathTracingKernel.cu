@@ -161,7 +161,7 @@ __global__ void RG_NAME(rg)()
 				radiance += material.base_color;
 			}
 			LightGPU light = params.lights[0];
-			if (TraceOcclusion(params.traversable, hit_info.P, -light.direction, 0.001f, 100000.0f))
+			if (TraceOcclusion(params.traversable, hit_info.P + M_EPSILON * hit_info.N, -light.direction, 0.001f, 100000.0f))
 			{
 				radiance = make_float3(0.0f);
 			}
