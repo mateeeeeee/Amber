@@ -69,7 +69,7 @@ namespace amber
 		uchar4*					image;
 		uint32			        sample_count;
 		uint32			        frame_index;
-		uint32			        max_bounces;
+		uint32			        max_depth;
 
 		float3					cam_eye;
 		float3					cam_u, cam_v, cam_w;
@@ -98,17 +98,14 @@ namespace amber
 		cudaTextureObject_t		sky;
 	};
 
-	struct RadiancePRD
+	struct HitInfo
 	{
-		float3		 radiance;
-		float3		 emissive;
-		float3		 origin;
-		float3		 direction;
-
-		float3       attenuation;
-		uint32		 seed;
-		uint32       depth;
-		uint32       done;
+		uint32		 depth;
+		bool32		 hit;
+		float3		 P;
+		float3		 N;
+		float2       uv;
+		uint32       material_idx;
 	};
 }
 
