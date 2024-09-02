@@ -7,6 +7,8 @@
 #include <vector_functions.h>
 #include <vector_types.h>
 
+static constexpr float M_EPSILON = 1e-5f;
+static constexpr float M_INF = FLT_MAX;
 static constexpr float M_PI = 3.14159265358979323846f;
 static constexpr float M_HALF_PI = 1.57079632679489661923f;
 static constexpr float M_INV_PI = 0.318309886183790671538f;

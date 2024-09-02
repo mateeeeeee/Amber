@@ -298,7 +298,7 @@ namespace amber
 		CompileOptions comp_opts{};
 		comp_opts.input_file_name = "Kernels.dir\\Debug\\PathTracingKernel.ptx"; 
 		comp_opts.launch_params_name = "params";
-		comp_opts.payload_values = sizeof(RadiancePRD) / sizeof(uint32);
+		comp_opts.payload_values = sizeof(HitInfo) / sizeof(uint32);
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
 		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup(RG_NAME_STR(rg));
 		OptixProgramGroup miss_handle = pipeline->AddMissGroup(MISS_NAME_STR(ms));
@@ -341,7 +341,7 @@ namespace amber
 		params.image = device_memory.As<uchar4>();
 		params.traversable = tlas_handle;
 		params.sample_count = sample_count;
-		params.max_bounces = MAX_DEPTH;
+		params.max_depth = MAX_DEPTH;
 		params.frame_index = frame_index;
 		params.vertices = vertices_buffer->GetDevicePtr();
 		params.indices = indices_buffer->GetDevicePtr();

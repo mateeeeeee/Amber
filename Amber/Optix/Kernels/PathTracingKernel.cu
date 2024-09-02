@@ -7,6 +7,8 @@
 
 using namespace amber;
 
+static constexpr uint32 RR_DEPTH = 2;
+
 extern "C" 
 {
 	__constant__ LaunchParams params;
@@ -85,6 +87,19 @@ __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, uns
 	return ray_direction;
 }
 
+__device__ __forceinline__ float3 GetEmissive(uint32 material_idx, float2 uv)
+{
+	MaterialGPU material = params.materials[material_idx];
+	if (material.emissive_tex_id >= 0)
+	{
+		float4 sampled = tex2D<float4>(params.textures[material.emissive_tex_id], uv.x, uv.y);
+		return material.emissive_color * make_float3(sampled.x, sampled.y, sampled.z);
+	}
+	else
+	{
+		return material.emissive_color;
+	}
+}
 
 extern "C" 
 __global__ void RG_NAME(rg)()
@@ -93,59 +108,98 @@ __global__ void RG_NAME(rg)()
 	float3 const  eye = params.cam_eye;
 	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
 	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
-	int samples = params.sample_count;
+	uint32 samples = params.sample_count;
 
-	float3 final_color = make_float3(0.0f);
+	float3 radiance = make_float3(0.0f);
+	float3 throughput = make_float3(1.0f);
 	do
 	{
 		uint32 seed = tea<4>(pixel.y * screen.x + pixel.x, samples);
 		float3 ray_origin = eye;
 		float3 ray_direction = GetRayDirection(pixel, screen, seed);
 
-		RadiancePRD prd{};
-		prd.attenuation = make_float3(1.0f);
-		prd.seed = seed;
-		prd.depth = 0;
-		
-		uint32 p0 = PackPointer0(&prd), p1 = PackPointer1(&prd);
-		for (uint32 bounce = 0; bounce < 1; ++bounce)
+
+		HitInfo hit_info{};
+		hit_info.depth = 0;
+		uint32 p0 = PackPointer0(&hit_info), p1 = PackPointer1(&hit_info);
+		//							   params.max_depth
+		for (uint32 depth = 0; depth < 1; ++depth)
 		{
-			Trace(scene, ray_origin, ray_direction, 1e-5f, 1e16f, p0, p1);
+			Trace(scene, ray_origin, ray_direction, M_EPSILON, M_INF, p0, p1);
+			if (!hit_info.hit)
+			{
+				float3 const& dir = ray_direction;
+				float u = (1.f + atan2(dir.x, -dir.z) * M_INV_PI) * 0.5f;
+				float v = 1.0f - acos(dir.y) * M_INV_PI;
+				float3 env_map_color = make_float3(0.0f);
+				if (params.sky)
+				{
+					float4 sampled = tex2D<float4>(params.sky, u, v);
+					env_map_color = make_float3(sampled.x, sampled.y, sampled.z);
+				}
 
-			final_color += prd.emissive;
-			final_color += prd.radiance * prd.attenuation;
+				//#todo add MIS / power heuristic
+				radiance += env_map_color * throughput;
+				break;
+			}
 
-			const float p = dot(prd.attenuation, make_float3(0.30f, 0.59f, 0.11f));
-			const bool done = prd.done || rnd(prd.seed) > p;
-			if (done) break;
+			if (depth == 0)
+			{
+				float3 emissive = GetEmissive(hit_info.material_idx, hit_info.uv);
+				radiance += emissive * throughput;
+			}
 
-			prd.attenuation /= p;
-			prd.depth++;
-			ray_origin = prd.origin;
-			ray_direction = prd.direction;
+			//temporary
+			MaterialGPU material = params.materials[hit_info.material_idx];
+			if (material.diffuse_tex_id >= 0)
+			{
+				float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], hit_info.uv.x, hit_info.uv.y);
+				radiance += material.base_color * make_float3(sampled.x, sampled.y, sampled.z);
+			}
+			else
+			{
+				radiance += material.base_color;
+			}
+			LightGPU light = params.lights[0];
+			if (TraceOcclusion(params.traversable, hit_info.P, -light.direction, 0.001f, 100000.0f))
+			{
+				radiance = make_float3(0.0f);
+			}
+
+			//#todo Next event estimation
+			//radiance += SampleDirectLight(ray, hit_info) * throughput;
+
+			//#todo Sample BSDF for color and outgoing direction
+			//scatterSample.f = MaterialSample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
+			//if (scatterSample.pdf > 0.0)
+			//	throughput *= scatterSample.f / scatterSample.pdf;
+			//else
+			//	break;
+
+			 // Move ray origin to hit point and set direction for next bounce
+			//r.direction = scatterSample.L;
+			//r.origin = state.fhp + r.direction * EPS;
+			ray_origin = hit_info.P;
+			ray_direction = make_float3(0.0f, 1.0f, 0.0f);
+
+			//russian roulette
+			if (depth >= RR_DEPTH)
+			{
+				float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
+				if (rnd(seed) > q) break;
+				throughput /= q;
+			}
 		}
 	} while (--samples);
 
-	final_color = final_color / params.sample_count;
-	params.image[pixel.x + pixel.y * screen.x] = MakeColor(final_color);
+	radiance = radiance / params.sample_count;
+	params.image[pixel.x + pixel.y * screen.x] = MakeColor(radiance);
 }
 
 extern "C" 
 __global__ void MISS_NAME(ms)()
 {
-	float3 dir = optixGetWorldRayDirection();
-	float u = (1.f + atan2(dir.x, -dir.z) * M_INV_PI) * 0.5f;
-	float v = 1.0f - acos(dir.y) * M_INV_PI;
-
-	RadiancePRD* prd = GetPayload<RadiancePRD>();
-	prd->radiance = make_float3(0.0f);
-	if (params.sky)
-	{
-		float4 sampled = tex2D<float4>(params.sky, u, v);
-		prd->radiance = make_float3(sampled.x, sampled.y, sampled.z);
-	}
-	prd->emissive = make_float3(0.0f);
-	prd->done = true;
+	GetPayload<HitInfo>()->hit = false;
 }
 
 struct VertexData
@@ -203,32 +257,6 @@ __global__ void AH_NAME(ah)()
 }
 
 
-//__device__ float3 SampleDirectLight(MaterialGPU const& material,
-//	float3 const& P,
-//	float3 const& N,
-//	float3 const& v_x,
-//	float3 const& v_y,
-//	float3 const& w_o)
-//{
-//	float3 illum = make_float3(0.f);
-//
-//	//later, pick one light randomly and accumulate result
-//
-//	uint32 occlusion_flags = OPTIX_RAY_FLAG_DISABLE_ANYHIT |
-//							 OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT |
-//							 OPTIX_RAY_FLAG_DISABLE_CLOSESTHIT;
-//
-//	for (uint32 i = 0; i < params.light_count; ++i)
-//	{
-//		LightGPU light = params.lights[i];
-//		if (light.type == LightType_Directional)
-//		{
-//
-//		}
-//	}
-//}
-
-
 extern "C" 
 __global__ void CH_NAME(ch)()
 {
@@ -237,65 +265,12 @@ __global__ void CH_NAME(ch)()
 
 	MeshGPU mesh = params.meshes[instance_idx];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
-	MaterialGPU material = params.materials[mesh.material_idx];
 
-	RadiancePRD* prd = GetPayload<RadiancePRD>();
-	if (material.diffuse_tex_id >= 0)
-	{
-		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-		prd->radiance = material.base_color * make_float3(sampled.x, sampled.y, sampled.z);
-	}
-	else
-	{
-		prd->radiance = material.base_color;
-	}
-
-	if (prd->depth == 0)
-	{
-		if (material.emissive_tex_id >= 0)
-		{
-			float4 sampled = tex2D<float4>(params.textures[material.emissive_tex_id], vertex.uv.x, vertex.uv.y);
-			prd->emissive = material.emissive_color * make_float3(sampled.x, sampled.y, sampled.z);
-		}
-		else
-		{
-			prd->emissive = material.emissive_color;
-		}
-	}
-
-	LightGPU light = params.lights[0];
-	if (TraceOcclusion(params.traversable, vertex.P, -light.direction, 0.001f, 100000.0f))
-	{
-		prd->radiance = make_float3(0.0f);
-	}
-
-	//OrthonormalBasis onb(vertex.N);
-	//float3 n = onb.normal;
-	//float3 t = onb.tangent;
-	//float3 b = onb.binormal;
-	//const float3 w_o = -prd->direction;
-
-
-	//prd->radiance += prd->attenuation * SampleDirectLight(mat,
-	//	hit_p,
-	//	v_z,
-	//	v_x,
-	//	v_y,
-	//	w_o,
-	//	params.lights,
-	//	params.num_lights,
-	//	ray_count,
-	//	rng);
-
-	float z1 = rnd(prd->seed);
-	float z2 = rnd(prd->seed);
-
-	float3 w_in;
-	CosineSampleHemisphere(z1, z2, w_in);
-	OrthonormalBasis onb(vertex.N);
-	onb.InverseTransform(w_in);
-	prd->direction = w_in;
-	prd->origin = vertex.P;
-	prd->done = false;
+	HitInfo* hit_info = GetPayload<HitInfo>();
+	hit_info->hit = true;
+	hit_info->P = vertex.P;
+	hit_info->N = vertex.N;
+	hit_info->uv = vertex.uv;
+	hit_info->material_idx = mesh.material_idx;
 }
 
