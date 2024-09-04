@@ -1,5 +1,4 @@
 #pragma once
-#include <stdio.h>
 #include <optix.h>
 #include "CudaRandom.cuh"
 #include "CudaUtils.cuh"

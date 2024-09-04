@@ -2,7 +2,9 @@
 #include <optix_stubs.h>
 #include <optix_stack_size.h>
 #include "OptixUtils.h"
+#include "KernelCompiler.h"
 #include "Core/Logger.h"
+#include "Core/Paths.h"
 
 namespace amber::optix
 {
@@ -54,13 +56,10 @@ namespace amber::optix
 			pipeline_compile_options.pipelineLaunchParamsVariableName = options.launch_params_name;
 			pipeline_compile_options.usesPrimitiveTypeFlags = OPTIX_PRIMITIVE_TYPE_FLAGS_TRIANGLE;
 
-			FILE* file = fopen(options.input_file_name, "rb");
-			fseek(file, 0, SEEK_END);
-			uint64 input_size = ftell(file);
-			std::unique_ptr<char[]> ptx(new char[input_size]);
-			rewind(file);
-			fread(ptx.get(), sizeof(char), input_size, file);
-			fclose(file);
+			std::string kernel_full_path = paths::KernelsDir + options.input_file_name;
+			KernelCompilerInput compiler_input{};
+			compiler_input.kernel_file = kernel_full_path;
+			KernelPTX ptx = CompileKernel(compiler_input);
 
 			char log[512];
 			uint64 log_size = sizeof(log);
@@ -68,8 +67,8 @@ namespace amber::optix
 				optix_ctx,
 				&module_compile_options,
 				&pipeline_compile_options,
-				ptx.get(),
-				input_size,
+				ptx.data(),
+				ptx.size(),
 				log, &log_size,
 				&module
 			));

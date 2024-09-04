@@ -5,6 +5,12 @@ find_package(CUDAToolkit REQUIRED)
 set(OPTIX_INSTALL_DIR "C:\\ProgramData\\NVIDIA Corporation\\OptiX SDK 8.0.0")
 #dont hardcode values
 
+find_library(NVRTC_LIB nvrtc PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64)
+
+if(NOT NVRTC_LIB)
+    message(FATAL_ERROR "NVRTC library not found!")
+endif()
+
 
 set(CORE_FILES
     Core/CoreTypes.h
@@ -102,6 +108,13 @@ set(OPTIX_BACKEND_FILES
     Optix/OptixRenderer.h
     Optix/OptixRenderer.cpp
     Optix/OptixShared.h
+    Optix/KernelCompiler.h
+    Optix/KernelCompiler.cpp
+
+    Optix/Kernels/CudaMath.cuh
+    Optix/Kernels/CudaRandom.cuh
+    Optix/Kernels/CudaUtils.cuh
+    Optix/Kernels/PathTracingKernel.cu
 )
 
 set(MATH_FILES
@@ -132,6 +145,7 @@ target_include_directories(Amber PRIVATE ${OPTIX_INSTALL_DIR}/include)
 
 
 target_link_libraries(Amber PUBLIC  ${CUDA_LIBRARIES})
+target_link_libraries(Amber PUBLIC  ${NVRTC_LIB})
 target_link_libraries(Amber PRIVATE CUDA::cudart CUDA::cuda_driver)
 target_link_libraries(Amber PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.lib)
 target_link_libraries(Amber PRIVATE pbrtParser)
@@ -164,7 +178,6 @@ endif()
 
 
 
-
 set(AMBER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Amber PRIVATE AMBER_PATH="${AMBER_PATH}")
 
@@ -191,37 +204,3 @@ add_custom_command(TARGET Amber PRE_BUILD
         "${CMAKE_SOURCE_DIR}/Libraries/SDL2/lib/SDL2.dll"
         "$<TARGET_FILE_DIR:Amber>"
 )
-
-
-set(OPTIX_KERNEL_SOURCES
-    Optix/Kernels/PathTracingKernel.cu
-)
-
-set(OPTIX_KERNEL_HEADERS
-    Optix/Kernels/CudaMath.cuh
-    Optix/Kernels/CudaRandom.cuh
-    Optix/Kernels/CudaUtils.cuh
-)
-
-source_group("" FILES ${OPTIX_KERNEL_SOURCES} ${OPTIX_KERNEL_HEADERS})
-add_library(Kernels OBJECT ${OPTIX_KERNEL_SOURCES} ${OPTIX_KERNEL_HEADERS})
-
-set_property(TARGET Kernels PROPERTY CUDA_PTX_COMPILATION ON)
-target_include_directories(Kernels PRIVATE ${OPTIX_INSTALL_DIR}/include)
-target_include_directories(Kernels PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(Kernels PRIVATE ${CUDA_INCLUDE_DIRS})
-
-target_compile_options(Kernels
-    PRIVATE
-    $<$<COMPILE_LANGUAGE:CUDA>:
-        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Core/CoreTypes.h
-        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Core/Defines.h
-        --pre-include=${CMAKE_CURRENT_SOURCE_DIR}/Math/MathTypes.h
-    >
-)
-
-target_compile_options(Kernels PRIVATE "--use_fast_math" "--generate-line-info" "-O0")
-
-#set(PTX_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/OptixIR")
-#target_compile_definitions(Amber PRIVATE PTX_OUTPUT_DIRECTORY="${PTX_OUTPUT_DIRECTORY}")
-add_dependencies(Amber Kernels)
