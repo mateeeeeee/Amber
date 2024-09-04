@@ -11,6 +11,7 @@ namespace amber
 	std::string const paths::LogDir = SavedDir + "Log/";
 	std::string const paths::ConfigDir = SavedDir + "Config/";
 	std::string const paths::SceneDir = ResourcesDir + "Scenes/";
+	std::string const paths::KernelsDir = AMBER_PATH"/Optix/Kernels/";
 
 }
 

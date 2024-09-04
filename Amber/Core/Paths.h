@@ -12,4 +12,5 @@ namespace amber::paths
 	extern std::string const LogDir;
 	extern std::string const ConfigDir;
 	extern std::string const SceneDir;
+	extern std::string const KernelsDir;
 }

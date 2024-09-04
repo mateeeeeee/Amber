@@ -3,6 +3,7 @@
 #include <optix_stubs.h>
 #include <optix_function_table_definition.h>
 #include <optix_stack_size.h>
+#include <nvrtc.h>
 #include "OptixShared.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
@@ -296,7 +297,7 @@ namespace amber
 		}
 
 		CompileOptions comp_opts{};
-		comp_opts.input_file_name = "Kernels.dir\\Debug\\PathTracingKernel.ptx"; 
+		comp_opts.input_file_name = "PathTracingKernel.cu"; 
 		comp_opts.launch_params_name = "params";
 		comp_opts.payload_values = sizeof(HitInfo) / sizeof(uint32);
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
