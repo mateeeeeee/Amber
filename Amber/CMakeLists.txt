@@ -111,11 +111,14 @@ set(OPTIX_BACKEND_FILES
     Optix/KernelCompiler.h
     Optix/KernelCompiler.cpp
 
+)
+
+ set(OPTIX_KERNEL_FILES
     Optix/Kernels/CudaMath.cuh
     Optix/Kernels/CudaRandom.cuh
     Optix/Kernels/CudaUtils.cuh
     Optix/Kernels/PathTracingKernel.cu
-)
+ )
 
 set(MATH_FILES
     Math/MathTypes.h
@@ -126,11 +129,16 @@ set(MAIN_FILES
 )
 
 
-add_executable(Amber ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+add_executable(Amber ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
 set_target_properties(Amber PROPERTIES OUTPUT_NAME Amber)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} "Optix/OptixRenderer.cu" ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES})
+
+# Exclude the .cu files from the build
+foreach(file ${OPTIX_KERNEL_FILES})
+    set_source_files_properties(${file} PROPERTIES HEADER_FILE_ONLY TRUE)
+endforeach()
 
 target_include_directories(Amber PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Amber PRIVATE ${CUDA_INCLUDE_DIRS})
@@ -175,7 +183,6 @@ else()
         >
     )
 endif()
-
 
 
 set(AMBER_PATH ${CMAKE_CURRENT_SOURCE_DIR})

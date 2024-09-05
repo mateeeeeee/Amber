@@ -1,8 +1,9 @@
 #pragma once
-#include <optix.h>
 #include "CudaRandom.cuh"
 #include "CudaUtils.cuh"
 #include "Optix/OptixShared.h"
+#include "optix.h"
+
 
 using namespace amber;
 
@@ -118,7 +119,7 @@ __global__ void RG_NAME(rg)()
 		float3 ray_direction = GetRayDirection(pixel, screen, seed);
 
 
-		HitInfo hit_info{};
+		HitRecord hit_info{};
 		hit_info.depth = 0;
 		uint32 p0 = PackPointer0(&hit_info), p1 = PackPointer1(&hit_info);
 		//							   params.max_depth
@@ -198,7 +199,7 @@ __global__ void RG_NAME(rg)()
 extern "C" 
 __global__ void MISS_NAME(ms)()
 {
-	GetPayload<HitInfo>()->hit = false;
+	GetPayload<HitRecord>()->hit = false;
 }
 
 struct VertexData
@@ -265,11 +266,10 @@ __global__ void CH_NAME(ch)()
 	MeshGPU mesh = params.meshes[instance_idx];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 
-	HitInfo* hit_info = GetPayload<HitInfo>();
+	HitRecord* hit_info = GetPayload<HitRecord>();
 	hit_info->hit = true;
 	hit_info->P = vertex.P;
 	hit_info->N = vertex.N;
 	hit_info->uv = vertex.uv;
 	hit_info->material_idx = mesh.material_idx;
 }
-

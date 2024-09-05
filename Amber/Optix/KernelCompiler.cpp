@@ -1,4 +1,5 @@
 #include <nvrtc.h>
+#include <fstream>
 #include "KernelCompiler.h"
 #include "Core/Logger.h"
 #include "Core/Paths.h"
@@ -13,35 +14,53 @@ namespace amber
         }
     }
 
+	bool ReadFileContents(std::string_view file_path, std::vector<char>& buffer)
+	{
+		std::ifstream file(file_path.data(), std::ios::ate);
+		if (!file.is_open()) 
+		{
+			AMBER_ERROR("Failed to open file %s \n", file_path.data());
+			return false;
+		}
+		std::streamsize fileSize = file.tellg();
+		buffer.resize(static_cast<std::size_t>(fileSize));
+
+		file.seekg(0, std::ios::beg);
+		if (!file.read(buffer.data(), fileSize))
+		{
+			AMBER_ERROR("Failed to read file contents %s \n", file_path.data());
+			return false;
+		}
+		return true;
+	}
+
 	KernelPTX CompileKernel(KernelCompilerInput const& compiler_input)
 	{
 		std::string_view kernel_file = compiler_input.kernel_file;
 
-		FILE* file = fopen(kernel_file.data(), "rb");
-		fseek(file, 0, SEEK_END);
-		uint64 input_size = ftell(file);
-		std::unique_ptr<char[]> kernel(new char[input_size]);
-		rewind(file);
-		fread(kernel.get(), sizeof(char), input_size, file);
-		fclose(file);
-
+		std::vector<char> kernel;
+		ReadFileContents(kernel_file, kernel);
+		
 		nvrtcProgram prog;
-		NvrtcCheck(nvrtcCreateProgram(&prog, kernel.get(), kernel_file.data(), 0, nullptr, nullptr));
+		NvrtcCheck(nvrtcCreateProgram(&prog, kernel.data(), kernel_file.data(), 0, nullptr, nullptr));
 
-		const char* options[] = 
-		{
-		"--pre-include=Core/CoreTypes.h",
-		"--pre-include=Core/Defines.h",
-		"--pre-include=Math/MathTypes.h",
-		"-I" AMBER_PATH,
-		"-I\"C:/ProgramData/NVIDIA Corporation/OptiX SDK 8.0.0/include\"",
-		"-I\"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.4/include\"",
-		"--use_fast_math",
-		"--generate-line-info",
-		"-std=c++17"
-		};
+		std::string optix_include = "C:/ProgramData/NVIDIA Corporation/OptiX SDK 8.0.0/include";
+		std::string cuda_include = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.4/include";
+		std::string cuda_std_include = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.4/include/cuda/std";
+		optix_include = "-I" + optix_include;
+		cuda_include = "-I" + cuda_include;
+		cuda_std_include = "-I" + cuda_std_include;
 
-		nvrtcResult compile_result = nvrtcCompileProgram(prog, ARRAYSIZE(options), options);
+		std::vector<char const*> compile_options;
+		compile_options.push_back(optix_include.c_str());
+		compile_options.push_back(cuda_include.c_str());
+		compile_options.push_back(cuda_std_include.c_str());
+		compile_options.push_back("-I" AMBER_PATH);
+		compile_options.push_back("--pre-include=Core/CoreTypes.h");
+		compile_options.push_back("--use_fast_math");
+		compile_options.push_back("--generate-line-info");
+
+		nvrtcResult compile_result = nvrtcCompileProgram(prog, compile_options.size(), compile_options.data());
 		if (compile_result != NVRTC_SUCCESS) 
 		{
 			uint64 log_size;
