@@ -299,7 +299,7 @@ namespace amber
 		CompileOptions comp_opts{};
 		comp_opts.input_file_name = "PathTracingKernel.cu"; 
 		comp_opts.launch_params_name = "params";
-		comp_opts.payload_values = sizeof(HitInfo) / sizeof(uint32);
+		comp_opts.payload_values = sizeof(HitRecord) / sizeof(uint32);
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
 		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup(RG_NAME_STR(rg));
 		OptixProgramGroup miss_handle = pipeline->AddMissGroup(MISS_NAME_STR(ms));

@@ -98,7 +98,7 @@ namespace amber
 		cudaTextureObject_t		sky;
 	};
 
-	struct HitInfo
+	struct HitRecord
 	{
 		uint32		 depth;
 		bool32		 hit;
