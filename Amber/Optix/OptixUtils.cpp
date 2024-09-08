@@ -59,20 +59,23 @@ namespace amber::optix
 			std::string kernel_full_path = paths::KernelsDir + options.input_file_name;
 			KernelCompilerInput compiler_input{};
 			compiler_input.kernel_file = kernel_full_path;
-			KernelPTX ptx = CompileKernel(compiler_input);
+			std::expected<KernelPTX, CompilerError> ptx = CompileKernel(compiler_input);
 
-			char log[512];
-			uint64 log_size = sizeof(log);
-			OptixCheck(optixModuleCreate(
-				optix_ctx,
-				&module_compile_options,
-				&pipeline_compile_options,
-				ptx.data(),
-				ptx.size(),
-				log, &log_size,
-				&module
-			));
-			if (log_size > 0) AMBER_INFO("%s", log);
+			if (ptx.has_value())
+			{
+				char log[512];
+				uint64 log_size = sizeof(log);
+				OptixCheck(optixModuleCreate(
+					optix_ctx,
+					&module_compile_options,
+					&pipeline_compile_options,
+					ptx.value().data(),
+					ptx.value().size(),
+					log, &log_size,
+					&module
+				));
+				if (log_size > 0) AMBER_INFO("%s", log);
+			}
 		}
 	}
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <string_view>
 #include <vector>
+#include <expected>
 
 namespace amber
 {
@@ -10,6 +11,12 @@ namespace amber
 		//add defines?
 	};
 
+	enum class CompilerError
+	{
+		ReadFileFailed,
+		CompilationFailed
+	};
+
 	using KernelPTX = std::vector<char>;
-	KernelPTX CompileKernel(KernelCompilerInput const& compiler_input);
+	std::expected<KernelPTX, CompilerError> CompileKernel(KernelCompilerInput const& compiler_input);
 }
