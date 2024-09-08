@@ -22,24 +22,23 @@ namespace amber
 			AMBER_ERROR("Failed to open file %s \n", file_path.data());
 			return false;
 		}
-		std::streamsize fileSize = file.tellg();
-		buffer.resize(static_cast<std::size_t>(fileSize));
+		std::streamsize file_size = file.tellg();
+		buffer.resize(static_cast<std::size_t>(file_size));
 
 		file.seekg(0, std::ios::beg);
-		if (!file.read(buffer.data(), fileSize))
-		{
-			AMBER_ERROR("Failed to read file contents %s \n", file_path.data());
-			return false;
-		}
+		file.read(buffer.data(), file_size);
 		return true;
 	}
 
-	KernelPTX CompileKernel(KernelCompilerInput const& compiler_input)
+	std::expected<KernelPTX, CompilerError> CompileKernel(KernelCompilerInput const& compiler_input)
 	{
 		std::string_view kernel_file = compiler_input.kernel_file;
 
 		std::vector<char> kernel;
-		ReadFileContents(kernel_file, kernel);
+		if (!ReadFileContents(kernel_file, kernel))
+		{
+			return std::unexpected(CompilerError::ReadFileFailed);
+		}
 		
 		nvrtcProgram prog;
 		NvrtcCheck(nvrtcCreateProgram(&prog, kernel.data(), kernel_file.data(), 0, nullptr, nullptr));
@@ -69,7 +68,7 @@ namespace amber
 			nvrtcGetProgramLog(prog, &log[0]);
 			AMBER_ERROR("Compilation failed: %s", log.c_str());
 			nvrtcDestroyProgram(&prog);
-			return {};
+			return std::unexpected(CompilerError::CompilationFailed);
 		}
 
 		uint64 ptx_size;
