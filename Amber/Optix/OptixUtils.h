@@ -92,13 +92,9 @@ namespace amber::optix
 			return *reinterpret_cast<T*>(GetShaderRecord(shader) + OPTIX_SBT_RECORD_HEADER_SIZE);
 		}
 
-		operator OptixShaderBindingTable const& () const
+		OptixShaderBindingTable const* Get() const
 		{
-			return shader_binding_table;
-		}
-		operator OptixShaderBindingTable& () 
-		{
-			return shader_binding_table;
+			return &shader_binding_table;
 		}
 
 	private:
