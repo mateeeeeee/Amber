@@ -297,7 +297,7 @@ namespace amber
 		}
 
 		CompileOptions comp_opts{};
-		comp_opts.input_file_name = "PathTracingKernel.cu"; 
+		comp_opts.input_file_name = "PathTracing.cu"; 
 		comp_opts.launch_params_name = "params";
 		comp_opts.payload_values = sizeof(HitRecord) / sizeof(uint32);
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
@@ -358,8 +358,7 @@ namespace amber
 		TBuffer<LaunchParams> gpu_params{};
 		gpu_params.Update(params);
 
-		OptixShaderBindingTable optix_sbt = sbt;
-		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), &optix_sbt, width, height, 1));
+		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), sbt.Get(), width, height, 1));
 		CudaSyncCheck();
 
 		cudaMemcpy(framebuffer, device_memory, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);

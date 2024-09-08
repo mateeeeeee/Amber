@@ -117,7 +117,7 @@ set(OPTIX_BACKEND_FILES
     Optix/Kernels/CudaMath.cuh
     Optix/Kernels/CudaRandom.cuh
     Optix/Kernels/CudaUtils.cuh
-    Optix/Kernels/PathTracingKernel.cu
+    Optix/Kernels/PathTracing.cu
  )
 
 set(MATH_FILES
