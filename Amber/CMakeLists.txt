@@ -114,9 +114,10 @@ set(OPTIX_BACKEND_FILES
 )
 
  set(OPTIX_KERNEL_FILES
-    Optix/Kernels/CudaMath.cuh
-    Optix/Kernels/CudaRandom.cuh
-    Optix/Kernels/CudaUtils.cuh
+    Optix/Kernels/Math.cuh
+    Optix/Kernels/Random.cuh
+    Optix/Kernels/Color.cuh
+    Optix/Kernels/Sampling.cuh
     Optix/Kernels/PathTracing.cu
  )
 

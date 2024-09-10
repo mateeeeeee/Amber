@@ -1,6 +1,7 @@
 #pragma once
-#include "CudaRandom.cuh"
-#include "CudaUtils.cuh"
+#include "Random.cuh"
+#include "Color.cuh"
+#include "Sampling.cuh"
 #include "Optix/OptixShared.h"
 #include "optix.h"
 
@@ -101,6 +102,16 @@ __device__ __forceinline__ float3 GetEmissive(uint32 material_idx, float2 uv)
 	}
 }
 
+__device__ __forceinline__ float3 SampleDirectLight(float3 ray_origin, float3 ray_direction, HitRecord const& hit_record, uint32 seed)
+{
+	float3 Ld = make_float3(0.0f, 0.0f, 0.0f);
+	float3 Li = make_float3(0.0f, 0.0f, 0.0f);
+	float3 scatter_position = hit_record.P + hit_record.N * M_EPSILON;
+
+	uint32 light_index = rnd(seed) * params.light_count;
+	LightGPU light = params.lights[light_index];
+}
+
 extern "C" 
 __global__ void RG_NAME(rg)()
 {
@@ -118,15 +129,14 @@ __global__ void RG_NAME(rg)()
 		float3 ray_origin = eye;
 		float3 ray_direction = GetRayDirection(pixel, screen, seed);
 
-
-		HitRecord hit_info{};
-		hit_info.depth = 0;
-		uint32 p0 = PackPointer0(&hit_info), p1 = PackPointer1(&hit_info);
+		HitRecord hit_record{};
+		hit_record.depth = 0;
+		uint32 p0 = PackPointer0(&hit_record), p1 = PackPointer1(&hit_record);
 		//							   params.max_depth
 		for (uint32 depth = 0; depth < 1; ++depth)
 		{
 			Trace(scene, ray_origin, ray_direction, M_EPSILON, M_INF, p0, p1);
-			if (!hit_info.hit)
+			if (!hit_record.hit)
 			{
 				float3 const& dir = ray_direction;
 				float u = (1.f + atan2(dir.x, -dir.z) * M_INV_PI) * 0.5f;
@@ -145,15 +155,17 @@ __global__ void RG_NAME(rg)()
 
 			if (depth == 0)
 			{
-				float3 emissive = GetEmissive(hit_info.material_idx, hit_info.uv);
+				float3 emissive = GetEmissive(hit_record.material_idx, hit_record.uv);
 				radiance += emissive * throughput;
 			}
 
+			//radiance += SampleDirectLight(ray_origin, ray_direction, hit_record, seed) * throughput;
+
 			//temporary
-			MaterialGPU material = params.materials[hit_info.material_idx];
+			MaterialGPU material = params.materials[hit_record.material_idx];
 			if (material.diffuse_tex_id >= 0)
 			{
-				float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], hit_info.uv.x, hit_info.uv.y);
+				float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], hit_record.uv.x, hit_record.uv.y);
 				radiance += material.base_color * make_float3(sampled.x, sampled.y, sampled.z);
 			}
 			else
@@ -161,13 +173,13 @@ __global__ void RG_NAME(rg)()
 				radiance += material.base_color;
 			}
 			LightGPU light = params.lights[0];
-			if (TraceOcclusion(params.traversable, hit_info.P + M_EPSILON * hit_info.N, -light.direction, 0.001f, 100000.0f))
+			if (TraceOcclusion(params.traversable, hit_record.P + M_EPSILON * hit_record.N, -light.direction, 0.001f, 100000.0f))
 			{
 				radiance = make_float3(0.0f);
 			}
 
 			//#todo Next event estimation
-			//radiance += SampleDirectLight(ray, hit_info) * throughput;
+			//radiance += SampleDirectLight(ray, hit_record) * throughput;
 
 			//#todo Sample BSDF for color and outgoing direction
 			//scatterSample.f = MaterialSample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
@@ -179,7 +191,7 @@ __global__ void RG_NAME(rg)()
 			 // Move ray origin to hit point and set direction for next bounce
 			//r.direction = scatterSample.L;
 			//r.origin = state.fhp + r.direction * EPS;
-			ray_origin = hit_info.P;
+			ray_origin = hit_record.P;
 			ray_direction = make_float3(0.0f, 1.0f, 0.0f);
 
 			//russian roulette
@@ -266,10 +278,10 @@ __global__ void CH_NAME(ch)()
 	MeshGPU mesh = params.meshes[instance_idx];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 
-	HitRecord* hit_info = GetPayload<HitRecord>();
-	hit_info->hit = true;
-	hit_info->P = vertex.P;
-	hit_info->N = vertex.N;
-	hit_info->uv = vertex.uv;
-	hit_info->material_idx = mesh.material_idx;
+	HitRecord* hit_record = GetPayload<HitRecord>();
+	hit_record->hit = true;
+	hit_record->P = vertex.P;
+	hit_record->N = vertex.N;
+	hit_record->uv = vertex.uv;
+	hit_record->material_idx = mesh.material_idx;
 }
