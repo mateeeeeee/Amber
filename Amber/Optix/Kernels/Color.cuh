@@ -1,7 +1,7 @@
 #pragma once
 #include <vector_types.h>
 #include <vector_functions.h>
-#include "CudaMath.cuh"
+#include "Math.cuh"
 
 //misc utilities
 
