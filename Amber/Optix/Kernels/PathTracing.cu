@@ -1,14 +1,11 @@
 #pragma once
+#include <optix.h>
+#include "Optix/OptixShared.h"
 #include "Random.cuh"
 #include "Color.cuh"
 #include "Sampling.cuh"
-#include "Optix/OptixShared.h"
-#include "optix.h"
-
 
 using namespace amber;
-
-static constexpr uint32 RR_DEPTH = 2;
 
 extern "C" 
 {
@@ -31,7 +28,7 @@ __device__ __forceinline__ T* GetPayload()
 {
     uint32 p0 = optixGetPayload_0(), p1 = optixGetPayload_1();
     const uintptr uptr = (uintptr(p0) << 32) | p1;
-    return reinterpret_cast<T *>(uptr);
+    return reinterpret_cast<T*>(uptr);
 }
 
 template <typename... Args>
@@ -195,7 +192,7 @@ __global__ void RG_NAME(rg)()
 			ray_direction = make_float3(0.0f, 1.0f, 0.0f);
 
 			//russian roulette
-			if (depth >= RR_DEPTH)
+			if (depth >= 2)
 			{
 				float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
 				if (rnd(seed) > q) break;
@@ -272,10 +269,7 @@ __global__ void AH_NAME(ah)()
 extern "C" 
 __global__ void CH_NAME(ch)()
 {
-	uint32 instance_idx = optixGetInstanceIndex();
-	uint32 primitive_idx = optixGetPrimitiveIndex();
-
-	MeshGPU mesh = params.meshes[instance_idx];
+	MeshGPU mesh = params.meshes[optixGetInstanceIndex()];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 
 	HitRecord* hit_record = GetPayload<HitRecord>();
