@@ -245,6 +245,7 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 	float2 uv1 = mesh_uvs[i1];
 	float2 uv2 = mesh_uvs[i2];
 	vertex.uv = Interpolate(uv0, uv1, uv2, barycentrics);
+	vertex.uv.y = 1.0f - vertex.uv.y;
 	return vertex;
 }
 

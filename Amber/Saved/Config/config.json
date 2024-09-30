@@ -1,8 +1,8 @@
 {
   "scene": 
    {
-		"scene file" : "obj/lost_empire/lost_empire.obj",
-		"scene scale" : 0.1,
+		"scene file" : "Sponza/Sponza.gltf",
+		"scene scale" : 6,
 		"scene environment" : "environment/barcelona.hdr",
 		"width" : 1080,
 		"height" : 720,

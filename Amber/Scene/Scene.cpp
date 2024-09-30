@@ -1,9 +1,11 @@
+#define CGLTF_IMPLEMENTATION
 #include <unordered_map>
 #include <algorithm>
 #include "Scene.h"
 #include "Core/Logger.h"
 #include "pbrtParser/Scene.h"
 #include "tinyobjloader/tiny_obj_loader.h"
+#include "cgltf/cgltf.h"
 
 
 namespace amber
@@ -349,7 +351,7 @@ namespace amber
 				material.specular_transmission = 0.0f;
 				if (!m.diffuse_texname.empty()) 
 				{
-					if (texture_ids.find(m.diffuse_texname) == texture_ids.end())
+					if (!texture_ids.contains(m.diffuse_texname))
 					{
 						texture_ids[m.diffuse_texname] = obj_scene->textures.size();
 						std::string texture_path = obj_base_dir + "/" + m.diffuse_texname;
@@ -366,8 +368,170 @@ namespace amber
 
 		std::unique_ptr<Scene> LoadGltfScene(std::string_view scene_file, float scale)
 		{
-			AMBER_ASSERT(false);
-			return nullptr;
+			cgltf_options options{};
+			cgltf_data* gltf_data = nullptr;
+			
+			cgltf_result result = cgltf_parse_file(&options, scene_file.data(), &gltf_data);
+			if (result != cgltf_result_success)
+			{
+				AMBER_WARN("GLTF - Failed to load '%s'", scene_file.data());
+				return nullptr;
+			}
+			result = cgltf_load_buffers(&options, gltf_data, scene_file.data());
+			if (result != cgltf_result_success)
+			{
+				AMBER_WARN("GLTF - Failed to load buffers '%s'", scene_file.data());
+				return nullptr;
+			}
+
+			std::string gltf_base_dir = std::string(scene_file.substr(0, scene_file.rfind('/')));
+			std::unique_ptr<Scene> gltf_scene = std::make_unique<Scene>();
+
+			std::unordered_map<std::string, int32> texture_ids;
+			gltf_scene->materials.reserve(gltf_data->materials_count);
+			for (uint32 i = 0; i < gltf_data->materials_count; ++i)
+			{
+				cgltf_material const& gltf_material = gltf_data->materials[i];
+				Material& material = gltf_scene->materials.emplace_back();
+
+				cgltf_pbr_metallic_roughness pbr_metallic_roughness = gltf_material.pbr_metallic_roughness;
+				material.base_color.x = (float)pbr_metallic_roughness.base_color_factor[0];
+				material.base_color.y = (float)pbr_metallic_roughness.base_color_factor[1];
+				material.base_color.z = (float)pbr_metallic_roughness.base_color_factor[2];
+				material.metallic = (float)pbr_metallic_roughness.metallic_factor;
+				material.roughness = (float)pbr_metallic_roughness.roughness_factor;
+				material.emissive_color.x = (float)gltf_material.emissive_factor[0];
+				material.emissive_color.y = (float)gltf_material.emissive_factor[1];
+				material.emissive_color.z = (float)gltf_material.emissive_factor[2];
+				material.alpha_cutoff = (float)gltf_material.alpha_cutoff;
+
+				if (cgltf_texture* texture = pbr_metallic_roughness.base_color_texture.texture)
+				{
+					cgltf_image* image = texture->image;
+					if (!texture_ids.contains(image->uri))
+					{
+						texture_ids[image->uri] = gltf_scene->textures.size();
+						std::string texture_path = gltf_base_dir + "/" + image->uri;
+						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
+					}
+					const int32 id = texture_ids[image->uri];
+					material.diffuse_tex_id = id;
+				}
+
+				if (cgltf_texture* texture = pbr_metallic_roughness.metallic_roughness_texture.texture)
+				{
+					cgltf_image* image = texture->image;
+					if (!texture_ids.contains(image->uri))
+					{
+						texture_ids[image->uri] = gltf_scene->textures.size();
+						std::string texture_path = gltf_base_dir + "/" + image->uri;
+						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
+					}
+					const int32 id = texture_ids[image->uri];
+					material.metallic_roughness_tex_id = id;
+				}
+
+				if (cgltf_texture* texture = gltf_material.normal_texture.texture)
+				{
+					cgltf_image* image = texture->image;
+					if (!texture_ids.contains(image->uri))
+					{
+						texture_ids[image->uri] = gltf_scene->textures.size();
+						std::string texture_path = gltf_base_dir + "/" + image->uri;
+						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
+					}
+					const int32 id = texture_ids[image->uri];
+					material.normal_tex_id = id;
+				}
+
+				if (cgltf_texture* texture = gltf_material.emissive_texture.texture)
+				{
+					cgltf_image* image = texture->image;
+					if (!texture_ids.contains(image->uri))
+					{
+						texture_ids[image->uri] = gltf_scene->textures.size();
+						std::string texture_path = gltf_base_dir + "/" + image->uri;
+						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
+					}
+					const int32 id = texture_ids[image->uri];
+					material.emissive_tex_id = id;
+				}
+
+			}
+
+			std::unordered_map<cgltf_mesh const*, std::vector<int32>> mesh_primitives_map; 
+			int32 primitive_count = 0;
+
+			for (uint32 i = 0; i < gltf_data->meshes_count; ++i)
+			{
+				cgltf_mesh const& gltf_mesh = gltf_data->meshes[i];
+				std::vector<int32>& primitives = mesh_primitives_map[&gltf_mesh];
+
+				Mesh& mesh = gltf_scene->meshes.emplace_back();
+				for (uint32 j = 0; j < gltf_mesh.primitives_count; ++j)
+				{
+					auto const& gltf_primitive = gltf_mesh.primitives[j];
+					AMBER_ASSERT(gltf_primitive.indices->count >= 0);
+
+					Geometry& geometry = mesh.geometries.emplace_back();
+					mesh.material_ids.push_back((int32)(gltf_primitive.material - gltf_data->materials));
+
+					geometry.indices.reserve(gltf_primitive.indices->count / 3);
+
+					uint32 triangle_cw[] = { 0, 1, 2 };
+					uint32 triangle_ccw[] = { 0, 2, 1 };
+					uint32* order = triangle_ccw;
+					for (uint64 i = 0; i < gltf_primitive.indices->count; i += 3)
+					{
+						uint32 i0 = (uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[0]);
+						uint32 i1 = (uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[1]);
+						uint32 i2 = (uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[2]);
+						geometry.indices.emplace_back(i0, i1, i2);
+					}
+
+					for (uint32 k = 0; k < gltf_primitive.attributes_count; ++k)
+					{
+						cgltf_attribute const& gltf_attribute = gltf_primitive.attributes[k];
+						std::string const& attr_name = gltf_attribute.name;
+
+						auto ReadAttributeData = [&]<typename T>(std::vector<T>&stream, const char* stream_name)
+						{
+							if (!attr_name.compare(stream_name))
+							{
+								stream.resize(gltf_attribute.data->count);
+								for (uint64 i = 0; i < gltf_attribute.data->count; ++i)
+								{
+									cgltf_accessor_read_float(gltf_attribute.data, i, &stream[i].x, sizeof(T) / sizeof(float));
+								}
+							}
+						};
+						ReadAttributeData(geometry.vertices, "POSITION");
+						ReadAttributeData(geometry.normals, "NORMAL");
+						ReadAttributeData(geometry.uvs, "TEXCOORD_0");
+					}
+					primitives.push_back(primitive_count++);
+				}
+			}
+
+			for (uint64 i = 0; i < gltf_data->nodes_count; ++i)
+			{
+				cgltf_node const& gltf_node = gltf_data->nodes[i];
+
+				if (gltf_node.mesh)
+				{
+					Matrix local_to_world;
+					cgltf_node_transform_world(&gltf_node, &local_to_world.m[0][0]);
+
+					for (int32 primitive : mesh_primitives_map[gltf_node.mesh])
+					{
+						Instance& instance = gltf_scene->instances.emplace_back();
+						instance.mesh_id = primitive;
+						instance.transform = local_to_world * Matrix::CreateScale(scale);
+					}
+				}
+			}
+
+			return gltf_scene;
 		}
 	}
 
