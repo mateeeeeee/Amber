@@ -98,8 +98,7 @@ set(EXTERNAL_FILES
     External/tinyobjloader/tiny_obj_loader.h
     External/tinyobjloader/tiny_obj_loader.cc
 
-    External/tinygltf/tiny_gltf.h
-    External/tinygltf/tiny_gltf.cc
+    External/cgltf/cgltf.h
 )
 
 set(OPTIX_BACKEND_FILES
