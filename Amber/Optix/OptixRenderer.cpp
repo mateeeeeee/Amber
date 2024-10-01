@@ -267,6 +267,7 @@ namespace amber
 				optix_material.clearcoat_gloss = m.clearcoat_gloss;
 				optix_material.ior = m.ior;
 				optix_material.specular_transmission = m.specular_transmission;
+				optix_material.alpha_cutoff = m.alpha_cutoff;
 			}
 			material_list_buffer = std::make_unique<Buffer>(materials.size() * sizeof(MaterialGPU));
 			material_list_buffer->Update(materials.data(), material_list_buffer->GetSize());
@@ -287,7 +288,7 @@ namespace amber
 				LightGPU& optix_light = lights.emplace_back();
 				optix_light.type = LightType_Directional;
 				optix_light.color = make_float3(1.0f, 0.0f, 0.0f);
-				optix_light.direction = make_float3(0.0f, -1.0f, 0.5f);
+				optix_light.direction = make_float3(0.0f, -1.0f, 0.1f);
 				optix_light.position = make_float3(-1000.0f * optix_light.direction.x, -1000.0f * optix_light.direction.y, -1000.0f * optix_light.direction.z);
 			}
 

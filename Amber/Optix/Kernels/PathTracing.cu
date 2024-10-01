@@ -170,7 +170,7 @@ __global__ void RG_NAME(rg)()
 				radiance += material.base_color;
 			}
 			LightGPU light = params.lights[0];
-			if (TraceOcclusion(params.traversable, hit_record.P + M_EPSILON * hit_record.N, -light.direction, 0.001f, 100000.0f))
+			if (TraceOcclusion(params.traversable, hit_record.P + M_EPSILON * hit_record.N, -light.direction, 0.001f, 1e9f))
 			{
 				radiance = make_float3(0.0f);
 			}
@@ -234,6 +234,11 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 	float3 pos2 = mesh_vertices[i2];
 	vertex.P = Interpolate(pos0, pos1, pos2, barycentrics);
 
+	// Compute geometric normal in world space using the transformed vertices
+	//float3 edge1 = world_v1 - world_v0;
+	//float3 edge2 = world_v2 - world_v0;
+	//float3 geometric_normal = normalize(cross(edge1, edge2));
+
 	float3* mesh_normals = params.normals + mesh.normals_offset;
 	float3 nor0 = mesh_normals[i0];
 	float3 nor1 = mesh_normals[i1];
@@ -262,10 +267,28 @@ __global__ void AH_NAME(ah)()
 	if (material.diffuse_tex_id >= 0)
 	{
 		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-		if(sampled.w < 0.5f) optixIgnoreIntersection();
+		if(sampled.w < material.alpha_cutoff) optixIgnoreIntersection();
 	}
 }
 
+
+__device__ float3 TransformVertex(float const matrix[12], float3 const& position)
+{
+	float3 transformed_position;
+	transformed_position.x = matrix[0] * position.x + matrix[1] * position.y + matrix[2] * position.z + matrix[3];
+	transformed_position.y = matrix[4] * position.x + matrix[5] * position.y + matrix[6] * position.z + matrix[7];
+	transformed_position.z = matrix[8] * position.x + matrix[9] * position.y + matrix[10] * position.z + matrix[11];
+	return transformed_position;
+}
+
+__device__ float3 TransformNormal(float const matrix[12], float3 const& normal)
+{
+	float3 transformed_normal;
+	transformed_normal.x = matrix[0] * normal.x + matrix[1] * normal.y + matrix[2] * normal.z;
+	transformed_normal.y = matrix[4] * normal.x + matrix[5] * normal.y + matrix[6] * normal.z;
+	transformed_normal.z = matrix[8] * normal.x + matrix[9] * normal.y + matrix[10] * normal.z;
+	return normalize(transformed_normal);
+}
 
 extern "C" 
 __global__ void CH_NAME(ch)()
@@ -273,10 +296,13 @@ __global__ void CH_NAME(ch)()
 	MeshGPU mesh = params.meshes[optixGetInstanceIndex()];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 
+	float object_to_world_transform[12];
+	optixGetObjectToWorldTransformMatrix(object_to_world_transform);
+
 	HitRecord* hit_record = GetPayload<HitRecord>();
 	hit_record->hit = true;
-	hit_record->P = vertex.P;
-	hit_record->N = vertex.N;
+	hit_record->P = TransformVertex(object_to_world_transform, vertex.P);
+	hit_record->N = TransformNormal(object_to_world_transform, vertex.N);
 	hit_record->uv = vertex.uv;
 	hit_record->material_idx = mesh.material_idx;
 }

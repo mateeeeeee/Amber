@@ -26,6 +26,7 @@ namespace amber
 		float roughness = 1.0f;
 		float specular_tint = 0.0f;
 		float anisotropy = 0.0f;
+		float alpha_cutoff = 0.5f;
 
 		float sheen = 0.0f;
 		float sheen_tint = 0.0f;
