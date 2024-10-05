@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #if defined(__CUDACC__)
 
 #include <cmath>
@@ -14,6 +13,11 @@ static constexpr float M_HALF_PI = 1.57079632679489661923f;
 static constexpr float M_INV_PI = 0.318309886183790671538f;
 static constexpr float M_TWO_PI = 2.0f * M_PI;          // 2π
 
+
+__forceinline__ __device__ float lerp(const float a, const float b, const float t)
+{
+	return a + t * (b - a);
+}
 
 /** clamp */
 __forceinline__ __device__ float clamp(const float f, const float a, const float b)
@@ -231,13 +235,13 @@ __forceinline__ __device__ float2 expf(const float2& v)
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ float getByIndex(const float2& v, int i)
+__forceinline__ __device__ float get_by_index(const float2& v, int i)
 {
 	return ((float*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(float2& v, int i, float x)
+__forceinline__ __device__ void set_by_index(float2& v, int i, float x)
 {
 	((float*)(&v))[i] = x;
 }
@@ -453,6 +457,16 @@ __forceinline__ __device__ float3 reflect(const float3& i, const float3& n)
 	return i - 2.0f * n * dot(n, i);
 }
 
+__forceinline__ __device__ float3 refract_ray(const float3& i, const float3& n, float eta) {
+	float n_dot_i = dot(n, i);
+	float k = 1.f - eta * eta * (1.f - n_dot_i * n_dot_i);
+	if (k < 0.f) {
+		return make_float3(0.f);
+	}
+	return eta * i - (eta * n_dot_i + sqrt(k)) * n;
+}
+
+
 /** Faceforward
 * Returns N if dot(i, nref) > 0; else -N;
 * Typical usage is N = faceforward(N, -ray.dir, N);
@@ -469,13 +483,13 @@ __forceinline__ __device__ float3 expf(const float3& v)
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ float getByIndex(const float3& v, int i)
+__forceinline__ __device__ float get_by_index(const float3& v, int i)
 {
 	return ((float*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(float3& v, int i, float x)
+__forceinline__ __device__ void set_by_index(float3& v, int i, float x)
 {
 	((float*)(&v))[i] = x;
 }
@@ -702,13 +716,13 @@ __forceinline__ __device__ float4 expf(const float4& v)
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ float getByIndex(const float4& v, int i)
+__forceinline__ __device__ float get_by_index(const float4& v, int i)
 {
 	return ((float*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(float4& v, int i, float x)
+__forceinline__ __device__ void set_by_index(float4& v, int i, float x)
 {
 	((float*)(&v))[i] = x;
 }
@@ -724,13 +738,13 @@ __forceinline__ __device__ int clamp(const int f, const int a, const int b)
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ int getByIndex(const int1& v, int i)
+__forceinline__ __device__ int get_by_index(const int1& v, int i)
 {
 	return ((int*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(int1& v, int i, int x)
+__forceinline__ __device__ void set_by_index(int1& v, int i, int x)
 {
 	((int*)(&v))[i] = x;
 }
@@ -850,13 +864,13 @@ __forceinline__ __device__ bool operator!=(const int2& a, const int2& b)
 /** @} */
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ int getByIndex(const int2& v, int i)
+__forceinline__ __device__ int get_by_index(const int2& v, int i)
 {
 	return ((int*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(int2& v, int i, int x)
+__forceinline__ __device__ void set_by_index(int2& v, int i, int x)
 {
 	((int*)(&v))[i] = x;
 }
@@ -994,13 +1008,13 @@ __forceinline__ __device__ bool operator!=(const int3& a, const int3& b)
 /** @} */
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ int getByIndex(const int3& v, int i)
+__forceinline__ __device__ int get_by_index(const int3& v, int i)
 {
 	return ((int*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(int3& v, int i, int x)
+__forceinline__ __device__ void set_by_index(int3& v, int i, int x)
 {
 	((int*)(&v))[i] = x;
 }
@@ -1138,13 +1152,13 @@ __forceinline__ __device__ bool operator!=(const int4& a, const int4& b)
 /** @} */
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ int getByIndex(const int4& v, int i)
+__forceinline__ __device__ int get_by_index(const int4& v, int i)
 {
 	return ((int*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(int4& v, int i, int x)
+__forceinline__ __device__ void set_by_index(int4& v, int i, int x)
 {
 	((int*)(&v))[i] = x;
 }
@@ -1160,13 +1174,13 @@ __forceinline__ __device__ unsigned int clamp(const unsigned int f, const unsign
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ unsigned int getByIndex(const uint1& v, unsigned int i)
+__forceinline__ __device__ unsigned int get_by_index(const uint1& v, unsigned int i)
 {
 	return ((unsigned int*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(uint1& v, int i, unsigned int x)
+__forceinline__ __device__ void set_by_index(uint1& v, int i, unsigned int x)
 {
 	((unsigned int*)(&v))[i] = x;
 }
@@ -1280,13 +1294,13 @@ __forceinline__ __device__ bool operator!=(const uint2& a, const uint2& b)
 /** @} */
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ unsigned int getByIndex(const uint2& v, unsigned int i)
+__forceinline__ __device__ unsigned int get_by_index(const uint2& v, unsigned int i)
 {
 	return ((unsigned int*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(uint2& v, int i, unsigned int x)
+__forceinline__ __device__ void set_by_index(uint2& v, int i, unsigned int x)
 {
 	((unsigned int*)(&v))[i] = x;
 }
@@ -1419,14 +1433,14 @@ __forceinline__ __device__ bool operator!=(const uint3& a, const uint3& b)
 
 /** If used on the device, this could place the the 'v' in local memory
 */
-__forceinline__ __device__ unsigned int getByIndex(const uint3& v, unsigned int i)
+__forceinline__ __device__ unsigned int get_by_index(const uint3& v, unsigned int i)
 {
 	return ((unsigned int*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory
 */
-__forceinline__ __device__ void setByIndex(uint3& v, int i, unsigned int x)
+__forceinline__ __device__ void set_by_index(uint3& v, int i, unsigned int x)
 {
 	((unsigned int*)(&v))[i] = x;
 }
@@ -1565,14 +1579,14 @@ __forceinline__ __device__ bool operator!=(const uint4& a, const uint4& b)
 
 /** If used on the device, this could place the the 'v' in local memory
 */
-__forceinline__ __device__ unsigned int getByIndex(const uint4& v, unsigned int i)
+__forceinline__ __device__ unsigned int get_by_index(const uint4& v, unsigned int i)
 {
 	return ((unsigned int*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory
 */
-__forceinline__ __device__ void setByIndex(uint4& v, int i, unsigned int x)
+__forceinline__ __device__ void set_by_index(uint4& v, int i, unsigned int x)
 {
 	((unsigned int*)(&v))[i] = x;
 }
@@ -1587,13 +1601,13 @@ __forceinline__ __device__ long long clamp(const long long f, const long long a,
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ long long getByIndex(const longlong1& v, int i)
+__forceinline__ __device__ long long get_by_index(const longlong1& v, int i)
 {
 	return ((long long*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(longlong1& v, int i, long long x)
+__forceinline__ __device__ void set_by_index(longlong1& v, int i, long long x)
 {
 	((long long*)(&v))[i] = x;
 }
@@ -1713,13 +1727,13 @@ __forceinline__ __device__ bool operator!=(const longlong2& a, const longlong2& 
 /** @} */
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ long long getByIndex(const longlong2& v, int i)
+__forceinline__ __device__ long long get_by_index(const longlong2& v, int i)
 {
 	return ((long long*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(longlong2& v, int i, long long x)
+__forceinline__ __device__ void set_by_index(longlong2& v, int i, long long x)
 {
 	((long long*)(&v))[i] = x;
 }
@@ -1857,13 +1871,13 @@ __forceinline__ __device__ bool operator!=(const longlong3& a, const longlong3& 
 /** @} */
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ long long getByIndex(const longlong3& v, int i)
+__forceinline__ __device__ long long get_by_index(const longlong3& v, int i)
 {
 	return ((long long*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(longlong3& v, int i, int x)
+__forceinline__ __device__ void set_by_index(longlong3& v, int i, int x)
 {
 	((long long*)(&v))[i] = x;
 }
@@ -2001,13 +2015,13 @@ __forceinline__ __device__ bool operator!=(const longlong4& a, const longlong4& 
 /** @} */
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ long long getByIndex(const longlong4& v, int i)
+__forceinline__ __device__ long long get_by_index(const longlong4& v, int i)
 {
 	return ((long long*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(longlong4& v, int i, long long x)
+__forceinline__ __device__ void set_by_index(longlong4& v, int i, long long x)
 {
 	((long long*)(&v))[i] = x;
 }
@@ -2022,13 +2036,13 @@ __forceinline__ __device__ unsigned long long clamp(const unsigned long long f, 
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ unsigned long long getByIndex(const ulonglong1& v, unsigned int i)
+__forceinline__ __device__ unsigned long long get_by_index(const ulonglong1& v, unsigned int i)
 {
 	return ((unsigned long long*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(ulonglong1& v, int i, unsigned long long x)
+__forceinline__ __device__ void set_by_index(ulonglong1& v, int i, unsigned long long x)
 {
 	((unsigned long long*)(&v))[i] = x;
 }
@@ -2142,13 +2156,13 @@ __forceinline__ __device__ bool operator!=(const ulonglong2& a, const ulonglong2
 /** @} */
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ unsigned long long getByIndex(const ulonglong2& v, unsigned int i)
+__forceinline__ __device__ unsigned long long get_by_index(const ulonglong2& v, unsigned int i)
 {
 	return ((unsigned long long*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory */
-__forceinline__ __device__ void setByIndex(ulonglong2& v, int i, unsigned long long x)
+__forceinline__ __device__ void set_by_index(ulonglong2& v, int i, unsigned long long x)
 {
 	((unsigned long long*)(&v))[i] = x;
 }
@@ -2281,14 +2295,14 @@ __forceinline__ __device__ bool operator!=(const ulonglong3& a, const ulonglong3
 
 /** If used on the device, this could place the the 'v' in local memory
 */
-__forceinline__ __device__ unsigned long long getByIndex(const ulonglong3& v, unsigned int i)
+__forceinline__ __device__ unsigned long long get_by_index(const ulonglong3& v, unsigned int i)
 {
 	return ((unsigned long long*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory
 */
-__forceinline__ __device__ void setByIndex(ulonglong3& v, int i, unsigned long long x)
+__forceinline__ __device__ void set_by_index(ulonglong3& v, int i, unsigned long long x)
 {
 	((unsigned long long*)(&v))[i] = x;
 }
@@ -2427,14 +2441,14 @@ __forceinline__ __device__ bool operator!=(const ulonglong4& a, const ulonglong4
 
 /** If used on the device, this could place the the 'v' in local memory
 */
-__forceinline__ __device__ unsigned long long getByIndex(const ulonglong4& v, unsigned int i)
+__forceinline__ __device__ unsigned long long get_by_index(const ulonglong4& v, unsigned int i)
 {
 	return ((unsigned long long*)(&v))[i];
 }
 
 /** If used on the device, this could place the the 'v' in local memory
 */
-__forceinline__ __device__ void setByIndex(ulonglong4& v, int i, unsigned long long x)
+__forceinline__ __device__ void set_by_index(ulonglong4& v, int i, unsigned long long x)
 {
 	((unsigned long long*)(&v))[i] = x;
 }

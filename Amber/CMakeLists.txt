@@ -117,6 +117,7 @@ set(OPTIX_BACKEND_FILES
     Optix/Kernels/Random.cuh
     Optix/Kernels/Color.cuh
     Optix/Kernels/Sampling.cuh
+    Optix/Kernels/Disney.cuh
     Optix/Kernels/PathTracing.cu
  )
 
