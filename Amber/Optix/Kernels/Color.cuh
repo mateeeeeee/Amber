@@ -1,10 +1,11 @@
 #pragma once
+
+#if defined(__CUDACC__)
+
 #include <vector_types.h>
 #include <vector_functions.h>
 #include "Math.cuh"
 
-
-#if defined(__CUDACC__)
 
 __device__ __forceinline__ float3 ToSRGB(float3 const& color)
 {

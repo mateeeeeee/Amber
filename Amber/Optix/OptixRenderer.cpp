@@ -254,8 +254,10 @@ namespace amber
 				MaterialGPU& optix_material = materials.emplace_back();
 				optix_material.base_color = make_float3(m.base_color.x, m.base_color.y, m.base_color.z);
 				optix_material.diffuse_tex_id = m.diffuse_tex_id;
+				optix_material.normal_tex_id = m.normal_tex_id;
 				optix_material.emissive_color = make_float3(m.emissive_color.x, m.emissive_color.y, m.emissive_color.z);
 				optix_material.emissive_tex_id = m.emissive_tex_id;
+				optix_material.metallic_roughness_tex_id = m.metallic_roughness_tex_id;
 				optix_material.metallic = m.metallic;
 				optix_material.specular = m.specular;
 				optix_material.roughness = m.roughness;
@@ -287,7 +289,7 @@ namespace amber
 			{
 				LightGPU& optix_light = lights.emplace_back();
 				optix_light.type = LightType_Directional;
-				optix_light.color = make_float3(1.0f, 0.0f, 0.0f);
+				optix_light.color = make_float3(1.0f, 1.0f, 1.0f);
 				optix_light.direction = make_float3(0.0f, -1.0f, 0.1f);
 				optix_light.position = make_float3(-1000.0f * optix_light.direction.x, -1000.0f * optix_light.direction.y, -1000.0f * optix_light.direction.z);
 			}

@@ -1,5 +1,4 @@
 #pragma once
-
 #if defined(__CUDACC__)
 
 template<unsigned int N>

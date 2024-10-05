@@ -17,10 +17,12 @@ namespace amber
 	{
 		float3 base_color = make_float3(0.9f, 0.9f, 0.9f);
 		int32 diffuse_tex_id = -1;
+		int32 normal_tex_id = -1;
 
 		float3 emissive_color = make_float3(0.0f, 0.0f, 0.0f);
 		int32 emissive_tex_id = -1;
 
+		int32 metallic_roughness_tex_id = -1;
 		float metallic = 0.0f;
 		float specular = 0.0f;
 		float roughness = 1.0f;

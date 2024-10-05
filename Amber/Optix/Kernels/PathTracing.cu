@@ -1,9 +1,13 @@
 #pragma once
+
+#if defined(__CUDACC__)
+
 #include <optix.h>
 #include "Optix/OptixShared.h"
 #include "Random.cuh"
 #include "Color.cuh"
 #include "Sampling.cuh"
+#include "Disney.cuh"
 
 using namespace amber;
 
@@ -70,6 +74,63 @@ __device__ __forceinline__ bool TraceOcclusion(
 	return optixHitObjectIsHit();
 }
 
+__device__ __forceinline__ void UnpackMaterial(DisneyMaterial& mat_params, uint32 id, float2 uv)
+{
+	MaterialGPU material = params.materials[id];
+	if (material.diffuse_tex_id >= 0)
+	{
+		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], uv.x, uv.y);
+		mat_params.base_color = material.base_color * make_float3(sampled.x, sampled.y, sampled.z);
+	}
+	else
+	{
+		mat_params.base_color = material.base_color;
+	}
+
+	if (material.emissive_tex_id >= 0)
+	{
+		float4 sampled = tex2D<float4>(params.textures[material.emissive_tex_id], uv.x, uv.y);
+		mat_params.emissive = material.emissive_color * make_float3(sampled.x, sampled.y, sampled.z);
+	}
+	else
+	{
+		mat_params.emissive = material.emissive_color;
+	}
+
+	if (material.metallic_roughness_tex_id >= 0)
+	{
+		float4 sampled = tex2D<float4>(params.textures[material.metallic_roughness_tex_id], uv.x, uv.y);
+		mat_params.ao = sampled.x;
+		mat_params.roughness = sampled.y * material.roughness;
+		mat_params.metallic = sampled.z * material.metallic;
+	}
+	else
+	{
+		mat_params.ao = 1.0f;
+		mat_params.roughness = material.roughness;
+		mat_params.metallic = material.metallic;
+	}
+
+	if (material.normal_tex_id >= 0)
+	{
+		float4 sampled = tex2D<float4>(params.textures[material.normal_tex_id], uv.x, uv.y);
+		mat_params.normal = make_float3(sampled.x, sampled.y, sampled.z);
+	}
+	else
+	{
+		mat_params.normal = make_float3(0.0f, 0.0f, 1.0f);
+	}
+
+	mat_params.specular_tint = material.specular_tint;
+	mat_params.anisotropy = material.anisotropy;
+	mat_params.sheen = material.sheen;
+	mat_params.sheen_tint = material.sheen_tint;
+	mat_params.clearcoat = material.clearcoat;
+	mat_params.clearcoat_gloss = material.clearcoat_gloss;
+	mat_params.ior = material.ior;
+	mat_params.specular_transmission = material.specular_transmission;
+}
+
 __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, unsigned int seed)
 {
 	float3 const  U = params.cam_u;
@@ -85,28 +146,42 @@ __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, uns
 	return ray_direction;
 }
 
-__device__ __forceinline__ float3 GetEmissive(uint32 material_idx, float2 uv)
+__device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_params, float3 const& hit_point, float3 const& w_o, OrthonormalBasis const& ort, uint32& seed)
 {
-	MaterialGPU material = params.materials[material_idx];
-	if (material.emissive_tex_id >= 0)
-	{
-		float4 sampled = tex2D<float4>(params.textures[material.emissive_tex_id], uv.x, uv.y);
-		return material.emissive_color * make_float3(sampled.x, sampled.y, sampled.z);
-	}
-	else
-	{
-		return material.emissive_color;
-	}
-}
-
-__device__ __forceinline__ float3 SampleDirectLight(float3 ray_origin, float3 ray_direction, HitRecord const& hit_record, uint32 seed)
-{
-	float3 Ld = make_float3(0.0f, 0.0f, 0.0f);
-	float3 Li = make_float3(0.0f, 0.0f, 0.0f);
-	float3 scatter_position = hit_record.P + hit_record.N * M_EPSILON;
-
 	uint32 light_index = rnd(seed) * params.light_count;
 	LightGPU light = params.lights[light_index];
+
+	float3 const& v_x = ort.tangent;
+	float3 const& v_y = ort.binormal;
+	float3 const& v_z = ort.normal;
+
+	float3 radiance = make_float3(0.0f);
+	if (light.type == LightType_Directional)
+	{
+		float3 light_dir = normalize(light.direction);
+		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, -light_dir, M_EPSILON, M_INF))
+		{
+			float3 bsdf = disney_brdf(mat_params, v_z, w_o, -light_dir, v_x, v_y);
+			radiance = bsdf * light.color * abs(dot(-light_dir, v_z));
+		}
+
+		float3 w_i;
+		float bsdf_pdf;
+		float3 bsdf = sample_disney_brdf(mat_params, v_z, w_o, v_x, v_y, seed, w_i, bsdf_pdf);
+
+		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
+		{
+			float light_pdf = 1.0f; // Since a directional light has a fixed direction, we consider the light_pdf to be a constant
+			float w = power_heuristic(1.f, bsdf_pdf, 1.f, light_pdf);
+
+			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, w_i, M_EPSILON, M_INF))
+			{
+				float3 bsdf = disney_brdf(mat_params, v_z, w_o, -light_dir, v_x, v_y);
+				radiance += bsdf * light.color * abs(dot(w_i, v_z)) * w / bsdf_pdf;
+			}
+		}
+	}
+	return radiance;
 }
 
 extern "C" 
@@ -129,8 +204,8 @@ __global__ void RG_NAME(rg)()
 		HitRecord hit_record{};
 		hit_record.depth = 0;
 		uint32 p0 = PackPointer0(&hit_record), p1 = PackPointer1(&hit_record);
-		//							   params.max_depth
-		for (uint32 depth = 0; depth < 1; ++depth)
+
+		for (uint32 depth = 0; depth < 2; ++depth)
 		{
 			Trace(scene, ray_origin, ray_direction, M_EPSILON, M_INF, p0, p1);
 			if (!hit_record.hit)
@@ -150,51 +225,45 @@ __global__ void RG_NAME(rg)()
 				break;
 			}
 
+			DisneyMaterial material{};
+			UnpackMaterial(material, hit_record.material_idx, hit_record.uv);
+
 			if (depth == 0)
 			{
-				float3 emissive = GetEmissive(hit_record.material_idx, hit_record.uv);
+				float3 emissive = material.emissive;
 				radiance += emissive * throughput;
 			}
 
-			//radiance += SampleDirectLight(ray_origin, ray_direction, hit_record, seed) * throughput;
-
-			//temporary
-			MaterialGPU material = params.materials[hit_record.material_idx];
-			if (material.diffuse_tex_id >= 0)
+			float3 w_o = -ray_direction;
+			float3 v_x, v_y;
+			float3 v_z = hit_record.N;
+			if (material.specular_transmission == 0.0f && dot(w_o, v_z) < 0.0)
 			{
-				float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], hit_record.uv.x, hit_record.uv.y);
-				radiance += material.base_color * make_float3(sampled.x, sampled.y, sampled.z);
+				v_z = -v_z;
 			}
-			else
+			OrthonormalBasis ort(v_z);
+			v_x = ort.tangent;
+			v_y = ort.binormal;
+
+			//radiance += material.base_color;
+			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, seed) * throughput;
+
+			float3 w_i;
+			float pdf;
+			float3 bsdf = sample_disney_brdf(material, v_z, w_o, v_x, v_y, seed, w_i, pdf);
+			if (pdf == 0.0f || length(bsdf) < M_EPSILON)
 			{
-				radiance += material.base_color;
+				break;
 			}
-			LightGPU light = params.lights[0];
-			if (TraceOcclusion(params.traversable, hit_record.P + M_EPSILON * hit_record.N, -light.direction, 0.001f, 1e9f))
-			{
-				radiance = make_float3(0.0f);
-			}
-
-			//#todo Next event estimation
-			//radiance += SampleDirectLight(ray, hit_record) * throughput;
-
-			//#todo Sample BSDF for color and outgoing direction
-			//scatterSample.f = MaterialSample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
-			//if (scatterSample.pdf > 0.0)
-			//	throughput *= scatterSample.f / scatterSample.pdf;
-			//else
-			//	break;
-
-			 // Move ray origin to hit point and set direction for next bounce
-			//r.direction = scatterSample.L;
-			//r.origin = state.fhp + r.direction * EPS;
+			throughput *= bsdf * abs(dot(w_i, v_z)) / pdf;
+			
 			ray_origin = hit_record.P;
-			ray_direction = make_float3(0.0f, 1.0f, 0.0f);
+			ray_direction = w_i;
 
 			//russian roulette
 			if (depth >= 2)
 			{
-				float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
+				float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001f, 0.95f);
 				if (rnd(seed) > q) break;
 				throughput /= q;
 			}
@@ -306,3 +375,5 @@ __global__ void CH_NAME(ch)()
 	hit_record->uv = vertex.uv;
 	hit_record->material_idx = mesh.material_idx;
 }
+
+#endif
