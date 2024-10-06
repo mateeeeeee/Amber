@@ -262,7 +262,7 @@ __device__ float3 disney_diffuse(const DisneyMaterial& mat,
     float fd90 = 0.5f + 2.f * mat.roughness * i_dot_h * i_dot_h;
     float fi = schlick_weight(n_dot_i);
     float fo = schlick_weight(n_dot_o);
-    return mat.base_color * M_EPSILON * lerp(1.f, fd90, fi) * lerp(1.f, fd90, fo);
+    return mat.base_color * M_INV_PI * lerp(1.f, fd90, fi) * lerp(1.f, fd90, fo);
 }
 
 __device__ float3 disney_microfacet_isotropic(const DisneyMaterial& mat,
