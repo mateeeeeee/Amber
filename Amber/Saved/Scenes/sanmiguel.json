@@ -1,0 +1,27 @@
+{
+  "scene": 
+   {
+		"model file" : "SanMiguel/sanmiguel.gltf",
+		"model scale" : 6,
+		"scene environment" : "environment/barcelona.hdr",
+		"width" : 1080,
+		"height" : 720,
+		"max depth" : 4,
+		"samples per pixel" : 1,
+        "camera": 
+		{
+			"position": [
+				13.5,
+				7.5, 
+				3.2
+			],
+			"look_at": [
+				  13.5,
+				  7.5, 
+				  2.2
+			],
+			"fov": 45.0
+		}
+    }
+}
+

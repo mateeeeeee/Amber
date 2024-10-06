@@ -5,81 +5,73 @@ namespace amber
 {
 	static constexpr float speed = 0.1f;
 
+	void Camera::Initialize(Vector3 const& eye, Vector3 const& look_at)
+	{
+		position = eye;
+		Vector3 look_vector = look_at - position;
+		look_vector.Normalize();
+
+		Vector3 up_vector = Vector3::Up - Vector3::Up.Dot(look_vector) * look_vector;
+		up_vector.Normalize();
+		orientation = Quaternion::LookRotation(look_vector, up_vector);
+		fovy = 45.0f;
+		aspect_ratio = 1.0f;
+		changed = false;
+	}
+
 	void Camera::Update(float dt)
 	{
 		changed = false;
 		Input& input = g_Input;
 		if (input.GetKey(KeyCode::Space)) return;
 
-		float speed_factor = 1.0f;
-		if (input.GetKey(KeyCode::ShiftLeft)) speed_factor *= 5.0f;
-		if (input.GetKey(KeyCode::CtrlLeft))  speed_factor *= 0.2f;
-
-		if (input.GetKey(KeyCode::W))
+		if (g_Input.GetKey(KeyCode::MouseRight))
 		{
-			eye += speed_factor * dt * look_dir;
-			changed = true;
-		}
-		if (input.GetKey(KeyCode::S))
-		{
-			eye -= speed_factor * dt * look_dir;
-			changed = true;
-		}
-		if (input.GetKey(KeyCode::A))
-		{
-			eye -= speed_factor * dt * right;
-			changed = true;
-		}
-		if (input.GetKey(KeyCode::D))
-		{
-			eye += speed_factor * dt * right;
-			changed = true;
-		}
-		if (input.GetKey(KeyCode::Q))
-		{
-			eye += speed_factor * dt * up;
-			changed = true;
-		}
-		if (input.GetKey(KeyCode::E))
-		{
-			eye -= speed_factor * dt * up;
-			changed = true;
-		}
-		if (input.GetKey(KeyCode::MouseRight))
-		{
-			float dx = -input.GetMouseDeltaX();
-			float dy = -input.GetMouseDeltaY();
-
-			Matrix R = Matrix::CreateFromAxisAngle(right, 0.2f * DirectX::XMConvertToRadians(dy));
-			up = Vector3::TransformNormal(up, R);
-			look_dir = Vector3::TransformNormal(look_dir, R);
-
-			R = Matrix::CreateRotationY(0.2f * DirectX::XMConvertToRadians(dx));
-			right = Vector3::TransformNormal(right, R);
-			up = Vector3::TransformNormal(up, R);
-			look_dir = Vector3::TransformNormal(look_dir, R);
+			float dx = -g_Input.GetMouseDeltaX();
+			float dy = -g_Input.GetMouseDeltaY();
+			Quaternion yaw_quaternion = Quaternion::CreateFromYawPitchRoll(0, dy * dt * 0.25f, 0);
+			Quaternion pitch_quaternion = Quaternion::CreateFromYawPitchRoll(dx * dt * 0.25f, 0, 0);
+			orientation = yaw_quaternion * orientation * pitch_quaternion;
 			changed = true;
 		}
 
-		UpdateFrame();
+		Vector3 movement{};
+		if (g_Input.GetKey(KeyCode::W)) movement.z += 1.0f;
+		if (g_Input.GetKey(KeyCode::S)) movement.z -= 1.0f;
+		if (g_Input.GetKey(KeyCode::D)) movement.x += 1.0f;
+		if (g_Input.GetKey(KeyCode::A)) movement.x -= 1.0f;
+		if (g_Input.GetKey(KeyCode::Q)) movement.y -= 1.0f;
+		if (g_Input.GetKey(KeyCode::E)) movement.y += 1.0f;
+		movement = Vector3::Transform(movement, orientation);
+		velocity = Vector3::SmoothStep(velocity, movement, 0.35f);
+
+		if (velocity.LengthSquared() > 1e-4)
+		{
+			float speed_factor = 1.0f;
+			if (input.GetKey(KeyCode::ShiftLeft)) speed_factor *= 5.0f;
+			if (input.GetKey(KeyCode::CtrlLeft))  speed_factor *= 0.2f;
+			position += velocity * dt * speed_factor * 5.0f;
+			changed = true;
+		}
 	}
 
+	Vector3 Camera::GetLookDir() const
+	{
+		return Vector3::Transform(Vector3::Forward, orientation);
+	}
+
+	void Camera::SetLookDir(Vector3 look_dir)
+	{
+		look_dir.Normalize();
+		orientation = Quaternion::LookRotation(look_dir, Vector3::Up);
+	}
 
 	void Camera::GetFrame(Vector3& U, Vector3& V, Vector3& W) const
 	{
-		U = right;
-		V = up;
-		W = look_dir;
+		U = Vector3::Transform(Vector3::Right, orientation);
+		V = Vector3::Transform(Vector3::Up, orientation);
+		W = Vector3::Transform(Vector3::Forward, orientation);
 	}
-
-	void Camera::UpdateFrame()
-	{
-		look_dir.Normalize();
-		up = look_dir.Cross(right);
-		up.Normalize();
-		right = up.Cross(look_dir);
-	}
-
 }
 
 

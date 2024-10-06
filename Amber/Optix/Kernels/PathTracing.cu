@@ -133,15 +133,17 @@ __device__ __forceinline__ void UnpackMaterial(DisneyMaterial& mat_params, uint3
 
 __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, unsigned int seed)
 {
-	float3 const  U = params.cam_u;
-	float3 const  V = params.cam_v;
-	float3 const  W = params.cam_w;
+	float3 const U = params.cam_u;
+	float3 const V = params.cam_v;
+	float3 const W = params.cam_w;
 
 	float2 subpixel_jitter = make_float2(rnd(seed), rnd(seed));
 	float2 d = (make_float2(pixel) + subpixel_jitter) / make_float2(screen);
 	d = 2.0f * d - 1.0f;
+
 	float tan_half_fovy = tan(params.cam_fovy * 0.5f);
 	float aspect_ratio = params.cam_aspect_ratio;
+
 	float3 ray_direction = normalize(d.x * aspect_ratio * tan_half_fovy * U + d.y * tan_half_fovy * V + W);
 	return ray_direction;
 }

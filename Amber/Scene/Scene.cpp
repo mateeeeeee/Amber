@@ -307,7 +307,7 @@ namespace amber
 						tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
 						tinyobj::real_t vx = attrib.vertices[3 * uint64(idx.vertex_index) + 0] * scale;
 						tinyobj::real_t vy = attrib.vertices[3 * uint64(idx.vertex_index) + 1] * scale;
-						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2] * scale;
+						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2] * scale * -1.0f;
 
 						geometry.vertices.emplace_back(vx, vy, vz);
 
@@ -526,7 +526,7 @@ namespace amber
 					{
 						Instance& instance = gltf_scene->instances.emplace_back();
 						instance.mesh_id = primitive;
-						instance.transform = local_to_world * Matrix::CreateScale(scale);
+						instance.transform = local_to_world * Matrix::CreateScale(scale, scale, -scale);
 					}
 				}
 			}
