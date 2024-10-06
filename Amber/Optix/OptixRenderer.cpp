@@ -23,9 +23,15 @@ namespace amber
 		switch (level)
 		{
 		case 0:
+			return;
 		case 1:
 		case 2:
+			AMBER_ERROR("%s", message);
+			return;
 		case 3:
+			AMBER_WARN("%s", message);
+			return;
+		case 4:
 			AMBER_INFO("%s", message);
 			return;
 		}
@@ -318,8 +324,7 @@ namespace amber
 	}
 
 	OptixRenderer::~OptixRenderer()
-	{
-	}
+	{}
 
 	void OptixRenderer::Update(float dt)
 	{

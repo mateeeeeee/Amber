@@ -42,18 +42,10 @@ namespace amber
 		
 		nvrtcProgram prog;
 		NvrtcCheck(nvrtcCreateProgram(&prog, kernel.data(), kernel_file.data(), 0, nullptr, nullptr));
-
-		std::string optix_include = "C:/ProgramData/NVIDIA Corporation/OptiX SDK 8.0.0/include";
-		std::string cuda_include = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.4/include";
-		std::string cuda_std_include = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.4/include/cuda/std";
-		optix_include = "-I" + optix_include;
-		cuda_include = "-I" + cuda_include;
-		cuda_std_include = "-I" + cuda_std_include;
-
 		std::vector<char const*> compile_options;
-		compile_options.push_back(optix_include.c_str());
-		compile_options.push_back(cuda_include.c_str());
-		compile_options.push_back(cuda_std_include.c_str());
+		compile_options.push_back("-I" OPTIX_PATH "/include");
+		compile_options.push_back("-I" CUDA_PATH "/include");
+		compile_options.push_back("-I" CUDA_PATH "/include/cuda/std");
 		compile_options.push_back("-I" AMBER_PATH);
 		compile_options.push_back("--pre-include=Core/CoreTypes.h");
 		compile_options.push_back("--use_fast_math");

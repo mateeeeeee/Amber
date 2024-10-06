@@ -2,8 +2,7 @@
 find_package(CUDA REQUIRED)
 find_package(CUDAToolkit REQUIRED)
 
-set(OPTIX_INSTALL_DIR "C:\\ProgramData\\NVIDIA Corporation\\OptiX SDK 8.0.0")
-#dont hardcode values
+set(OPTIX_INSTALL_DIR "C:/ProgramData/NVIDIA Corporation/OptiX SDK 8.0.0")
 
 find_library(NVRTC_LIB nvrtc PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64)
 
@@ -188,6 +187,8 @@ endif()
 
 set(AMBER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Amber PRIVATE AMBER_PATH="${AMBER_PATH}")
+target_compile_definitions(Amber PRIVATE CUDA_PATH="${CUDA_TOOLKIT_ROOT_DIR}")
+target_compile_definitions(Amber PRIVATE OPTIX_PATH="${OPTIX_INSTALL_DIR}")
 
 if(WIN32)
     target_compile_definitions(Amber PRIVATE NOMINMAX)
