@@ -11,9 +11,9 @@ namespace amber
 		Vector3 look_vector = look_at - position;
 		look_vector.Normalize();
 
-		Vector3 up_vector = Vector3::Up - Vector3::Up.Dot(look_vector) * look_vector;
-		up_vector.Normalize();
-		orientation = Quaternion::LookRotation(look_vector, up_vector);
+		//Vector3 up_vector = Vector3::Up - Vector3::Up.Dot(look_vector) * look_vector;
+		//up_vector.Normalize();
+		orientation = Quaternion::LookRotation(look_vector, Vector3::Up);
 		fovy = 45.0f;
 		aspect_ratio = 1.0f;
 		changed = false;
@@ -22,13 +22,14 @@ namespace amber
 	void Camera::Update(float dt)
 	{
 		changed = false;
+		if (!enabled) return;
 		Input& input = g_Input;
 		if (input.GetKey(KeyCode::Space)) return;
 
 		if (g_Input.GetKey(KeyCode::MouseRight))
 		{
-			float dx = -g_Input.GetMouseDeltaX();
-			float dy = -g_Input.GetMouseDeltaY();
+			float dx = g_Input.GetMouseDeltaX();
+			float dy = g_Input.GetMouseDeltaY();
 			Quaternion yaw_quaternion = Quaternion::CreateFromYawPitchRoll(0, dy * dt * 0.25f, 0);
 			Quaternion pitch_quaternion = Quaternion::CreateFromYawPitchRoll(dx * dt * 0.25f, 0, 0);
 			orientation = yaw_quaternion * orientation * pitch_quaternion;

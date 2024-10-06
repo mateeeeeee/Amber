@@ -66,7 +66,7 @@ __device__ __forceinline__ bool TraceOcclusion(
 		tmin,
 		tmax, 0.0f,                
 		OptixVisibilityMask(255),
-		OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT | OPTIX_RAY_FLAG_DISABLE_ANYHIT,
+		OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT,
 		0,                          
 		1,							
 		0                           
@@ -139,6 +139,7 @@ __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, uns
 
 	float2 subpixel_jitter = make_float2(rnd(seed), rnd(seed));
 	float2 d = (make_float2(pixel) + subpixel_jitter) / make_float2(screen);
+	d.y = 1.0f - d.y;
 	d = 2.0f * d - 1.0f;
 
 	float tan_half_fovy = tan(params.cam_fovy * 0.5f);
@@ -173,7 +174,7 @@ __device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_pa
 
 		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
 		{
-			float light_pdf = 1.0f; // Since a directional light has a fixed direction, we consider the light_pdf to be a constant
+			float light_pdf = 1.0f; 
 			float w = power_heuristic(1.f, bsdf_pdf, 1.f, light_pdf);
 
 			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, w_i, M_EPSILON, M_INF))
@@ -207,7 +208,7 @@ __global__ void RG_NAME(rg)()
 		hit_record.depth = 0;
 		uint32 p0 = PackPointer0(&hit_record), p1 = PackPointer1(&hit_record);
 
-		for (uint32 depth = 0; depth < 2; ++depth)
+		for (uint32 depth = 0; depth < params.max_depth; ++depth)
 		{
 			Trace(scene, ray_origin, ray_direction, M_EPSILON, M_INF, p0, p1);
 			if (!hit_record.hit)
@@ -222,7 +223,6 @@ __global__ void RG_NAME(rg)()
 					env_map_color = make_float3(sampled.x, sampled.y, sampled.z);
 				}
 
-				//#todo add MIS / power heuristic
 				radiance += env_map_color * throughput;
 				break;
 			}
@@ -247,7 +247,6 @@ __global__ void RG_NAME(rg)()
 			v_x = ort.tangent;
 			v_y = ort.binormal;
 
-			//radiance += material.base_color;
 			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, seed) * throughput;
 
 			float3 w_i;
@@ -262,7 +261,6 @@ __global__ void RG_NAME(rg)()
 			ray_origin = hit_record.P;
 			ray_direction = w_i;
 
-			//russian roulette
 			if (depth >= 2)
 			{
 				float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001f, 0.95f);
@@ -313,7 +311,7 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 	float3 pos2 = mesh_vertices[i2];
 	vertex.P = Interpolate(pos0, pos1, pos2, barycentrics);
 
-	// Compute geometric normal in world space using the transformed vertices
+	//geometric normal
 	//float3 edge1 = world_v1 - world_v0;
 	//float3 edge2 = world_v2 - world_v0;
 	//float3 geometric_normal = normalize(cross(edge1, edge2));

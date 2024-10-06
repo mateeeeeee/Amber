@@ -17,7 +17,7 @@ namespace amber
 		{
 			Visibility_Log,
 			Visibility_Console,
-			Visibility_Settings,
+			Visibility_Options,
 			Visibility_Stats,
 			Visibility_Camera,
 			Visibility_Count
@@ -36,11 +36,7 @@ namespace amber
 		{
 			editor_sink = sink;
 		}
-		void SetDefaultOptions(uint32 _sample_count, uint32 _max_depth)
-		{
-			sample_count = _sample_count;
-			max_depth = _max_depth;
-		}
+		void SetDefaultOptions(uint32 _sample_count, uint32 _max_depth);
 
 	private:
 		Window& window;
@@ -51,6 +47,7 @@ namespace amber
 		SDLTexturePtr gui_target = nullptr;
 
 		bool gui_enabled = true;
+		bool scene_focused = false;
 		bool visibility_flags[Visibility_Count] = {false};
 		std::unique_ptr<EditorConsole> editor_console;
 		EditorSink* editor_sink;

@@ -328,7 +328,7 @@ namespace amber
 	{
 	}
 
-	void OptixRenderer::Render(Camera& camera, uint32 sample_count)
+	void OptixRenderer::Render(Camera& camera)
 	{
 		uint64 const width = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
@@ -354,7 +354,7 @@ namespace amber
 		params.accum = accum_memory.As<float4>();
 		params.traversable = tlas_handle;
 		params.sample_count = sample_count;
-		params.max_depth = MAX_DEPTH;
+		params.max_depth = depth_count;
 		params.frame_index = frame_index;
 		params.vertices = vertices_buffer->GetDevicePtr();
 		params.indices = indices_buffer->GetDevicePtr();
@@ -390,8 +390,8 @@ namespace amber
 
 	void OptixRenderer::WriteFramebuffer(char const* outfile)
 	{
-		std::string output_path = paths::ResultDir + outfile;
-		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), sizeof(uchar4));
+		std::string output_path = paths::ScreenshotDir + outfile + ".png";
+		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), framebuffer.Cols() * sizeof(uchar4));
 	}
 
 }
