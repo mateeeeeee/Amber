@@ -8,7 +8,7 @@ namespace amber
 	struct KernelCompilerInput
 	{
 		std::string_view kernel_file;
-		//add defines?
+		std::vector<std::string> defines;
 	};
 
 	enum class CompilerError

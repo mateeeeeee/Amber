@@ -12,6 +12,7 @@
 *.sln.docstates
 
 Amber/Resources/Scenes/Sponza/
+Amber/Resources/Scenes/SanMiguel/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
