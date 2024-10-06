@@ -2,56 +2,34 @@
 
 namespace amber
 {
-	class Camera 
+	class Camera
 	{
 	public:
-		Camera() 
-			: eye(Vector3(0.0f, 0.0f, 1.0f)), look_dir(Vector3(0.0f, 0.0f, -1.0f))
-			, up(Vector3(0.0f, 1.0f, 0.0f)), right(Vector3(1.0f, 0.0f, 0.0f))
-			, fovy(35.0f), aspect_ratio(1.0f), changed(false)
-		{}
+		void Initialize(Vector3 const& position, Vector3 const& lookat);
 
 		void Update(float dt);
 
 		bool IsChanged() const { return changed; }
 
-		Vector3 const& GetEye() const { return eye; }
-		void SetEye(Vector3 const& val) { eye = val; }
+		Vector3 const& GetPosition() const { return position; }
+		void SetPosition(Vector3 const& val) { position = val; }
+		Vector3 GetLookDir() const;
+		void SetLookDir(Vector3 val);
 
-		void SetLookat(Vector3 const& val) 
-		{ 
-			look_dir = val - eye;
-			look_dir.Normalize();
-		}
-		Vector3 GetLookDir() const
-		{
-			return look_dir;
-		}
-		void SetLookDir(Vector3 const& dir)
-		{
-			look_dir = dir;
-			look_dir.Normalize();
-		}
-
-		Vector3 const& GetUp() const { return up; }
-		void SetUp(Vector3 const& val) { up = val; }
 		float GetFovY() const { return fovy; }
-		void SetFovY(float val) { fovy = val; }
+		void  SetFovY(float val) { fovy = val; }
 		float GetAspectRatio() const { return aspect_ratio; }
 		void  SetAspectRatio(float val) { aspect_ratio = val; }
 
 		void GetFrame(Vector3& U, Vector3& V, Vector3& W) const;
 
 	private:
-		Vector3 eye;
-		Vector3 look_dir;
-		Vector3 up;
-		Vector3 right;
+		Vector3		position;
+		Vector3     velocity;
+		Quaternion  orientation;
+
 		float fovy;
 		float aspect_ratio;
 		bool changed;
-
-	private:
-		void UpdateFrame();
 	};
 }

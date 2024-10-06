@@ -250,6 +250,8 @@ namespace amber
 					visibility_flags[Visibility_Settings] = !visibility_flags[Visibility_Settings];
 				if (ImGui::MenuItem(ICON_FA_CLOCK" Stats", 0, visibility_flags[Visibility_Stats]))
 					visibility_flags[Visibility_Stats] = !visibility_flags[Visibility_Stats];
+				if (ImGui::MenuItem(ICON_FA_CAMERA" Camera", 0, visibility_flags[Visibility_Camera]))
+					visibility_flags[Visibility_Camera] = !visibility_flags[Visibility_Camera];
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu(" Help"))
@@ -264,6 +266,7 @@ namespace amber
 		ConsoleWindow();
 		StatsWindow();
 		SettingsWindow();
+		CameraWindow();
 	}
 
 	void Editor::EndGUI()
@@ -306,6 +309,22 @@ namespace amber
 			ImGuiIO& io = ImGui::GetIO();
 			ImGui::SliderInt("Samples", &sample_count, 1, 64);
 			ImGui::SliderInt("Max Depth", &max_depth, 1, renderer.GetMaxDepth());
+		}
+		ImGui::End();
+	}
+
+	void Editor::CameraWindow()
+	{
+		if (!visibility_flags[Visibility_Camera]) return;
+		ImGui::Begin(ICON_FA_CAMERA" Camera");
+		{
+			Vector3 camera_eye = camera.GetPosition();
+			ImGui::InputFloat3("Camera Position", &camera_eye.x);
+			camera.SetPosition(camera_eye);
+
+			Vector3 camera_look_dir = camera.GetLookDir();
+			ImGui::InputFloat3("Camera Look Direction", &camera_look_dir.x);
+			camera.SetLookDir(camera_look_dir);
 		}
 		ImGui::End();
 	}

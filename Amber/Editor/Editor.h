@@ -19,6 +19,7 @@ namespace amber
 			Visibility_Console,
 			Visibility_Settings,
 			Visibility_Stats,
+			Visibility_Camera,
 			Visibility_Count
 		};
 
@@ -74,5 +75,6 @@ namespace amber
 		void ConsoleWindow();
 		void StatsWindow();
 		void SettingsWindow();
+		void CameraWindow();
 	};
 }

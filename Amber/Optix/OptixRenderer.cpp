@@ -22,8 +22,6 @@ namespace amber
 	{
 		switch (level)
 		{
-		case 0:
-			return;
 		case 1:
 		case 2:
 			AMBER_ERROR("%s", message);
@@ -61,7 +59,7 @@ namespace amber
 		OptixDeviceContextOptions ctx_options{};
 		ctx_options.validationMode = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
 		OptixCheck(optixDeviceContextCreate(cuda_context, &ctx_options, &optix_context));
-		OptixCheck(optixDeviceContextSetLogCallback(optix_context, OptixLogCallback, nullptr, 4));
+		OptixCheck(optixDeviceContextSetLogCallback(optix_context, OptixLogCallback, nullptr, 3));
 #else 
 		OptixCheck(optixDeviceContextCreate(cuda_context, nullptr, &optix_context));
 		OptixCheck(optixDeviceContextSetLogCallback(optix_context, OptixLogCallback, nullptr, 0));
@@ -345,7 +343,7 @@ namespace amber
 		Vector3 u, v, w;
 		camera.GetFrame(u, v, w);
 		auto ToFloat3 = [](Vector3 const& v) { return make_float3(v.x, v.y, v.z); };
-		params.cam_eye = ToFloat3(camera.GetEye());
+		params.cam_eye = ToFloat3(camera.GetPosition());
 		params.cam_u = ToFloat3(u);
 		params.cam_v = ToFloat3(v);
 		params.cam_w = ToFloat3(w);

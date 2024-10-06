@@ -10,7 +10,7 @@ namespace amber::paths
 	extern std::string const IconsDir;
 	extern std::string const ResultDir;
 	extern std::string const LogDir;
-	extern std::string const ConfigDir;
 	extern std::string const SceneDir;
+	extern std::string const ModelDir;
 	extern std::string const KernelsDir;
 }
