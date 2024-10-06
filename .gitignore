@@ -11,8 +11,10 @@
 *.userosscache
 *.sln.docstates
 
+todolist.txt
 Amber/Resources/Models/Sponza/
 Amber/Resources/Models/SanMiguel/
+Amber/Resources/Models/Toyshop_TeddyGI/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

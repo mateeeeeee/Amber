@@ -75,8 +75,10 @@ namespace amber
 	void Editor::Run()
 	{
 		g_Input.Tick();
-		float dt = ImGui::GetIO().DeltaTime;
+		if (gui_enabled) camera.Enable(scene_focused);
+		else camera.Enable(true);
 
+		float dt = ImGui::GetIO().DeltaTime;
 		camera.Update(dt);
 		renderer.Update(dt);
 		Begin();
@@ -118,6 +120,14 @@ namespace amber
 	{
 		g_Input.OnWindowEvent(data);
 		if (gui_enabled) ImGui_ImplSDL2_ProcessEvent(data.event);
+	}
+
+	void Editor::SetDefaultOptions(uint32 _sample_count, uint32 _max_depth)
+	{
+		sample_count = _sample_count;
+		max_depth = _max_depth;
+		renderer.SetDepthCount(max_depth);
+		renderer.SetDepthCount(sample_count);
 	}
 
 	void Editor::SetStyle()
@@ -199,7 +209,7 @@ namespace amber
 
 	void Editor::Render()
 	{
-		renderer.Render(camera, sample_count);
+		renderer.Render(camera);
 		auto const& fb = renderer.GetFramebuffer();
 
 		int width, height, pitch = -1; void* data = nullptr;
@@ -225,6 +235,7 @@ namespace amber
 		
 		ImGuiID dockspace_id = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 		ImGui::Begin(ICON_FA_GLOBE"Scene");
+		scene_focused = ImGui::IsWindowFocused();
 		ImVec2 v_min = ImGui::GetWindowContentRegionMin();
 		ImVec2 v_max = ImGui::GetWindowContentRegionMax();
 		v_min.x += ImGui::GetWindowPos().x;
@@ -246,8 +257,8 @@ namespace amber
 					visibility_flags[Visibility_Log] = !visibility_flags[Visibility_Log];
 				if (ImGui::MenuItem(ICON_FA_TERMINAL" Console", 0, visibility_flags[Visibility_Console]))
 					visibility_flags[Visibility_Console] = !visibility_flags[Visibility_Console];
-				if (ImGui::MenuItem(ICON_FA_GEAR" Settings", 0, visibility_flags[Visibility_Settings]))
-					visibility_flags[Visibility_Settings] = !visibility_flags[Visibility_Settings];
+				if (ImGui::MenuItem(ICON_FA_GEAR" Options", 0, visibility_flags[Visibility_Options]))
+					visibility_flags[Visibility_Options] = !visibility_flags[Visibility_Options];
 				if (ImGui::MenuItem(ICON_FA_CLOCK" Stats", 0, visibility_flags[Visibility_Stats]))
 					visibility_flags[Visibility_Stats] = !visibility_flags[Visibility_Stats];
 				if (ImGui::MenuItem(ICON_FA_CAMERA" Camera", 0, visibility_flags[Visibility_Camera]))
@@ -303,12 +314,30 @@ namespace amber
 
 	void Editor::SettingsWindow()
 	{
-		if (!visibility_flags[Visibility_Settings]) return;
-		ImGui::Begin(ICON_FA_GEAR" Settings");
+		if (!visibility_flags[Visibility_Options]) return;
+		ImGui::Begin(ICON_FA_GEAR" Options");
 		{
 			ImGuiIO& io = ImGui::GetIO();
-			ImGui::SliderInt("Samples", &sample_count, 1, 64);
-			ImGui::SliderInt("Max Depth", &max_depth, 1, renderer.GetMaxDepth());
+			if (ImGui::SliderInt("Samples", &sample_count, 1, 4))
+			{
+				renderer.SetSampleCount(sample_count);
+			}
+			if (ImGui::SliderInt("Max Depth", &max_depth, 1, renderer.GetMaxDepth()))
+			{
+				renderer.SetDepthCount(max_depth);
+			}
+
+			if (ImGui::TreeNode("Screenshot"))
+			{
+				static char ss_name[32 + 1] = {};
+				ImGui::InputText("Name", ss_name, sizeof(ss_name) - 1);
+				if (ImGui::Button("Take Screenshot"))
+				{
+					renderer.WriteFramebuffer(ss_name);
+				}
+				ImGui::TreePop();
+			}
+			
 		}
 		ImGui::End();
 	}
@@ -323,8 +352,7 @@ namespace amber
 			camera.SetPosition(camera_eye);
 
 			Vector3 camera_look_dir = camera.GetLookDir();
-			ImGui::InputFloat3("Camera Look Direction", &camera_look_dir.x);
-			camera.SetLookDir(camera_look_dir);
+			ImGui::Text("Camera Look Direction: (%f, %f, %f)", camera_look_dir.x, camera_look_dir.y, camera_look_dir.z);
 		}
 		ImGui::End();
 	}

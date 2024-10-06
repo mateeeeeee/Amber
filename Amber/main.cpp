@@ -15,7 +15,7 @@
 
 using namespace amber;
 
-struct Config
+struct SceneConfig
 {
 	std::string model_file;
 	float  model_scale;
@@ -26,28 +26,30 @@ struct Config
 	uint32 samples_per_pixel;
 	Camera camera;
 };
-bool ParseSceneConfig(char const* config_file, Config& cfg);
+bool ParseSceneConfig(char const* config_file, SceneConfig& cfg);
 
 
 int main(int argc, char* argv[])
 {
-	std::string config_file, log_file;
+	std::string config_file, log_file, output_file;
 	bool use_editor = true, maximize_window = false, stats_enabled = false;
 	{
-		CLI::App cli_parser{ "Lavender" };
+		CLI::App cli_parser{ "Amber" };
 		cli_parser.add_option("--config-file", config_file, "Config file");
 		cli_parser.add_option("--log-file", log_file, "Log file");
+		cli_parser.add_option("--output-file", output_file, "Output file");
 		CLI::Option* no_editor_opt = cli_parser.add_flag("--noeditor", "Don't use editor");
 		CLI::Option* max_window_opt = cli_parser.add_flag("--max", "Maximize editor window");
 		CLI11_PARSE(cli_parser, argc, argv);
-		if (log_file.empty()) log_file = "lavender.log";
-		if (config_file.empty()) config_file = "sanmiguel.json";
+		if (log_file.empty()) log_file = "amber.log";
+		if (config_file.empty()) config_file = "toyshop.json";
+		if (output_file.empty()) output_file = "output";
 		use_editor = !(bool)*no_editor_opt;
 		maximize_window = (bool)*max_window_opt;
 	}
 	g_LogManager.Initialize(log_file.c_str(), LogLevel::Debug);
 
-	Config cfg{};
+	SceneConfig cfg{};
 	if (!ParseSceneConfig(config_file.c_str(), cfg))
 	{
 		AMBER_ERROR("Config parsing failed!");
@@ -74,7 +76,7 @@ int main(int argc, char* argv[])
 	OptixRenderer renderer(cfg.width, cfg.height, std::move(scene));
 	if(use_editor)
 	{
-		Window window(cfg.width, cfg.height, "lavender");
+		Window window(cfg.width, cfg.height, "amber");
 		if (maximize_window) window.Maximize();
 		Editor editor(window, camera, renderer);
 		editor.SetEditorSink(g_LogManager.GetEditorSink());
@@ -86,15 +88,17 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		renderer.Render(camera, cfg.samples_per_pixel);
-		renderer.WriteFramebuffer("test.png"); 
+		renderer.SetDepthCount(cfg.max_depth);
+		renderer.SetSampleCount(cfg.samples_per_pixel);
+		renderer.Render(camera);
+		renderer.WriteFramebuffer(output_file.c_str()); 
 	}
 	g_LogManager.Destroy();
 
 	return 0;
 }
 
-bool ParseSceneConfig(char const* scene_config, Config& cfg)
+bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
 {
 	json json_scene;
 	try
@@ -144,6 +148,6 @@ bool ParseSceneConfig(char const* scene_config, Config& cfg)
 
 	float fovy = camera_params.FindOr<float>("fov", 45.0f);
 	cfg.camera.SetFovY(fovy);
-	cfg.camera.SetAspectRatio(cfg.width * 1.0f / cfg.height);
+	cfg.camera.SetAspectRatio((float)cfg.width / cfg.height);
 	return true;
 }
