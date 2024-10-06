@@ -70,7 +70,7 @@ namespace amber
 
 
 	OptixRenderer::OptixRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(), 
-		framebuffer(height, width), device_memory(width * height), frame_index(0), scene(std::move(_scene))
+		framebuffer(height, width), device_memory(width * height), accum_memory(width * height),  frame_index(0), scene(std::move(_scene))
 	{
 		OnResize(width, height);
 		{
@@ -332,6 +332,11 @@ namespace amber
 
 		LaunchParams params{};
 
+		if (camera.IsChanged())
+		{
+			frame_index = 0;
+		}
+
 		Vector3 u, v, w;
 		camera.GetFrame(u, v, w);
 		auto ToFloat3 = [](Vector3 const& v) { return make_float3(v.x, v.y, v.z); };
@@ -342,7 +347,8 @@ namespace amber
 		params.cam_fovy = camera.GetFovY();
 		params.cam_aspect_ratio = camera.GetAspectRatio();
 
-		params.image = device_memory.As<uchar4>();
+		params.output = device_memory.As<uchar4>();
+		params.accum = accum_memory.As<float4>();
 		params.traversable = tlas_handle;
 		params.sample_count = sample_count;
 		params.max_depth = MAX_DEPTH;
@@ -374,7 +380,9 @@ namespace amber
 	{
 		framebuffer.Resize(h, w);
 		device_memory.Realloc(w * h);
+		accum_memory.Realloc(w * h);
 		cudaMemset(device_memory, 0, device_memory.GetSize());
+		cudaMemset(accum_memory, 0, accum_memory.GetSize());
 	}
 
 	void OptixRenderer::WriteFramebuffer(char const* outfile)

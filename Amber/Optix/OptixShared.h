@@ -69,7 +69,8 @@ namespace amber
 	struct LaunchParams
 	{
 		OptixTraversableHandle	traversable;
-		uchar4*					image;
+		uchar4*					output;
+		float4*					accum;
 		uint32			        sample_count;
 		uint32			        frame_index;
 		uint32			        max_depth;

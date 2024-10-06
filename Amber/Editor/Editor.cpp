@@ -77,7 +77,7 @@ namespace amber
 		g_Input.Tick();
 		float dt = ImGui::GetIO().DeltaTime;
 
-		camera.Tick(dt);
+		camera.Update(dt);
 		renderer.Update(dt);
 		Begin();
 		{

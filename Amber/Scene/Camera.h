@@ -4,18 +4,19 @@ namespace amber
 {
 	class Camera 
 	{
-		static constexpr float speed = 0.1f;
 	public:
-		Camera()  : eye(Vector3(0.0f, 0.0f, 1.0f)), look_dir(Vector3(0.0f, 0.0f, -1.0f))
+		Camera() 
+			: eye(Vector3(0.0f, 0.0f, 1.0f)), look_dir(Vector3(0.0f, 0.0f, -1.0f))
 			, up(Vector3(0.0f, 1.0f, 0.0f)), right(Vector3(1.0f, 0.0f, 0.0f))
-			, fovy(35.0f), aspect_ratio(1.0f)
-		{
-		}
+			, fovy(35.0f), aspect_ratio(1.0f), changed(false)
+		{}
+
+		void Update(float dt);
+
+		bool IsChanged() const { return changed; }
 
 		Vector3 const& GetEye() const { return eye; }
 		void SetEye(Vector3 const& val) { eye = val; }
-
-		void Tick(float dt);
 
 		void SetLookat(Vector3 const& val) 
 		{ 
@@ -48,6 +49,7 @@ namespace amber
 		Vector3 right;
 		float fovy;
 		float aspect_ratio;
+		bool changed;
 
 	private:
 		void UpdateFrame();

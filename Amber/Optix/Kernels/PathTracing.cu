@@ -197,7 +197,7 @@ __global__ void RG_NAME(rg)()
 	float3 throughput = make_float3(1.0f);
 	do
 	{
-		uint32 seed = tea<4>(pixel.y * screen.x + pixel.x, samples);
+		uint32 seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.frame_index);
 		float3 ray_origin = eye;
 		float3 ray_direction = GetRayDirection(pixel, screen, seed);
 
@@ -271,7 +271,15 @@ __global__ void RG_NAME(rg)()
 	} while (--samples);
 
 	radiance = radiance / params.sample_count;
-	params.image[pixel.x + pixel.y * screen.x] = MakeColor(radiance);
+
+	float4 old_accum_color = params.accum[pixel.x + pixel.y * screen.x];
+	if (params.frame_index > 0)
+	{
+		radiance += make_float3(old_accum_color.x, old_accum_color.y, old_accum_color.z);
+	}
+	params.accum[pixel.x + pixel.y * screen.x] = make_float4(radiance.x, radiance.y, radiance.z, 1.0f);
+	radiance /= (1 + params.frame_index);
+	params.output[pixel.x + pixel.y * screen.x] = MakeColor(radiance);
 }
 
 extern "C" 
