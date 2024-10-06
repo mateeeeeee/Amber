@@ -3,9 +3,11 @@
 
 namespace amber
 {
+	static constexpr float speed = 0.1f;
 
-	void Camera::Tick(float dt)
+	void Camera::Update(float dt)
 	{
+		changed = false;
 		Input& input = g_Input;
 		if (input.GetKey(KeyCode::Space)) return;
 
@@ -16,26 +18,32 @@ namespace amber
 		if (input.GetKey(KeyCode::W))
 		{
 			eye += speed_factor * dt * look_dir;
+			changed = true;
 		}
 		if (input.GetKey(KeyCode::S))
 		{
 			eye -= speed_factor * dt * look_dir;
+			changed = true;
 		}
 		if (input.GetKey(KeyCode::A))
 		{
 			eye -= speed_factor * dt * right;
+			changed = true;
 		}
 		if (input.GetKey(KeyCode::D))
 		{
 			eye += speed_factor * dt * right;
+			changed = true;
 		}
 		if (input.GetKey(KeyCode::Q))
 		{
 			eye += speed_factor * dt * up;
+			changed = true;
 		}
 		if (input.GetKey(KeyCode::E))
 		{
 			eye -= speed_factor * dt * up;
+			changed = true;
 		}
 		if (input.GetKey(KeyCode::MouseRight))
 		{
@@ -50,6 +58,7 @@ namespace amber
 			right = Vector3::TransformNormal(right, R);
 			up = Vector3::TransformNormal(up, R);
 			look_dir = Vector3::TransformNormal(look_dir, R);
+			changed = true;
 		}
 
 		UpdateFrame();
