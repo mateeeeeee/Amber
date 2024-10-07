@@ -164,22 +164,22 @@ __device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_pa
 		float3 light_dir = normalize(light.direction);
 		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, -light_dir, M_EPSILON, M_INF))
 		{
-			float3 bsdf = disney_brdf(mat_params, v_z, w_o, -light_dir, v_x, v_y);
+			float3 bsdf = DisneyBrdf(mat_params, v_z, w_o, -light_dir, v_x, v_y);
 			radiance = bsdf * light.color * abs(dot(-light_dir, v_z));
 		}
 
 		float3 w_i;
 		float bsdf_pdf;
-		float3 bsdf = sample_disney_brdf(mat_params, v_z, w_o, v_x, v_y, seed, w_i, bsdf_pdf);
+		float3 bsdf = SampleDisneyBrdf(mat_params, v_z, w_o, v_x, v_y, seed, w_i, bsdf_pdf);
 
 		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
 		{
 			float light_pdf = 1.0f; 
-			float w = power_heuristic(1.f, bsdf_pdf, 1.f, light_pdf);
+			float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
 
 			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, w_i, M_EPSILON, M_INF))
 			{
-				float3 bsdf = disney_brdf(mat_params, v_z, w_o, -light_dir, v_x, v_y);
+				float3 bsdf = DisneyBrdf(mat_params, v_z, w_o, -light_dir, v_x, v_y);
 				radiance += bsdf * light.color * abs(dot(w_i, v_z)) * w / bsdf_pdf;
 			}
 		}
@@ -230,11 +230,8 @@ __global__ void RG_NAME(rg)()
 			DisneyMaterial material{};
 			UnpackMaterial(material, hit_record.material_idx, hit_record.uv);
 
-			if (depth == 0)
-			{
-				float3 emissive = material.emissive;
-				radiance += emissive * throughput;
-			}
+			float3 emissive = material.emissive;
+			radiance += emissive * throughput;
 
 			float3 w_o = -ray_direction;
 			float3 v_x, v_y;
@@ -251,7 +248,7 @@ __global__ void RG_NAME(rg)()
 
 			float3 w_i;
 			float pdf;
-			float3 bsdf = sample_disney_brdf(material, v_z, w_o, v_x, v_y, seed, w_i, pdf);
+			float3 bsdf = SampleDisneyBrdf(material, v_z, w_o, v_x, v_y, seed, w_i, pdf);
 			if (pdf == 0.0f || length(bsdf) < M_EPSILON)
 			{
 				break;
