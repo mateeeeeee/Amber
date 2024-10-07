@@ -41,10 +41,13 @@ namespace amber
 			depth_count = depth;
 			if (depth_count > MAX_DEPTH) depth_count = MAX_DEPTH;
 		}
+		uint32 GetDepthCount() const { return depth_count; }
 		void SetSampleCount(uint32 samples)
 		{
 			sample_count = samples;
 		}
+		uint32 GetSampleCount() const { return sample_count; }
+		
 
 	private:
 		std::unique_ptr<Scene>		scene;

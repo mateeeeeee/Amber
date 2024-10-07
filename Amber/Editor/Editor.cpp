@@ -122,14 +122,6 @@ namespace amber
 		if (gui_enabled) ImGui_ImplSDL2_ProcessEvent(data.event);
 	}
 
-	void Editor::SetDefaultOptions(uint32 _sample_count, uint32 _max_depth)
-	{
-		sample_count = _sample_count;
-		max_depth = _max_depth;
-		renderer.SetDepthCount(max_depth);
-		renderer.SetDepthCount(sample_count);
-	}
-
 	void Editor::SetStyle()
 	{
 		ImGuiStyle& style = ImGui::GetStyle();
@@ -198,6 +190,10 @@ namespace amber
 		{
 			gui_enabled = !gui_enabled;
 			g_Input.SetMouseVisibility(gui_enabled);
+		}
+		if (keycode == KeyCode::F12)
+		{
+			renderer.WriteFramebuffer("screenshot");
 		}
 	}
 
@@ -318,10 +314,13 @@ namespace amber
 		ImGui::Begin(ICON_FA_GEAR" Options");
 		{
 			ImGuiIO& io = ImGui::GetIO();
+
+			int32 sample_count = renderer.GetSampleCount();
 			if (ImGui::SliderInt("Samples", &sample_count, 1, 4))
 			{
 				renderer.SetSampleCount(sample_count);
 			}
+			int32 max_depth = renderer.GetMaxDepth();
 			if (ImGui::SliderInt("Max Depth", &max_depth, 1, renderer.GetMaxDepth()))
 			{
 				renderer.SetDepthCount(max_depth);
