@@ -208,7 +208,7 @@ __global__ void RG_NAME(rg)()
 		hit_record.depth = 0;
 		uint32 p0 = PackPointer0(&hit_record), p1 = PackPointer1(&hit_record);
 
-		for (uint32 depth = 0; depth < 2; ++depth)
+		for (uint32 depth = 0; depth < params.max_depth; ++depth)
 		{
 			Trace(scene, ray_origin, ray_direction, M_EPSILON, M_INF, p0, p1);
 			if (!hit_record.hit)

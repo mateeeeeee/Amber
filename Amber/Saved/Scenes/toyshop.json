@@ -2,7 +2,7 @@
   "scene": 
    {
 		"model file" : "Toyshop_TeddyGI/Toyshop_Teddy_static/Toyshop_Teddy_static.gltf",
-		"model scale" : 6,
+		"model scale" : 2,
 		"scene environment" : "environment/barcelona.hdr",
 		"width" : 1080,
 		"height" : 720,

@@ -320,7 +320,7 @@ namespace amber
 			{
 				renderer.SetSampleCount(sample_count);
 			}
-			int32 max_depth = renderer.GetMaxDepth();
+			int32 max_depth = renderer.GetDepthCount();
 			if (ImGui::SliderInt("Max Depth", &max_depth, 1, renderer.GetMaxDepth()))
 			{
 				renderer.SetDepthCount(max_depth);
