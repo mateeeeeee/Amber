@@ -11,9 +11,11 @@ namespace amber
 		Vector3 look_vector = look_at - position;
 		look_vector.Normalize();
 
-		//Vector3 up_vector = Vector3::Up - Vector3::Up.Dot(look_vector) * look_vector;
-		//up_vector.Normalize();
-		orientation = Quaternion::LookRotation(look_vector, Vector3::Up);
+		float yaw = std::atan2(look_vector.x, look_vector.z);
+		float pitch = std::asin(-look_vector.y);
+		Quaternion pitch_quat = Quaternion::CreateFromYawPitchRoll(0, pitch, 0);
+		Quaternion yaw_quat = Quaternion::CreateFromYawPitchRoll(yaw, 0, 0);
+		orientation = pitch_quat * orientation * yaw_quat;
 		fovy = 45.0f;
 		aspect_ratio = 1.0f;
 		changed = false;
@@ -22,9 +24,10 @@ namespace amber
 	void Camera::Update(float dt)
 	{
 		changed = false;
-		if (!enabled) return;
-		Input& input = g_Input;
-		if (input.GetKey(KeyCode::Space)) return;
+		if (!enabled || g_Input.GetKey(KeyCode::Space))
+		{
+			return;
+		}
 
 		if (g_Input.GetKey(KeyCode::MouseRight))
 		{
@@ -49,8 +52,8 @@ namespace amber
 		if (velocity.LengthSquared() > 1e-4)
 		{
 			float speed_factor = 1.0f;
-			if (input.GetKey(KeyCode::ShiftLeft)) speed_factor *= 5.0f;
-			if (input.GetKey(KeyCode::CtrlLeft))  speed_factor *= 0.2f;
+			if (g_Input.GetKey(KeyCode::ShiftLeft)) speed_factor *= 5.0f;
+			if (g_Input.GetKey(KeyCode::CtrlLeft))  speed_factor *= 0.2f;
 			position += velocity * dt * speed_factor * 5.0f;
 			changed = true;
 		}
@@ -61,10 +64,14 @@ namespace amber
 		return Vector3::Transform(Vector3::Forward, orientation);
 	}
 
-	void Camera::SetLookDir(Vector3 look_dir)
+	void Camera::SetLookDir(Vector3 look_vector)
 	{
-		look_dir.Normalize();
-		orientation = Quaternion::LookRotation(look_dir, Vector3::Up);
+		look_vector.Normalize();
+		float yaw = std::atan2(look_vector.x, look_vector.z);
+		float pitch = std::asin(-look_vector.y);
+		Quaternion pitch_quat = Quaternion::CreateFromYawPitchRoll(0, pitch, 0);
+		Quaternion yaw_quat = Quaternion::CreateFromYawPitchRoll(yaw, 0, 0);
+		orientation = pitch_quat * orientation * yaw_quat;
 	}
 
 	void Camera::GetFrame(Vector3& U, Vector3& V, Vector3& W) const

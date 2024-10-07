@@ -328,7 +328,7 @@ namespace amber
 	{
 	}
 
-	void OptixRenderer::Render(Camera& camera)
+	void OptixRenderer::Render(Camera const& camera)
 	{
 		uint64 const width = framebuffer.Cols();
 		uint64 const height = framebuffer.Rows();
