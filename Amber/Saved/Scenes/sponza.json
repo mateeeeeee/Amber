@@ -6,7 +6,7 @@
 		"scene environment" : "environment/barcelona.hdr",
 		"width" : 1080,
 		"height" : 720,
-		"max depth" : 4,
+		"max depth" : 3,
 		"samples per pixel" : 1,
         "camera": 
 		{

@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 		CLI::Option* max_window_opt = cli_parser.add_flag("--max", "Maximize editor window");
 		CLI11_PARSE(cli_parser, argc, argv);
 		if (log_file.empty()) log_file = "amber.log";
-		if (config_file.empty()) config_file = "toyshop.json";
+		if (config_file.empty()) config_file = "sponza.json";
 		if (output_file.empty()) output_file = "output";
 		use_editor = !(bool)*no_editor_opt;
 		maximize_window = (bool)*max_window_opt;
@@ -80,7 +80,8 @@ int main(int argc, char* argv[])
 		if (maximize_window) window.Maximize();
 		Editor editor(window, camera, renderer);
 		editor.SetEditorSink(g_LogManager.GetEditorSink());
-		editor.SetDefaultOptions(cfg.samples_per_pixel, cfg.max_depth);
+		renderer.SetDepthCount(cfg.max_depth);
+		renderer.SetSampleCount(cfg.samples_per_pixel);
 		while (window.Loop())
 		{
 			editor.Run();

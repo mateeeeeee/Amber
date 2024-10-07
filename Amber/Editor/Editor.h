@@ -36,7 +36,6 @@ namespace amber
 		{
 			editor_sink = sink;
 		}
-		void SetDefaultOptions(uint32 _sample_count, uint32 _max_depth);
 
 	private:
 		Window& window;
@@ -51,9 +50,6 @@ namespace amber
 		bool visibility_flags[Visibility_Count] = {false};
 		std::unique_ptr<EditorConsole> editor_console;
 		EditorSink* editor_sink;
-
-		int32 sample_count = 1;
-		int32 max_depth = 1;
 
 	private:
 		void SetStyle();
