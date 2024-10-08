@@ -48,7 +48,11 @@ int main(int argc, char* argv[])
 		use_editor = !(bool)*no_editor_opt;
 		maximize_window = (bool)*max_window_opt;
 	}
+#ifdef _DEBUG
 	g_LogManager.Initialize(log_file.c_str(), LogLevel::Debug);
+#else 
+	g_LogManager.Initialize(log_file.c_str(), LogLevel::Error);
+#endif
 
 	SceneConfig cfg{};
 	if (!ParseSceneConfig(config_file.c_str(), cfg))
