@@ -313,20 +313,9 @@ namespace amber
 		if (!visibility_flags[Visibility_Options]) return;
 		ImGui::Begin(ICON_FA_GEAR" Options");
 		{
-			ImGuiIO& io = ImGui::GetIO();
+			renderer.GUI();
 
-			int32 sample_count = renderer.GetSampleCount();
-			if (ImGui::SliderInt("Samples", &sample_count, 1, 4))
-			{
-				renderer.SetSampleCount(sample_count);
-			}
-			int32 max_depth = renderer.GetDepthCount();
-			if (ImGui::SliderInt("Max Depth", &max_depth, 1, renderer.GetMaxDepth()))
-			{
-				renderer.SetDepthCount(max_depth);
-			}
-
-			if (ImGui::TreeNode("Screenshot"))
+			if (ImGui::TreeNode("Debug Options"))
 			{
 				static char ss_name[32 + 1] = {};
 				ImGui::InputText("Name", ss_name, sizeof(ss_name) - 1);
@@ -336,7 +325,6 @@ namespace amber
 				}
 				ImGui::TreePop();
 			}
-			
 		}
 		ImGui::End();
 	}

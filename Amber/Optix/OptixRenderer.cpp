@@ -4,12 +4,13 @@
 #include <optix_function_table_definition.h>
 #include <optix_stack_size.h>
 #include <nvrtc.h>
-#include "OptixShared.h"
+#include "ImGui/imgui.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "OptixRenderer.h"
 #include "Core/Logger.h"
 #include "Core/Paths.h"
+#include "Math/MathCommon.h"
 #include "Utilities/Random.h"
 #include "Utilities/ImageUtil.h"
 
@@ -33,6 +34,14 @@ namespace amber
 			AMBER_INFO("%s", message);
 			return;
 		}
+	}
+
+	template<typename T>
+	static auto CreateBuffer(std::vector<T> const& buf)
+	{
+		std::unique_ptr<Buffer> buffer = std::make_unique<Buffer>(buf.size() * sizeof(T));
+		buffer->Update(buf.data(), buffer->GetSize());
+		return buffer;
 	}
 
 	OptixInitializer::OptixInitializer()
@@ -118,13 +127,6 @@ namespace amber
 					gpu_mesh.material_idx = mesh.material_ids[i];
 				}
 			}
-
-			auto CreateBuffer = []<typename T>(std::vector<T> const& buf)
-			{
-				std::unique_ptr<Buffer> buffer = std::make_unique<Buffer>(buf.size() * sizeof(T));
-				buffer->Update(buf.data(), buffer->GetSize());
-				return buffer;
-			};
 			mesh_list_buffer	= CreateBuffer(gpu_meshes); 
 			vertices_buffer		= CreateBuffer(vertices);
 			normals_buffer		= CreateBuffer(normals);
@@ -278,7 +280,6 @@ namespace amber
 			material_list_buffer = std::make_unique<Buffer>(materials.size() * sizeof(MaterialGPU));
 			material_list_buffer->Update(materials.data(), material_list_buffer->GetSize());
 
-			std::vector<LightGPU> lights;
 			lights.reserve(scene->lights.size());
 			for (Light const& l : scene->lights)
 			{
@@ -297,9 +298,7 @@ namespace amber
 				optix_light.direction = make_float3(0.0f, -1.0f, 0.1f);
 				optix_light.position = make_float3(-1000.0f * optix_light.direction.x, -1000.0f * optix_light.direction.y, -1000.0f * optix_light.direction.z);
 			}
-
-			light_list_buffer = std::make_unique<Buffer>(lights.size() * sizeof(LightGPU));
-			light_list_buffer->Update(lights.data(), light_list_buffer->GetSize());
+			light_list_buffer = CreateBuffer(lights); 
 		}
 
 		CompileOptions comp_opts{};
@@ -391,6 +390,52 @@ namespace amber
 	{
 		std::string output_path = paths::ScreenshotDir + outfile + ".png";
 		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), framebuffer.Cols() * sizeof(uchar4));
+	}
+
+	void OptixRenderer::GUI()
+	{
+		if (ImGui::TreeNode("Renderer Options"))
+		{
+			ImGui::SliderInt("Samples", &sample_count, 1, 8);
+			ImGui::SliderInt("Max Depth", &depth_count, 1, MAX_DEPTH);
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("Lights"))
+		{
+			bool changed = false;
+			for (LightGPU& light : lights)
+			{
+				changed |= ImGui::ColorEdit3("Color", &light.color.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+				if (light.type == LightType_Directional)
+				{
+					static float sun_elevation = 75.0f;
+					static float sun_azimuth = 260.0f;
+					ConvertDirectionToAzimuthAndElevation(-Vector3(&light.direction.x), sun_elevation, sun_azimuth);
+
+					changed |= ImGui::SliderFloat("Sun Elevation", &sun_elevation, -90.0f, 90.0f);
+					changed |= ImGui::SliderFloat("Sun Azimuth", &sun_azimuth, 0.0f, 360.0f);
+
+					Vector3 light_direction = ConvertElevationAndAzimuthToDirection(sun_elevation, sun_azimuth);
+					light.direction.x = -light_direction.x;
+					light.direction.y = -light_direction.y;
+					light.direction.z = -light_direction.z;
+				}
+				else
+				{
+					//#todo
+				}
+			}
+
+			if (changed)
+			{
+				frame_index = 0;
+				light_list_buffer = CreateBuffer(lights);
+			}
+
+			ImGui::TreePop();
+		}
 	}
 
 }
