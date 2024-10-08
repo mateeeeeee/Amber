@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "OptixUtils.h"
+#include "OptixShared.h"
 #include "Utilities/CpuBuffer2D.h"
 
 namespace amber
@@ -22,7 +23,6 @@ namespace amber
 	class OptixRenderer : public OptixInitializer
 	{
 		static constexpr uint32 MAX_DEPTH = 3;
-
 	public:
 		OptixRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene);
 		~OptixRenderer();
@@ -35,19 +35,17 @@ namespace amber
 
 		auto const& GetFramebuffer() const { return framebuffer; }
 		uint32 GetMaxDepth() const { return MAX_DEPTH; }
+		void GUI();
 
 		void SetDepthCount(uint32 depth)
 		{
 			depth_count = depth;
 			if (depth_count > MAX_DEPTH) depth_count = MAX_DEPTH;
 		}
-		uint32 GetDepthCount() const { return depth_count; }
 		void SetSampleCount(uint32 samples)
 		{
 			sample_count = samples;
 		}
-		uint32 GetSampleCount() const { return sample_count; }
-		
 
 	private:
 		std::unique_ptr<Scene>		scene;
@@ -72,10 +70,10 @@ namespace amber
 		std::unique_ptr<optix::Buffer> uvs_buffer;
 		std::unique_ptr<optix::Buffer> indices_buffer;
 
-		//
+		std::vector<LightGPU> lights;
 
 		uint32 frame_index;
-		uint32 depth_count;
-		uint32 sample_count;
+		int32 depth_count;
+		int32 sample_count;
 	};
 }

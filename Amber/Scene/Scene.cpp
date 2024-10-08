@@ -1,8 +1,8 @@
 #define CGLTF_IMPLEMENTATION
 #include <unordered_map>
-#include <algorithm>
 #include "Scene.h"
 #include "Core/Logger.h"
+#include "Math/MathCommon.h"
 #include "pbrtParser/Scene.h"
 #include "tinyobjloader/tiny_obj_loader.h"
 #include "cgltf/cgltf.h"
@@ -214,24 +214,24 @@ namespace amber
 
 							Geometry geom{};
 							geom.vertices.reserve(mesh->vertex.size());
-							std::transform(
-								mesh->vertex.begin(),
-								mesh->vertex.end(),
-								std::back_inserter(geom.vertices),
-								[](pbrt::vec3f const& v) { return Vector3(v.x, v.y, v.z); });
+							//std::transform(
+							//	mesh->vertex.begin(),
+							//	mesh->vertex.end(),
+							//	std::back_inserter(geom.vertices),
+							//	[](pbrt::vec3f const& v) { return Vector3(v.x, v.y, v.z); });
 
 							geom.indices.reserve(mesh->index.size());
-							std::transform(
-								mesh->index.begin(),
-								mesh->index.end(),
-								std::back_inserter(geom.indices),
-								[](pbrt::vec3i const& v) { return Vector3u(v.x, v.y, v.z); });
+							//std::transform(
+							//	mesh->index.begin(),
+							//	mesh->index.end(),
+							//	std::back_inserter(geom.indices),
+							//	[](pbrt::vec3i const& v) { return Vector3u(v.x, v.y, v.z); });
 
 							geom.uvs.reserve(mesh->texcoord.size());
-							std::transform(mesh->texcoord.begin(),
-								mesh->texcoord.end(),
-								std::back_inserter(geom.uvs),
-								[](pbrt::vec2f const& v) { return Vector2(v.x, v.y); });
+							//std::transform(mesh->texcoord.begin(),
+							//	mesh->texcoord.end(),
+							//	std::back_inserter(geom.uvs),
+							//	[](pbrt::vec2f const& v) { return Vector2(v.x, v.y); });
 
 							geometries.push_back(geom);
 						}
@@ -335,19 +335,14 @@ namespace amber
 				mesh.material_ids.push_back(obj_mesh.material_ids[0]);
 			}
 			obj_scene->meshes.push_back(std::move(mesh));
-			
-			auto clamp = []<typename T>(T v, T min, T max)
-			{
-				return v < min ? min : (v > max ? max : v);
-			};
 
 			std::unordered_map<std::string, int32> texture_ids;
 			for (auto const& m : materials)
 			{
 				Material material{};
 				material.base_color = Vector3(m.diffuse[0], m.diffuse[1], m.diffuse[2]);
-				material.specular = clamp(m.shininess / 500.f, 0.0f, 1.0f);
-				material.roughness = clamp(1.f - material.specular, 0.0f, 1.0f);
+				material.specular = Clamp(m.shininess / 500.f, 0.0f, 1.0f);
+				material.roughness = Clamp(1.f - material.specular, 0.0f, 1.0f);
 				material.specular_transmission = 0.0f;
 				if (!m.diffuse_texname.empty()) 
 				{
