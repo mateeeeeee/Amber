@@ -5,16 +5,14 @@
 
 namespace amber
 {
-
     template<typename T>
     class ConcurrentQueue
     {
     public:
 
         ConcurrentQueue() = default;
-        LAVENDER_NONCOPYABLE_NONMOVABLE(ConcurrentQueue)
+        AMBER_NONCOPYABLE_NONMOVABLE(ConcurrentQueue)
 		~ConcurrentQueue() = default;
-
 
         void Push(T const& value)
         {

@@ -1,4 +1,5 @@
 #include "Window.h"
+#include "Core/Paths.h"
 
 namespace amber
 {
@@ -8,6 +9,9 @@ namespace amber
 		SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE);
 		sdl_window.reset(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, window_flags));
 		SDLCheck(sdl_window.get());
+		std::string icon_path = paths::IconsDir + "amberlogo.bmp";
+		SDL_Surface* icon = SDL_LoadBMP(icon_path.c_str());
+		SDL_SetWindowIcon(sdl_window.get(), icon);
 	}
 	Window::~Window() = default;
 

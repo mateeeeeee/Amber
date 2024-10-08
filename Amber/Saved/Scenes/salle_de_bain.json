@@ -1,0 +1,25 @@
+{
+	"scene": {
+		"model file": "salle_de_bain/salle_de_bain.obj",
+		"model scale": 1,
+		"scene environment": "environment/barcelona.hdr",
+		"width": 1080,
+		"height": 720,
+		"max depth": 2,
+		"samples per pixel": 1,
+		"camera": {
+			"position": [
+				-1.15,
+				11.53,
+				-8.84
+			],
+			"look_at": [
+				-1.19,
+				11.48,
+				-7.85
+			],
+			"fov": 45.0
+		}
+	}
+}
+

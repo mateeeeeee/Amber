@@ -8,8 +8,6 @@ namespace amber
 	{
 		friend class Singleton<ConsoleManager>;
 	public:
-		ConsoleManager() {}
-		~ConsoleManager();
 
 		virtual IConsoleVariable* RegisterConsoleVariable(char const* name, bool default_value, char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariable(char const* name, int default_value, char const* help) override;
@@ -39,13 +37,15 @@ namespace amber
 		std::unordered_map<std::string, IConsoleObject*> console_objects;
 
 	private:
+		ConsoleManager() {}
+		~ConsoleManager();
+
 		IConsoleObject* AddObject(char const* name, IConsoleObject* obj);
 	};
 #define g_ConsoleManager ConsoleManager::Get()
 
 	class AutoConsoleObject
 	{
-
 	public:
 		virtual ~AutoConsoleObject()
 		{
