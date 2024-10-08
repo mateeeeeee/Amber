@@ -12,7 +12,7 @@ namespace amber
 		friend class Singleton<ThreadPool>;
 	public:
 
-		LAVENDER_NONCOPYABLE_NONMOVABLE(ThreadPool)
+		AMBER_NONCOPYABLE_NONMOVABLE(ThreadPool)
 		~ThreadPool() = default;
 
 		void Initialize(uint32 pool_size = std::thread::hardware_concurrency() - 1)

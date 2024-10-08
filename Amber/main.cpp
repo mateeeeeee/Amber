@@ -5,6 +5,7 @@
 #include "Core/Window.h"
 #include "Core/Logger.h"
 #include "Core/Paths.h"
+#include "Core/ConsoleManager.h"
 #include "Editor/Editor.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
@@ -27,7 +28,7 @@ struct SceneConfig
 	Camera camera;
 };
 bool ParseSceneConfig(char const* config_file, SceneConfig& cfg);
-
+void ProcessCVarIniFile(char const* cvar_file);
 
 int main(int argc, char* argv[])
 {
@@ -42,7 +43,7 @@ int main(int argc, char* argv[])
 		CLI::Option* max_window_opt = cli_parser.add_flag("--max", "Maximize editor window");
 		CLI11_PARSE(cli_parser, argc, argv);
 		if (log_file.empty()) log_file = "amber.log";
-		if (config_file.empty()) config_file = "toyshop.json";
+		if (config_file.empty()) config_file = "salle_de_bain.json";
 		if (output_file.empty()) output_file = "output";
 		use_editor = !(bool)*no_editor_opt;
 		maximize_window = (bool)*max_window_opt;
@@ -71,9 +72,9 @@ int main(int argc, char* argv[])
 		AMBER_ERROR("{}", e.what());
 		return EXIT_FAILURE;
 	}
-
 	Camera camera = std::move(cfg.camera);
 	OptixRenderer renderer(cfg.width, cfg.height, std::move(scene));
+	ProcessCVarIniFile("cvars.ini");
 	if(use_editor)
 	{
 		Window window(cfg.width, cfg.height, "amber");
@@ -151,4 +152,20 @@ bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
 	cfg.camera.SetFovY(fovy);
 	cfg.camera.SetAspectRatio((float)cfg.width / cfg.height);
 	return true;
+}
+
+void ProcessCVarIniFile(char const* cvar_file)
+{
+	std::string cvar_ini_path = paths::IniDir + cvar_file;  ;
+	std::ifstream cvar_ini_file(cvar_ini_path);
+	if (!cvar_ini_file.is_open())
+	{
+		return;
+	}
+	std::string line;
+	while (std::getline(cvar_ini_file, line))
+	{
+		if (line.empty() || line[0] == '#') continue;
+		g_ConsoleManager.ProcessInput(line);
+	}
 }

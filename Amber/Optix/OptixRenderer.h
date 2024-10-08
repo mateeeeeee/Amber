@@ -71,6 +71,9 @@ namespace amber
 		std::unique_ptr<optix::Buffer> normals_buffer;
 		std::unique_ptr<optix::Buffer> uvs_buffer;
 		std::unique_ptr<optix::Buffer> indices_buffer;
+
+		//
+
 		uint32 frame_index;
 		uint32 depth_count;
 		uint32 sample_count;
