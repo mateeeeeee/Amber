@@ -47,7 +47,7 @@ namespace amber
 		if (g_Input.GetKey(KeyCode::Q)) movement.y -= 1.0f;
 		if (g_Input.GetKey(KeyCode::E)) movement.y += 1.0f;
 		movement = Vector3::Transform(movement, orientation);
-		velocity = Vector3::SmoothStep(velocity, movement, 0.35f);
+		velocity = Vector3::SmoothStep(velocity, movement, 0.25f);
 
 		if (velocity.LengthSquared() > 1e-4)
 		{

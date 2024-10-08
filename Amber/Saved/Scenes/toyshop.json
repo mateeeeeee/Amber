@@ -6,19 +6,19 @@
 		"scene environment" : "environment/barcelona.hdr",
 		"width" : 1080,
 		"height" : 720,
-		"max depth" : 4,
+		"max depth" : 2,
 		"samples per pixel" : 1,
         "camera": 
 		{
 			"position": [
-			   -7.0,
-				4.0, 
-				0.0
+			  -3.5,
+				2.2, 
+				1.8
 			],
 			"look_at": [
-			   -6.0,
-				4.0, 
-				0.0
+			  -4.1,
+				1.9, 
+				1.0
 			],
 			"fov": 45.0
 		}

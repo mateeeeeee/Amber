@@ -193,7 +193,7 @@ namespace amber
 			{
 				Instance const& inst = scene->instances[i];
 				OptixInstance instance{};
-				instance.instanceId = i;
+				instance.instanceId = inst.mesh_id;
 				instance.sbtOffset = 0; 
 				instance.flags = OPTIX_INSTANCE_FLAG_NONE;
 				instance.traversableHandle = blas_handles[inst.mesh_id];
@@ -300,7 +300,6 @@ namespace amber
 
 			light_list_buffer = std::make_unique<Buffer>(lights.size() * sizeof(LightGPU));
 			light_list_buffer->Update(lights.data(), light_list_buffer->GetSize());
-
 		}
 
 		CompileOptions comp_opts{};
