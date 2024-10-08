@@ -331,7 +331,7 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 extern "C" 
 __global__ void AH_NAME(ah)()
 {
-	uint32 instance_idx = optixGetInstanceIndex();
+	uint32 instance_idx = optixGetInstanceId();
 	uint32 primitive_idx = optixGetPrimitiveIndex();
 
 	MeshGPU mesh = params.meshes[instance_idx];
@@ -367,7 +367,7 @@ __device__ float3 TransformNormal(float const matrix[12], float3 const& normal)
 extern "C" 
 __global__ void CH_NAME(ch)()
 {
-	MeshGPU mesh = params.meshes[optixGetInstanceIndex()];
+	MeshGPU mesh = params.meshes[optixGetInstanceId()];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 
 	float object_to_world_transform[12];
