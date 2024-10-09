@@ -160,7 +160,7 @@ bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
 
 void ProcessCVarIniFile(char const* cvar_file)
 {
-	std::string cvar_ini_path = paths::IniDir + cvar_file;  ;
+	std::string cvar_ini_path = paths::IniDir + cvar_file;
 	std::ifstream cvar_ini_file(cvar_ini_path);
 	if (!cvar_ini_file.is_open())
 	{

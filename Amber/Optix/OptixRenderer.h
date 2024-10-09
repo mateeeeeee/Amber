@@ -35,7 +35,9 @@ namespace amber
 
 		auto const& GetFramebuffer() const { return framebuffer; }
 		uint32 GetMaxDepth() const { return MAX_DEPTH; }
-		void GUI();
+
+		void OptionsGUI();
+		void LightsGUI();
 
 		void SetDepthCount(uint32 depth)
 		{

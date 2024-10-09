@@ -398,7 +398,7 @@ namespace amber
 		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), framebuffer.Cols() * sizeof(uchar4));
 	}
 
-	void OptixRenderer::GUI()
+	void OptixRenderer::OptionsGUI()
 	{
 		if (ImGui::TreeNode("Renderer Options"))
 		{
@@ -407,7 +407,10 @@ namespace amber
 
 			ImGui::TreePop();
 		}
+	}
 
+	void OptixRenderer::LightsGUI()
+	{
 		if (ImGui::TreeNode("Lights"))
 		{
 			bool changed = false;
@@ -416,7 +419,7 @@ namespace amber
 			{
 				std::string light_label = "Light " + std::to_string(light_index++);
 
-				ImGui::PushID(light_index); 
+				ImGui::PushID(light_index);
 				ImGui::BeginChild(light_label.c_str(), ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
 
 				ImGui::Columns(2, nullptr, false);
@@ -459,16 +462,16 @@ namespace amber
 
 				ImGui::Columns(1);
 				ImGui::EndChild();
-				ImGui::PopID(); 
+				ImGui::PopID();
 
 				ImGui::Separator();
 			}
+
 			if (changed)
 			{
 				frame_index = 0;
 				light_list_buffer = CreateBuffer(lights);
 			}
-
 			ImGui::TreePop();
 		}
 	}
