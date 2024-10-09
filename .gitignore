@@ -3,7 +3,7 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-
+*.obj
 # User-specific files
 *.rsuser
 *.suo
@@ -14,6 +14,8 @@
 todolist.txt
 Amber/Resources/Models/SanMiguel/
 Amber/Resources/Models/Toyshop_TeddyGI/
+Amber/Resources/Models/living_room/
+Amber/Resources/Models/salle_de_bain/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -92,7 +94,6 @@ StyleCopReport.xml
 *_h.h
 *.ilk
 *.meta
-*.obj
 *.iobj
 *.pch
 *.pdb
