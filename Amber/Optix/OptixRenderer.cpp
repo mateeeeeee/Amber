@@ -280,9 +280,15 @@ namespace amber
 			material_list_buffer = std::make_unique<Buffer>(materials.size() * sizeof(MaterialGPU));
 			material_list_buffer->Update(materials.data(), material_list_buffer->GetSize());
 
+			uint32 directional_light_count = 0;
 			lights.reserve(scene->lights.size());
 			for (Light const& l : scene->lights)
 			{
+				if (l.type == LightType::Directional)
+				{
+					++directional_light_count;
+				}
+
 				LightGPU& optix_light = lights.emplace_back();
 				optix_light.type = static_cast<uint32>(l.type);
 				optix_light.color = make_float3(l.color.x, l.color.y, l.color.z);
@@ -290,7 +296,7 @@ namespace amber
 				optix_light.position = make_float3(l.position.x, l.position.y, l.position.z);
 			}
 
-			if (lights.empty())
+			if (directional_light_count == 0)
 			{
 				LightGPU& optix_light = lights.emplace_back();
 				optix_light.type = LightType_Directional;
@@ -405,29 +411,58 @@ namespace amber
 		if (ImGui::TreeNode("Lights"))
 		{
 			bool changed = false;
+			int light_index = 0;
 			for (LightGPU& light : lights)
 			{
-				changed |= ImGui::ColorEdit3("Color", &light.color.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+				std::string light_label = "Light " + std::to_string(light_index++);
+
+				ImGui::PushID(light_index); 
+				ImGui::BeginChild(light_label.c_str(), ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
+
+				ImGui::Columns(2, nullptr, false);
+
+				ImGui::Text("Light %d", light_index);
+				ImGui::NextColumn();
+				const char* light_types[] = { "Directional", "Point" };
+				ImGui::Combo("Type", (int*)&light.type, light_types, IM_ARRAYSIZE(light_types));
+				ImGui::NextColumn();
+
+				ImGui::Text("Color");
+				ImGui::NextColumn();
+				changed |= ImGui::ColorEdit3("##Color", &light.color.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+				ImGui::NextColumn();
+
 				if (light.type == LightType_Directional)
 				{
+					ImGui::Text("Sun Elevation");
+					ImGui::NextColumn();
 					static float sun_elevation = 75.0f;
-					static float sun_azimuth = 260.0f;
-					ConvertDirectionToAzimuthAndElevation(-Vector3(&light.direction.x), sun_elevation, sun_azimuth);
+					changed |= ImGui::SliderFloat("##Elevation", &sun_elevation, -90.0f, 90.0f);
+					ImGui::NextColumn();
 
-					changed |= ImGui::SliderFloat("Sun Elevation", &sun_elevation, -90.0f, 90.0f);
-					changed |= ImGui::SliderFloat("Sun Azimuth", &sun_azimuth, 0.0f, 360.0f);
+					ImGui::Text("Sun Azimuth");
+					ImGui::NextColumn();
+					static float sun_azimuth = 260.0f;
+					changed |= ImGui::SliderFloat("##Azimuth", &sun_azimuth, 0.0f, 360.0f);
 
 					Vector3 light_direction = ConvertElevationAndAzimuthToDirection(sun_elevation, sun_azimuth);
 					light.direction.x = -light_direction.x;
 					light.direction.y = -light_direction.y;
 					light.direction.z = -light_direction.z;
 				}
-				else
+				else if (light.type == LightType_Point)
 				{
-					//#todo
+					ImGui::Text("Position");
+					ImGui::NextColumn();
+					changed |= ImGui::InputFloat3("##Position", &light.position.x);
 				}
-			}
 
+				ImGui::Columns(1);
+				ImGui::EndChild();
+				ImGui::PopID(); 
+
+				ImGui::Separator();
+			}
 			if (changed)
 			{
 				frame_index = 0;

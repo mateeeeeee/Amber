@@ -512,16 +512,40 @@ namespace amber
 			{
 				cgltf_node const& gltf_node = gltf_data->nodes[i];
 
+				Matrix local_to_world;
+				cgltf_node_transform_world(&gltf_node, &local_to_world.m[0][0]);
+				local_to_world *= Matrix::CreateScale(scale, scale, -scale);
 				if (gltf_node.mesh)
 				{
-					Matrix local_to_world;
-					cgltf_node_transform_world(&gltf_node, &local_to_world.m[0][0]);
-
 					for (int32 primitive : mesh_primitives_map[gltf_node.mesh])
 					{
 						Instance& instance = gltf_scene->instances.emplace_back();
 						instance.mesh_id = primitive;
-						instance.transform = local_to_world * Matrix::CreateScale(scale, scale, -scale);
+						instance.transform = local_to_world;
+					}
+				}
+
+				if (gltf_node.light)
+				{
+					cgltf_light const& gltf_light = *gltf_node.light;
+					Vector3 translation, scale;
+					Quaternion rotation;
+					local_to_world.Decompose(translation, rotation, scale);
+
+					Light& light = gltf_scene->lights.emplace_back();
+					light.color.x = gltf_light.color[0] * gltf_light.intensity;
+					light.color.y = gltf_light.color[1] * gltf_light.intensity;
+					light.color.z = gltf_light.color[2] * gltf_light.intensity;
+					light.position = Vector3(translation.x, translation.y, translation.z);
+					Vector3 forward(0.0f, 0.0f, -1.0f);
+					Vector3 direction = Vector3::Transform(forward, Matrix::CreateFromQuaternion(rotation));
+					light.direction = Vector3(direction.x, direction.y, direction.z);
+
+					switch (gltf_light.type)
+					{
+					case cgltf_light_type_directional: light.type = LightType::Directional; break;
+					case cgltf_light_type_point:	   light.type = LightType::Point; break;
+					case cgltf_light_type_spot:		   light.type = LightType::Spot; break;
 					}
 				}
 			}

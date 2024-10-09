@@ -133,6 +133,7 @@ set(MISC_FILES
     Saved/Scenes/sanmiguel.json
     Saved/Scenes/toyshop.json
     Saved/Scenes/salle_de_bain.json
+    Saved/Scenes/living_room.json
 
     Saved/Ini/cvars.ini
 )

@@ -184,6 +184,35 @@ __device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_pa
 			}
 		}
 	}
+	else if (light.type == LightType_Point)
+	{
+		float3 light_pos = light.position;
+		float3 light_dir = light_pos - hit_point; 
+		float dist = length(light_dir);
+		light_dir = light_dir / dist;
+
+		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, light_dir, M_EPSILON, dist - M_EPSILON))
+		{
+			float attenuation = 1.0f / (dist * dist);
+			float3 bsdf = DisneyBrdf(mat_params, v_z, w_o, light_dir, v_x, v_y);
+			radiance = bsdf * light.color * abs(dot(light_dir, v_z)) * attenuation;
+		}
+
+		float3 w_i;
+		float bsdf_pdf;
+		float3 bsdf = SampleDisneyBrdf(mat_params, v_z, w_o, v_x, v_y, seed, w_i, bsdf_pdf);
+		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
+		{
+			float light_pdf = (dist * dist) / (abs(dot(light_dir, v_z)) * 1.0f); // light.radius);
+			float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
+
+			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, w_i, M_EPSILON, dist - M_EPSILON))
+			{
+				float attenuation = 1.0f / (dist * dist); 
+				radiance += bsdf * light.color * abs(dot(w_i, v_z)) * attenuation * w / bsdf_pdf;
+			}
+		}
+	}
 	return radiance;
 }
 
