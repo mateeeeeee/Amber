@@ -22,9 +22,9 @@ namespace amber
 		float ior = 1.5f;
 		float specular_transmission = 0.0f;
 
-		int32 diffuse_tex_id = -1;
-		int32 metallic_roughness_tex_id = -1;
-		int32 normal_tex_id = -1;
-		int32 emissive_tex_id = -1;
+		Sint32 diffuse_tex_id = -1;
+		Sint32 metallic_roughness_tex_id = -1;
+		Sint32 normal_tex_id = -1;
+		Sint32 emissive_tex_id = -1;
 	};
 }

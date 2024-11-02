@@ -10,7 +10,7 @@
 
 namespace amber
 {
-	enum class SceneFormat : uint8
+	enum class SceneFormat : Uint8
 	{
 		OBJ,
 		GLTF,
@@ -32,11 +32,11 @@ namespace amber
 	
 	namespace 
 	{
-		int32 LoadPBRTTexture(
+		Sint32 LoadPBRTTexture(
 			Scene& scene,
 			pbrt::Texture::SP const& texture,
 			std::string_view pbrt_base_dir,
-			std::unordered_map<pbrt::Texture::SP, uint32>& pbrt_textures)
+			std::unordered_map<pbrt::Texture::SP, Uint32>& pbrt_textures)
 		{
 			auto fnd = pbrt_textures.find(texture);
 			if (fnd != pbrt_textures.end())
@@ -47,7 +47,7 @@ namespace amber
 			if (auto t = texture->as<pbrt::ImageTexture>())
 			{
 				std::string path = std::string(pbrt_base_dir) + t->fileName;
-				const uint32 id = scene.textures.size();
+				const Uint32 id = scene.textures.size();
 				pbrt_textures[texture] = id;
 				//scene.textures.emplace_back(path.c_str());
 				//AMBER_INFO("Loaded image texture: %s\n", t->fileName.c_str());
@@ -69,12 +69,12 @@ namespace amber
 			return -1;
 		}
 
-		uint32 LoadPBRTMaterials(Scene& scene,
+		Uint32 LoadPBRTMaterials(Scene& scene,
 			pbrt::Material::SP const& mat,
 			std::map<std::string, pbrt::Texture::SP> const& texture_overrides,
 			std::string_view pbrt_base_dir,
-			std::unordered_map<pbrt::Material::SP, uint32>& pbrt_materials,
-			std::unordered_map<pbrt::Texture::SP, uint32>& pbrt_textures)
+			std::unordered_map<pbrt::Material::SP, Uint32>& pbrt_materials,
+			std::unordered_map<pbrt::Texture::SP, Uint32>& pbrt_textures)
 		{
 			if (pbrt_materials.contains(mat))
 			{
@@ -107,7 +107,7 @@ namespace amber
 					}
 					else 
 					{
-						int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
 						loaded_mat.diffuse_tex_id = tex_id;
 					}
 				}
@@ -126,7 +126,7 @@ namespace amber
 					}
 					else 
 					{
-						int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
 						loaded_mat.diffuse_tex_id = tex_id;
 					}
 				}
@@ -142,7 +142,7 @@ namespace amber
 					}
 					else 
 					{
-						int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
 						loaded_mat.diffuse_tex_id = tex_id;
 					}
 				}
@@ -153,7 +153,7 @@ namespace amber
 				loaded_mat.clearcoat_gloss = loaded_mat.specular;
 			}
 
-			uint32 mat_id = scene.materials.size();
+			Uint32 mat_id = scene.materials.size();
 			pbrt_materials[mat] = mat_id;
 			scene.materials.push_back(loaded_mat);
 			return mat_id;
@@ -187,21 +187,21 @@ namespace amber
 				}
 			}
 
-			std::unordered_map<pbrt::Material::SP, uint32>	pbrt_materials;
-			std::unordered_map<pbrt::Texture::SP, uint32>	pbrt_textures;
-			std::unordered_map<std::string, uint32>			pbrt_objects;
+			std::unordered_map<pbrt::Material::SP, Uint32>	pbrt_materials;
+			std::unordered_map<pbrt::Texture::SP, Uint32>	pbrt_textures;
+			std::unordered_map<std::string, Uint32>			pbrt_objects;
 			for (auto const& instance : pbrt_world->instances)
 			{
-				uint64 primitive_id = -1;
+				Uint64 primitive_id = -1;
 				if (!pbrt_objects.contains(instance->object->name))
 				{
-					std::vector<uint32> material_ids;
+					std::vector<Uint32> material_ids;
 					std::vector<Geometry> geometries;
 					for (const auto& shape : instance->object->shapes)
 					{
 						if (pbrt::TriangleMesh::SP mesh = shape->as<pbrt::TriangleMesh>())
 						{
-							uint32 material_id = -1;
+							Uint32 material_id = -1;
 							if (mesh->material)
 							{
 								material_id = LoadPBRTMaterials(*scene, mesh->material,
@@ -241,7 +241,7 @@ namespace amber
 						}
 					}
 
-					uint64 const mesh_id = scene->meshes.size();
+					Uint64 const mesh_id = scene->meshes.size();
 					scene->meshes.emplace_back(geometries);
 
 					pbrt_objects[instance->object->name] = mesh_id;
@@ -291,38 +291,38 @@ namespace amber
 			std::unique_ptr<Scene> obj_scene = std::make_unique<Scene>();
 
 			Mesh mesh;
-			std::vector<uint32> material_ids;
-			for (uint64 s = 0; s < shapes.size(); s++)
+			std::vector<Uint32> material_ids;
+			for (Uint64 s = 0; s < shapes.size(); s++)
 			{
 				tinyobj::mesh_t const& obj_mesh = shapes[s].mesh;
 				if(obj_mesh.material_ids[0] >= 0) material_ids.push_back(obj_mesh.material_ids[0]);
 				
 				Geometry geometry{};
-				uint32 index_offset = 0;
-				for (uint64 f = 0; f < obj_mesh.num_face_vertices.size(); ++f) 
+				Uint32 index_offset = 0;
+				for (Uint64 f = 0; f < obj_mesh.num_face_vertices.size(); ++f) 
 				{
 					AMBER_ASSERT(obj_mesh.num_face_vertices[f] == 3);
-					for (uint64 v = 0; v < 3; v++)
+					for (Uint64 v = 0; v < 3; v++)
 					{
 						tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-						tinyobj::real_t vx = attrib.vertices[3 * uint64(idx.vertex_index) + 0] * scale;
-						tinyobj::real_t vy = attrib.vertices[3 * uint64(idx.vertex_index) + 1] * scale;
-						tinyobj::real_t vz = attrib.vertices[3 * uint64(idx.vertex_index) + 2] * scale * -1.0f;
+						tinyobj::real_t vx = attrib.vertices[3 * Uint64(idx.vertex_index) + 0] * scale;
+						tinyobj::real_t vy = attrib.vertices[3 * Uint64(idx.vertex_index) + 1] * scale;
+						tinyobj::real_t vz = attrib.vertices[3 * Uint64(idx.vertex_index) + 2] * scale * -1.0f;
 
 						geometry.vertices.emplace_back(vx, vy, vz);
 
 						if (idx.normal_index >= 0)
 						{
-							tinyobj::real_t nx = attrib.normals[3 * uint64(idx.normal_index) + 0];
-							tinyobj::real_t ny = attrib.normals[3 * uint64(idx.normal_index) + 1];
-							tinyobj::real_t nz = attrib.normals[3 * uint64(idx.normal_index) + 2];
+							tinyobj::real_t nx = attrib.normals[3 * Uint64(idx.normal_index) + 0];
+							tinyobj::real_t ny = attrib.normals[3 * Uint64(idx.normal_index) + 1];
+							tinyobj::real_t nz = attrib.normals[3 * Uint64(idx.normal_index) + 2];
 							geometry.normals.emplace_back(nx, ny, nz);
 						}
 
 						if (idx.texcoord_index >= 0)
 						{
-							tinyobj::real_t tx = attrib.texcoords[2 * uint64(idx.texcoord_index) + 0];
-							tinyobj::real_t ty = attrib.texcoords[2 * uint64(idx.texcoord_index) + 1];
+							tinyobj::real_t tx = attrib.texcoords[2 * Uint64(idx.texcoord_index) + 0];
+							tinyobj::real_t ty = attrib.texcoords[2 * Uint64(idx.texcoord_index) + 1];
 
 							geometry.uvs.emplace_back(tx, ty);
 						}
@@ -336,7 +336,7 @@ namespace amber
 			}
 			obj_scene->meshes.push_back(std::move(mesh));
 
-			std::unordered_map<std::string, int32> texture_ids;
+			std::unordered_map<std::string, Sint32> texture_ids;
 			for (auto const& m : materials)
 			{
 				Material material{};
@@ -352,7 +352,7 @@ namespace amber
 						std::string texture_path = obj_base_dir + "/" + m.diffuse_texname;
 						obj_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const int32 id = texture_ids[m.diffuse_texname];
+					const Sint32 id = texture_ids[m.diffuse_texname];
 					material.diffuse_tex_id = id;
 				}
 				obj_scene->materials.push_back(material);
@@ -382,9 +382,9 @@ namespace amber
 			std::string gltf_base_dir = std::string(scene_file.substr(0, scene_file.rfind('/')));
 			std::unique_ptr<Scene> gltf_scene = std::make_unique<Scene>();
 
-			std::unordered_map<std::string, int32> texture_ids;
+			std::unordered_map<std::string, Sint32> texture_ids;
 			gltf_scene->materials.reserve(gltf_data->materials_count);
-			for (uint32 i = 0; i < gltf_data->materials_count; ++i)
+			for (Uint32 i = 0; i < gltf_data->materials_count; ++i)
 			{
 				cgltf_material const& gltf_material = gltf_data->materials[i];
 				Material& material = gltf_scene->materials.emplace_back();
@@ -409,7 +409,7 @@ namespace amber
 						std::string texture_path = gltf_base_dir + "/" + image->uri;
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const int32 id = texture_ids[image->uri];
+					const Sint32 id = texture_ids[image->uri];
 					material.diffuse_tex_id = id;
 				}
 
@@ -422,7 +422,7 @@ namespace amber
 						std::string texture_path = gltf_base_dir + "/" + image->uri;
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const int32 id = texture_ids[image->uri];
+					const Sint32 id = texture_ids[image->uri];
 					material.metallic_roughness_tex_id = id;
 				}
 
@@ -435,7 +435,7 @@ namespace amber
 						std::string texture_path = gltf_base_dir + "/" + image->uri;
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const int32 id = texture_ids[image->uri];
+					const Sint32 id = texture_ids[image->uri];
 					material.normal_tex_id = id;
 				}
 
@@ -448,43 +448,43 @@ namespace amber
 						std::string texture_path = gltf_base_dir + "/" + image->uri;
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const int32 id = texture_ids[image->uri];
+					const Sint32 id = texture_ids[image->uri];
 					material.emissive_tex_id = id;
 				}
 
 			}
 
-			std::unordered_map<cgltf_mesh const*, std::vector<int32>> mesh_primitives_map; 
-			int32 primitive_count = 0;
+			std::unordered_map<cgltf_mesh const*, std::vector<Sint32>> mesh_primitives_map; 
+			Sint32 primitive_count = 0;
 
-			for (uint32 i = 0; i < gltf_data->meshes_count; ++i)
+			for (Uint32 i = 0; i < gltf_data->meshes_count; ++i)
 			{
 				cgltf_mesh const& gltf_mesh = gltf_data->meshes[i];
-				std::vector<int32>& primitives = mesh_primitives_map[&gltf_mesh];
+				std::vector<Sint32>& primitives = mesh_primitives_map[&gltf_mesh];
 
 				Mesh& mesh = gltf_scene->meshes.emplace_back();
-				for (uint32 j = 0; j < gltf_mesh.primitives_count; ++j)
+				for (Uint32 j = 0; j < gltf_mesh.primitives_count; ++j)
 				{
 					auto const& gltf_primitive = gltf_mesh.primitives[j];
 					AMBER_ASSERT(gltf_primitive.indices->count >= 0);
 
 					Geometry& geometry = mesh.geometries.emplace_back();
-					mesh.material_ids.push_back((int32)(gltf_primitive.material - gltf_data->materials));
+					mesh.material_ids.push_back((Sint32)(gltf_primitive.material - gltf_data->materials));
 
 					geometry.indices.reserve(gltf_primitive.indices->count / 3);
 
-					uint32 triangle_cw[] = { 0, 1, 2 };
-					uint32 triangle_ccw[] = { 0, 2, 1 };
-					uint32* order = triangle_ccw;
-					for (uint64 i = 0; i < gltf_primitive.indices->count; i += 3)
+					Uint32 triangle_cw[] = { 0, 1, 2 };
+					Uint32 triangle_ccw[] = { 0, 2, 1 };
+					Uint32* order = triangle_ccw;
+					for (Uint64 i = 0; i < gltf_primitive.indices->count; i += 3)
 					{
-						uint32 i0 = (uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[0]);
-						uint32 i1 = (uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[1]);
-						uint32 i2 = (uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[2]);
+						Uint32 i0 = (Uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[0]);
+						Uint32 i1 = (Uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[1]);
+						Uint32 i2 = (Uint32)cgltf_accessor_read_index(gltf_primitive.indices, i + order[2]);
 						geometry.indices.emplace_back(i0, i1, i2);
 					}
 
-					for (uint32 k = 0; k < gltf_primitive.attributes_count; ++k)
+					for (Uint32 k = 0; k < gltf_primitive.attributes_count; ++k)
 					{
 						cgltf_attribute const& gltf_attribute = gltf_primitive.attributes[k];
 						std::string const& attr_name = gltf_attribute.name;
@@ -494,7 +494,7 @@ namespace amber
 							if (!attr_name.compare(stream_name))
 							{
 								stream.resize(gltf_attribute.data->count);
-								for (uint64 i = 0; i < gltf_attribute.data->count; ++i)
+								for (Uint64 i = 0; i < gltf_attribute.data->count; ++i)
 								{
 									cgltf_accessor_read_float(gltf_attribute.data, i, &stream[i].x, sizeof(T) / sizeof(float));
 								}
@@ -508,7 +508,7 @@ namespace amber
 				}
 			}
 
-			for (uint64 i = 0; i < gltf_data->nodes_count; ++i)
+			for (Uint64 i = 0; i < gltf_data->nodes_count; ++i)
 			{
 				cgltf_node const& gltf_node = gltf_data->nodes[i];
 
@@ -517,7 +517,7 @@ namespace amber
 				local_to_world *= Matrix::CreateScale(scale, scale, -scale);
 				if (gltf_node.mesh)
 				{
-					for (int32 primitive : mesh_primitives_map[gltf_node.mesh])
+					for (Sint32 primitive : mesh_primitives_map[gltf_node.mesh])
 					{
 						Instance& instance = gltf_scene->instances.emplace_back();
 						instance.mesh_id = primitive;

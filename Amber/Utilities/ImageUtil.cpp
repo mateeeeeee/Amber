@@ -9,7 +9,7 @@
 namespace amber
 {
 
-	void WriteImageToFile(ImageFormat type, char const* filename, uint32 width, uint32 height, void const* data, uint32 stride)
+	void WriteImageToFile(ImageFormat type, char const* filename, Uint32 width, Uint32 height, void const* data, Uint32 stride)
 	{
 		switch (type)
 		{
@@ -26,10 +26,10 @@ namespace amber
 	Image::Image(char const* file, bool srgb) : srgb(srgb)
 	{
 		stbi_set_flip_vertically_on_load(1);
-		uint8* image_data = stbi_load(file, &width, &height, &channels, 4);
+		Uint8* image_data = stbi_load(file, &width, &height, &channels, 4);
 		channels = 4;
 		AMBER_ASSERT_MSG(image_data, "Could not load image");
-		data = std::vector<uint8>(image_data, image_data + width * height * channels);
+		data = std::vector<Uint8>(image_data, image_data + width * height * channels);
 		stbi_image_free(image_data);
 		stbi_set_flip_vertically_on_load(0);
 	}

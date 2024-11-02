@@ -12,8 +12,8 @@ endif()
 
 
 set(CORE_FILES
-    Core/CoreTypes.h
-    Core/Defines.h
+    Core/Types.h
+    Core/Macros.h
     Core/Logger.h
     Core/Logger.cpp
     Core/Window.h
@@ -177,8 +177,8 @@ if(MSVC)
         PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:
             ${DISABLED_WARNINGS}
-            /FI"Core/CoreTypes.h"
-            /FI"Core/Defines.h"
+            /FI"Core/Types.h"
+            /FI"Core/Macros.h"
             /FI"Math/MathTypes.h"
         >
     )
@@ -187,8 +187,8 @@ else()
         PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:
             ${DISABLED_WARNINGS}
-            -include Core/CoreTypes.h
-            -include Core/Defines.h
+            -include Core/Types.h
+            -include Core/Macros.h
             -include Math/MathTypes.h
         >
     )

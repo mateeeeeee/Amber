@@ -3,7 +3,7 @@
 
 namespace amber
 {
-	enum class KeyCode : uint32;
+	enum class KeyCode : Uint32;
 	class Window;
 	struct WindowEventData;
 	class EditorSink;
@@ -30,7 +30,7 @@ namespace amber
 
 		void Run();
 
-		void OnResize(int32 w, int32 h);
+		void OnResize(Sint32 w, Sint32 h);
 		void OnWindowEvent(WindowEventData const&);
 
 		void SetEditorSink(EditorSink* sink)

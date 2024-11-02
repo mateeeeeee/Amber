@@ -55,7 +55,7 @@ namespace amber
 		std::string msg(size, '\0');
 		std::vsnprintf(&msg[0], size, fmt.data(), args);
 		va_end(args);
-		uint32 i = (uint32)level;
+		Uint32 i = (Uint32)level;
 		AMBER_ASSERT(callbacks[i]);
 		callbacks[i](msg);
 	}

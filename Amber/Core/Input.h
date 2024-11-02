@@ -6,7 +6,7 @@
 
 namespace amber
 {
-	enum class KeyCode : uint32
+	enum class KeyCode : Uint32
 	{
 		F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
 		Alpha0, Alpha1, Alpha2, Alpha3, Alpha4, Alpha5, Alpha6, Alpha7, Alpha8, Alpha9,
@@ -36,7 +36,7 @@ namespace amber
 	};
 
 	struct WindowEventData;
-	DECLARE_EVENT(WindowResizedEvent, Input, int32, int32);
+	DECLARE_EVENT(WindowResizedEvent, Input, Sint32, Sint32);
 	DECLARE_EVENT(KeyPressedEvent, Input, KeyCode);
 
 	struct InputEvents
@@ -55,29 +55,29 @@ namespace amber
 		void Tick();
 		void OnWindowEvent(WindowEventData const&);
 
-		bool GetKey(KeyCode key)    const { return keys[(uint64)key]; }
-		bool IsKeyDown(KeyCode key) const { return GetKey(key) && !prev_keys[(uint64)key]; }
-		bool IsKeyUp(KeyCode key)   const { return !GetKey(key) && prev_keys[(uint64)key]; }
+		bool GetKey(KeyCode key)    const { return keys[(Uint64)key]; }
+		bool IsKeyDown(KeyCode key) const { return GetKey(key) && !prev_keys[(Uint64)key]; }
+		bool IsKeyUp(KeyCode key)   const { return !GetKey(key) && prev_keys[(Uint64)key]; }
 
 		void SetMouseVisibility(bool visible);
 
-		int32 GetMousePositionX()  const { return mouse_position_x; }
-		int32 GetMousePositionY()  const { return mouse_position_y; }
+		Sint32 GetMousePositionX()  const { return mouse_position_x; }
+		Sint32 GetMousePositionY()  const { return mouse_position_y; }
 
-		int32 GetMouseDeltaX()     const { return mouse_position_x - prev_mouse_position_x; }
-		int32 GetMouseDeltaY()     const { return mouse_position_y - prev_mouse_position_y; }
+		Sint32 GetMouseDeltaX()     const { return mouse_position_x - prev_mouse_position_x; }
+		Sint32 GetMouseDeltaY()     const { return mouse_position_y - prev_mouse_position_y; }
 		float GetMouseWheelDelta() const { return mmouse_wheel_delta; }
 
 	private:
 		InputEvents input_events;
-		std::array<bool, (uint64)KeyCode::Count> keys = {};
-		std::array<bool, (uint64)KeyCode::Count> prev_keys = {};
+		std::array<bool, (Uint64)KeyCode::Count> keys = {};
+		std::array<bool, (Uint64)KeyCode::Count> prev_keys = {};
 		
-		int32 mouse_position_x = 0;
-		int32 mouse_position_y = 0;
+		Sint32 mouse_position_x = 0;
+		Sint32 mouse_position_y = 0;
 
-		int32 prev_mouse_position_x = 0;
-		int32 prev_mouse_position_y = 0;
+		Sint32 prev_mouse_position_x = 0;
+		Sint32 prev_mouse_position_y = 0;
 		float mmouse_wheel_delta = 0.0f;
 
 		bool new_frame = false;
