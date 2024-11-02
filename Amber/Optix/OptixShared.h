@@ -16,13 +16,13 @@ namespace amber
 	struct MaterialGPU
 	{
 		float3 base_color;
-		int32 diffuse_tex_id = -1;
-		int32 normal_tex_id = -1;
+		Sint32 diffuse_tex_id = -1;
+		Sint32 normal_tex_id = -1;
 
 		float3 emissive_color;
-		int32 emissive_tex_id = -1;
+		Sint32 emissive_tex_id = -1;
 
-		int32 metallic_roughness_tex_id = -1;
+		Sint32 metallic_roughness_tex_id = -1;
 		float metallic = 0.0f;
 		float specular = 0.0f;
 		float roughness = 1.0f;
@@ -41,15 +41,15 @@ namespace amber
 	};
 	struct MeshGPU
 	{
-		uint32 positions_offset;
-		uint32 positions_count;
-		uint32 uvs_offset;
-		uint32 uvs_count;
-		uint32 normals_offset;
-		uint32 normals_count;
-		uint32 indices_offset;
-		uint32 indices_count;
-		uint32 material_idx;
+		Uint32 positions_offset;
+		Uint32 positions_count;
+		Uint32 uvs_offset;
+		Uint32 uvs_count;
+		Uint32 normals_offset;
+		Uint32 normals_count;
+		Uint32 indices_offset;
+		Uint32 indices_count;
+		Uint32 material_idx;
 	};
 
 	#define LightType_Directional 0
@@ -60,7 +60,7 @@ namespace amber
 
 	struct LightGPU
 	{
-		uint32		type;
+		Uint32		type;
 		float3		direction;
 		float3		position;
 		float3		color;
@@ -71,9 +71,9 @@ namespace amber
 		OptixTraversableHandle	traversable;
 		uchar4*					output;
 		float4*					accum;
-		uint32			        sample_count;
-		uint32			        frame_index;
-		uint32			        max_depth;
+		Uint32			        sample_count;
+		Uint32			        frame_index;
+		Uint32			        max_depth;
 
 		float3					cam_eye;
 		float3					cam_u, cam_v, cam_w;
@@ -98,18 +98,18 @@ namespace amber
 		CUdeviceptr				meshes;
 		CUdeviceptr				lights;
 #endif
-		uint32					light_count;
+		Uint32					light_count;
 		cudaTextureObject_t		sky;
 	};
 
 	struct HitRecord
 	{
-		uint32		 depth;
-		bool32		 hit;
+		Uint32		 depth;
+		Bool32		 hit;
 		float3		 P;
 		float3		 N;
 		float2       uv;
-		uint32       material_idx;
+		Uint32       material_idx;
 	};
 }
 

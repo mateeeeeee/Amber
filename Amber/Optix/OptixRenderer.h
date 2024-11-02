@@ -22,29 +22,29 @@ namespace amber
 
 	class OptixRenderer : public OptixInitializer
 	{
-		static constexpr uint32 MAX_DEPTH = 3;
+		static constexpr Uint32 MAX_DEPTH = 3;
 	public:
-		OptixRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& scene);
+		OptixRenderer(Uint32 width, Uint32 height, std::unique_ptr<Scene>&& scene);
 		~OptixRenderer();
 
 		void Update(float dt);
 		void Render(Camera const& camera);
 
-		void OnResize(uint32 w, uint32 h);
+		void OnResize(Uint32 w, Uint32 h);
 		void WriteFramebuffer(char const* outfile);
 
 		auto const& GetFramebuffer() const { return framebuffer; }
-		uint32 GetMaxDepth() const { return MAX_DEPTH; }
+		Uint32 GetMaxDepth() const { return MAX_DEPTH; }
 
 		void OptionsGUI();
 		void LightsGUI();
 
-		void SetDepthCount(uint32 depth)
+		void SetDepthCount(Uint32 depth)
 		{
 			depth_count = depth;
 			if (depth_count > MAX_DEPTH) depth_count = MAX_DEPTH;
 		}
-		void SetSampleCount(uint32 samples)
+		void SetSampleCount(Uint32 samples)
 		{
 			sample_count = samples;
 		}
@@ -74,8 +74,8 @@ namespace amber
 
 		std::vector<LightGPU> lights;
 
-		uint32 frame_index;
-		int32 depth_count;
-		int32 sample_count;
+		Uint32 frame_index;
+		Sint32 depth_count;
+		Sint32 sample_count;
 	};
 }

@@ -25,7 +25,7 @@ namespace amber
 
 		editor_console = std::make_unique<EditorConsole>();
 
-		uint32 renderer_flags = SDL_RENDERER_ACCELERATED;
+		Uint32 renderer_flags = SDL_RENDERER_ACCELERATED;
 		renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
 		sdl_renderer.reset(SDL_CreateRenderer(window.sdl_window.get(), -1, renderer_flags));
 		SDLCheck(sdl_renderer.get());
@@ -98,7 +98,7 @@ namespace amber
 		End();
 	}
 
-	void Editor::OnResize(int32 w, int32 h)
+	void Editor::OnResize(Sint32 w, Sint32 h)
 	{
 		render_target.reset(SDL_CreateTexture(sdl_renderer.get(),
 			SDL_PIXELFORMAT_RGBA32,

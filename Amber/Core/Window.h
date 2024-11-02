@@ -14,11 +14,11 @@ namespace amber
 	{
 		friend class Editor;
 	public:
-		Window(uint32 w, uint32 h, char const* title = "");
+		Window(Uint32 w, Uint32 h, char const* title = "");
 		~Window();
 
-		uint32 Width() const;
-		uint32 Height() const;
+		Uint32 Width() const;
+		Uint32 Height() const;
 
 		void Maximize();
 		bool Loop();
@@ -26,7 +26,7 @@ namespace amber
 
 	private:
 		SDLWindowPtr sdl_window = nullptr;
-		uint32 width, height;
+		Uint32 width, height;
 		WindowEvent window_event;
 	};
 }

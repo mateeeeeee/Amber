@@ -4,7 +4,7 @@
 namespace amber
 {
 
-	Window::Window(uint32 w, uint32 h, char const* title) : width(w), height(h)
+	Window::Window(Uint32 w, Uint32 h, char const* title) : width(w), height(h)
 	{
 		SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE);
 		sdl_window.reset(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, window_flags));
@@ -15,11 +15,11 @@ namespace amber
 	}
 	Window::~Window() = default;
 
-	uint32 Window::Width() const
+	Uint32 Window::Width() const
 	{
 		return width;
 	}
-	uint32 Window::Height() const
+	Uint32 Window::Height() const
 	{
 		return height;
 	}

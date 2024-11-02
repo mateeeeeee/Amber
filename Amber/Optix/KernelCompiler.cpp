@@ -47,14 +47,14 @@ namespace amber
 		compile_options.push_back("-I" CUDA_PATH "/include");
 		compile_options.push_back("-I" CUDA_PATH "/include/cuda/std");
 		compile_options.push_back("-I" AMBER_PATH);
-		compile_options.push_back("--pre-include=Core/CoreTypes.h");
+		compile_options.push_back("--pre-include=Core/Types.h");
 		compile_options.push_back("--use_fast_math");
 		compile_options.push_back("--generate-line-info");
 
 		nvrtcResult compile_result = nvrtcCompileProgram(prog, compile_options.size(), compile_options.data());
 		if (compile_result != NVRTC_SUCCESS) 
 		{
-			uint64 log_size;
+			Uint64 log_size;
 			nvrtcGetProgramLogSize(prog, &log_size);
 			std::string log(log_size, '\0');
 			nvrtcGetProgramLog(prog, &log[0]);
@@ -63,7 +63,7 @@ namespace amber
 			return std::unexpected(CompilerError::CompilationFailed);
 		}
 
-		uint64 ptx_size;
+		Uint64 ptx_size;
 		nvrtcGetPTXSize(prog, &ptx_size);
 		
 		KernelPTX ptx{};

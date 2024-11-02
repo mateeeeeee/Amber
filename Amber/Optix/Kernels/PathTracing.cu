@@ -16,22 +16,22 @@ extern "C"
 	__constant__ LaunchParams params;
 }
 
-__device__ inline uint32 PackPointer0(void* ptr) 
+__device__ inline Uint32 PackPointer0(void* ptr) 
 {
-	uintptr uptr = reinterpret_cast<uintptr>(ptr);
-	return static_cast<uint32>(uptr >> 32);
+	Uintptr uptr = reinterpret_cast<Uintptr>(ptr);
+	return static_cast<Uint32>(uptr >> 32);
 }
-__device__ inline uint32 PackPointer1(void* ptr) 
+__device__ inline Uint32 PackPointer1(void* ptr) 
 {
-	uintptr uptr = reinterpret_cast<uintptr>(ptr);
-	return static_cast<uint32>(uptr);
+	Uintptr uptr = reinterpret_cast<Uintptr>(ptr);
+	return static_cast<Uint32>(uptr);
 }
 
 template <typename T>
 __device__ __forceinline__ T* GetPayload()
 {
-    uint32 p0 = optixGetPayload_0(), p1 = optixGetPayload_1();
-    const uintptr uptr = (uintptr(p0) << 32) | p1;
+    Uint32 p0 = optixGetPayload_0(), p1 = optixGetPayload_1();
+    const Uintptr uptr = (Uintptr(p0) << 32) | p1;
     return reinterpret_cast<T*>(uptr);
 }
 
@@ -74,7 +74,7 @@ __device__ __forceinline__ bool TraceOcclusion(
 	return optixHitObjectIsHit();
 }
 
-__device__ __forceinline__ void UnpackMaterial(DisneyMaterial& mat_params, uint32 id, float2 uv)
+__device__ __forceinline__ void UnpackMaterial(DisneyMaterial& mat_params, Uint32 id, float2 uv)
 {
 	MaterialGPU material = params.materials[id];
 	if (material.diffuse_tex_id >= 0)
@@ -149,9 +149,9 @@ __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, uns
 	return ray_direction;
 }
 
-__device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_params, float3 const& hit_point, float3 const& w_o, OrthonormalBasis const& ort, uint32& seed)
+__device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_params, float3 const& hit_point, float3 const& w_o, OrthonormalBasis const& ort, Uint32& seed)
 {
-	uint32 light_index = rnd(seed) * params.light_count;
+	Uint32 light_index = rnd(seed) * params.light_count;
 	LightGPU light = params.lights[light_index];
 
 	float3 const& v_x = ort.tangent;
@@ -223,21 +223,21 @@ __global__ void RG_NAME(rg)()
 	float3 const  eye = params.cam_eye;
 	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
 	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
-	uint32 samples = params.sample_count;
+	Uint32 samples = params.sample_count;
 
 	float3 radiance = make_float3(0.0f);
 	float3 throughput = make_float3(1.0f);
 	do
 	{
-		uint32 seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.frame_index);
+		Uint32 seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.frame_index);
 		float3 ray_origin = eye;
 		float3 ray_direction = GetRayDirection(pixel, screen, seed);
 
 		HitRecord hit_record{};
 		hit_record.depth = 0;
-		uint32 p0 = PackPointer0(&hit_record), p1 = PackPointer1(&hit_record);
+		Uint32 p0 = PackPointer0(&hit_record), p1 = PackPointer1(&hit_record);
 
-		for (uint32 depth = 0; depth < params.max_depth; ++depth)
+		for (Uint32 depth = 0; depth < params.max_depth; ++depth)
 		{
 			Trace(scene, ray_origin, ray_direction, M_EPSILON, M_INF, p0, p1);
 			if (!hit_record.hit)
@@ -327,9 +327,9 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 	uint3* mesh_indices = params.indices + mesh.indices_offset;
 
 	uint3 primitive_indices = mesh_indices[primitive_idx];
-	uint32 i0 = primitive_indices.x;
-	uint32 i1 = primitive_indices.y;
-	uint32 i2 = primitive_indices.z;
+	Uint32 i0 = primitive_indices.x;
+	Uint32 i1 = primitive_indices.y;
+	Uint32 i2 = primitive_indices.z;
 
 	float3* mesh_vertices = params.vertices + mesh.positions_offset;
 	float3 pos0 = mesh_vertices[i0];
@@ -360,8 +360,8 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive
 extern "C" 
 __global__ void AH_NAME(ah)()
 {
-	uint32 instance_idx = optixGetInstanceId();
-	uint32 primitive_idx = optixGetPrimitiveIndex();
+	Uint32 instance_idx = optixGetInstanceId();
+	Uint32 primitive_idx = optixGetPrimitiveIndex();
 
 	MeshGPU mesh = params.meshes[instance_idx];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());

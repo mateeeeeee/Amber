@@ -14,12 +14,12 @@ namespace amber
 	struct Mesh
 	{
 		std::vector<Geometry> geometries;
-		std::vector<uint32>   material_ids;
+		std::vector<Uint32>   material_ids;
 	};
 
 	struct Instance
 	{
 		Matrix transform;
-		uint64 mesh_id;
+		Uint64 mesh_id;
 	};
 }

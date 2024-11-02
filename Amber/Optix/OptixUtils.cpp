@@ -64,7 +64,7 @@ namespace amber::optix
 			if (ptx.has_value())
 			{
 				char log[512];
-				uint64 log_size = sizeof(log);
+				Uint64 log_size = sizeof(log);
 				OptixCheck(optixModuleCreate(
 					optix_ctx,
 					&module_compile_options,
@@ -79,13 +79,13 @@ namespace amber::optix
 		}
 	}
 
-	void Pipeline::Create(uint32 max_depth)
+	void Pipeline::Create(Uint32 max_depth)
 	{
 		OptixPipelineLinkOptions pipeline_link_options{};
 		pipeline_link_options.maxTraceDepth = max_depth;
 
 		char log[512];
-		uint64 log_size = sizeof(log);
+		Uint64 log_size = sizeof(log);
 		OptixCheck(optixPipelineCreate(
 			optix_ctx,
 			&pipeline_compile_options,
@@ -102,9 +102,9 @@ namespace amber::optix
 		{
 			OptixCheck(optixUtilAccumulateStackSizes(prog_group, &stack_sizes, pipeline));
 		}
-		uint32 direct_callable_stack_size_from_traversal;
-		uint32 direct_callable_stack_size_from_state;
-		uint32 continuation_stack_size;
+		Uint32 direct_callable_stack_size_from_traversal;
+		Uint32 direct_callable_stack_size_from_state;
+		Uint32 continuation_stack_size;
 		OptixCheck(optixUtilComputeStackSizes(&stack_sizes, max_depth,
 			0,
 			0,
@@ -127,7 +127,7 @@ namespace amber::optix
 		prog_group_desc.raygen.entryFunctionName = entry;
 
 		char log[512];
-		uint64 log_size = sizeof(log);
+		Uint64 log_size = sizeof(log);
 		OptixCheck(optixProgramGroupCreate(
 			optix_ctx,
 			&prog_group_desc,
@@ -152,7 +152,7 @@ namespace amber::optix
 		prog_group_desc.miss.entryFunctionName = entry;
 
 		char log[512];
-		uint64 log_size = sizeof(log);
+		Uint64 log_size = sizeof(log);
 		OptixCheck(optixProgramGroupCreate(
 			optix_ctx,
 			&prog_group_desc,
@@ -189,7 +189,7 @@ namespace amber::optix
 		}
 
 		char log[512];
-		uint64 log_size = sizeof(log);
+		Uint64 log_size = sizeof(log);
 		OptixCheck(optixProgramGroupCreate(
 			optix_ctx,
 			&prog_group_desc,
@@ -204,14 +204,14 @@ namespace amber::optix
 
 	ShaderBindingTable::ShaderBindingTable(ShaderRecord&& raygen_record, std::vector<ShaderRecord>&& miss_records, std::vector<ShaderRecord>&& hitgroup_records)
 	{
-		auto AlignTo = [](uint64 val, uint64 align)
+		auto AlignTo = [](Uint64 val, Uint64 align)
 			{
 				return ((val + align - 1) / align) * align;
 			};
 
-		uint64 raygen_entry_size = AlignTo(raygen_record.size + OPTIX_SBT_RECORD_HEADER_SIZE, OPTIX_SBT_RECORD_ALIGNMENT);
+		Uint64 raygen_entry_size = AlignTo(raygen_record.size + OPTIX_SBT_RECORD_HEADER_SIZE, OPTIX_SBT_RECORD_ALIGNMENT);
 
-		uint64 miss_entry_size = 0;
+		Uint64 miss_entry_size = 0;
 		for (auto const& miss_record : miss_records) 
 		{
 			miss_entry_size = std::max(
@@ -219,7 +219,7 @@ namespace amber::optix
 				AlignTo(miss_record.size + OPTIX_SBT_RECORD_HEADER_SIZE, OPTIX_SBT_RECORD_ALIGNMENT));
 		}
 
-		uint64 hitgroup_entry_size = 0;
+		Uint64 hitgroup_entry_size = 0;
 		for (auto const& hitgroup_record : hitgroup_records)
 		{
 			hitgroup_entry_size = std::max(
@@ -227,7 +227,7 @@ namespace amber::optix
 				AlignTo(hitgroup_record.size + OPTIX_SBT_RECORD_HEADER_SIZE, OPTIX_SBT_RECORD_ALIGNMENT));
 		}
 
-		uint64 sbt_size = raygen_entry_size + miss_records.size() * miss_entry_size + hitgroup_records.size() * hitgroup_entry_size;
+		Uint64 sbt_size = raygen_entry_size + miss_records.size() * miss_entry_size + hitgroup_records.size() * hitgroup_entry_size;
 
 		CudaCheck(cudaMalloc(&gpu_shader_table, sbt_size));
 		cpu_shader_table.resize(sbt_size, 0);
@@ -242,7 +242,7 @@ namespace amber::optix
 		shader_binding_table.hitgroupRecordStrideInBytes = hitgroup_entry_size;
 		shader_binding_table.hitgroupRecordCount = hitgroup_records.size();
 
-		uint64 offset = 0;
+		Uint64 offset = 0;
 		record_offsets[raygen_record.name] = offset;
 		OptixCheck(optixSbtRecordPackHeader(raygen_record.program_group, &cpu_shader_table[offset]));
 		offset += raygen_entry_size;
@@ -262,7 +262,7 @@ namespace amber::optix
 		}
 	}
 
-	Buffer::Buffer(uint64 alloc_in_bytes) : alloc_size(alloc_in_bytes)
+	Buffer::Buffer(Uint64 alloc_in_bytes) : alloc_size(alloc_in_bytes)
 	{
 		CudaCheck(cudaMalloc(&dev_alloc, alloc_in_bytes));
 	}
@@ -272,7 +272,7 @@ namespace amber::optix
 		CudaCheck(cudaFree(dev_alloc));
 	}
 
-	void Buffer::Realloc(uint64 _alloc_size)
+	void Buffer::Realloc(Uint64 _alloc_size)
 	{
 		if (alloc_size != _alloc_size)
 		{
@@ -282,7 +282,7 @@ namespace amber::optix
 		}
 	}
 
-	Texture2D::Texture2D(uint32 w, uint32 h, cudaChannelFormatDesc format, bool srgb) : width(w), height(h), format(format)
+	Texture2D::Texture2D(Uint32 w, Uint32 h, cudaChannelFormatDesc format, bool srgb) : width(w), height(h), format(format)
 	{
 		CudaCheck(cudaMallocArray(&data, &format, w, h));
 
@@ -316,8 +316,8 @@ namespace amber::optix
 
 	void Texture2D::Update(void const* img_data)
 	{
-		uint64 const pixel_size = (format.x + format.y + format.z + format.w) / 8;
-		uint64 const pitch = pixel_size * width;
+		Uint64 const pixel_size = (format.x + format.y + format.z + format.w) / 8;
+		Uint64 const pitch = pixel_size * width;
 		CudaCheck(cudaMemcpy2DToArray(data, 0, 0, img_data, pitch, pitch, height, cudaMemcpyHostToDevice));
 	}
 

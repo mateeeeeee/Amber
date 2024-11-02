@@ -7,7 +7,7 @@ namespace amber
 {
 	class EditorSink;
 
-	enum class LogLevel : uint8 
+	enum class LogLevel : Uint8 
 	{
 		Debug,
 		Info,
@@ -31,7 +31,7 @@ namespace amber
 		void Log(LogLevel level, std::string_view fmt, Args&&... args)
 		{
 			std::string msg = std::vformat(fmt, std::make_format_args(args...));
-			uint32 i = (uint32)level;
+			Uint32 i = (Uint32)level;
 			AMBER_ASSERT(callbacks[i]);
 			callbacks[i](msg);
 		}
@@ -39,14 +39,14 @@ namespace amber
 		EditorSink* GetEditorSink();
 
 	private:
-		LogCallbackType callbacks[(uint32)LogLevel::Count] = {};
+		LogCallbackType callbacks[(Uint32)LogLevel::Count] = {};
 
 	private:
 		LogManager() = default;
 
 		void SetLogCallback(LogLevel level, LogCallbackType&& callback)
 		{
-			callbacks[(uint32)level] = callback;
+			callbacks[(Uint32)level] = callback;
 		}
 	};
 	#define g_LogManager amber::LogManager::Get() 

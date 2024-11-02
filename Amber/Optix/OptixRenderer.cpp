@@ -82,7 +82,7 @@ namespace amber
 	}
 
 
-	OptixRenderer::OptixRenderer(uint32 width, uint32 height, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(), 
+	OptixRenderer::OptixRenderer(Uint32 width, Uint32 height, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(), 
 		framebuffer(height, width), device_memory(width * height), accum_memory(width * height),  frame_index(0), scene(std::move(_scene))
 	{
 		OnResize(width, height);
@@ -95,7 +95,7 @@ namespace amber
 
 			for (Mesh const& mesh : scene->meshes)
 			{
-				for (uint32 i = 0; i < mesh.geometries.size(); ++i)
+				for (Uint32 i = 0; i < mesh.geometries.size(); ++i)
 				{
 					Geometry const& geom = mesh.geometries[i];
 					MeshGPU& gpu_mesh = gpu_meshes.emplace_back();
@@ -137,7 +137,7 @@ namespace amber
 			for (MeshGPU const& gpu_mesh : gpu_meshes)
 			{
 				OptixBuildInput build_input{};
-				uint32 build_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
+				Uint32 build_input_flags[] = { OPTIX_GEOMETRY_FLAG_NONE };
 				CUdeviceptr vertex_buffers[] = { vertices_buffer->GetDevicePtr() + gpu_mesh.positions_offset * sizeof(Vector3) }; 
 				
 				build_input.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
@@ -191,7 +191,7 @@ namespace amber
 
 			std::vector<OptixInstance> instances;
 			instances.reserve(scene->instances.size());
-			for (uint64 i = 0; i < scene->instances.size(); ++i) 
+			for (Uint64 i = 0; i < scene->instances.size(); ++i) 
 			{
 				Instance const& inst = scene->instances[i];
 				OptixInstance instance{};
@@ -280,7 +280,7 @@ namespace amber
 			material_list_buffer = std::make_unique<Buffer>(materials.size() * sizeof(MaterialGPU));
 			material_list_buffer->Update(materials.data(), material_list_buffer->GetSize());
 
-			uint32 directional_light_count = 0;
+			Uint32 directional_light_count = 0;
 			lights.reserve(scene->lights.size());
 			for (Light const& l : scene->lights)
 			{
@@ -290,7 +290,7 @@ namespace amber
 				}
 
 				LightGPU& optix_light = lights.emplace_back();
-				optix_light.type = static_cast<uint32>(l.type);
+				optix_light.type = static_cast<Uint32>(l.type);
 				optix_light.color = make_float3(l.color.x, l.color.y, l.color.z);
 				optix_light.direction = make_float3(l.direction.x, l.direction.y, l.direction.z);
 				optix_light.position = make_float3(l.position.x, l.position.y, l.position.z);
@@ -310,7 +310,7 @@ namespace amber
 		CompileOptions comp_opts{};
 		comp_opts.input_file_name = "PathTracing.cu"; 
 		comp_opts.launch_params_name = "params";
-		comp_opts.payload_values = sizeof(HitRecord) / sizeof(uint32);
+		comp_opts.payload_values = sizeof(HitRecord) / sizeof(Uint32);
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
 		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup(RG_NAME_STR(rg));
 		OptixProgramGroup miss_handle = pipeline->AddMissGroup(MISS_NAME_STR(ms));
@@ -334,8 +334,8 @@ namespace amber
 
 	void OptixRenderer::Render(Camera const& camera)
 	{
-		uint64 const width = framebuffer.Cols();
-		uint64 const height = framebuffer.Rows();
+		Uint64 const width = framebuffer.Cols();
+		Uint64 const height = framebuffer.Rows();
 
 		LaunchParams params{};
 
@@ -383,7 +383,7 @@ namespace amber
 		++frame_index;
 	}
 
-	void OptixRenderer::OnResize(uint32 w, uint32 h)
+	void OptixRenderer::OnResize(Uint32 w, Uint32 h)
 	{
 		framebuffer.Resize(h, w);
 		device_memory.Realloc(w * h);

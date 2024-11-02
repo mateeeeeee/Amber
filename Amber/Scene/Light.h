@@ -3,7 +3,7 @@
 namespace amber
 {
 
-	enum class LightType : uint32
+	enum class LightType : Uint32
 	{
 		Directional,
 		Point,

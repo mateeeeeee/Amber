@@ -21,10 +21,10 @@ struct SceneConfig
 	std::string model_file;
 	float  model_scale;
 	std::string scene_environment;
-	uint32 width;
-	uint32 height;
-	uint32 max_depth;
-	uint32 samples_per_pixel;
+	Uint32 width;
+	Uint32 height;
+	Uint32 max_depth;
+	Uint32 samples_per_pixel;
 	Camera camera;
 };
 bool ParseSceneConfig(char const* config_file, SceneConfig& cfg);
@@ -132,10 +132,10 @@ bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
 	cfg.model_file = paths::ModelDir + model_file;
 	cfg.model_scale = scene_params.FindOr<float>("model scale", 1.0f);
 	cfg.scene_environment = paths::ModelDir + scene_environment;
-	cfg.width = scene_params.FindOr<uint32>("width", 1080);
-	cfg.height = scene_params.FindOr<uint32>("height", 720);
-	cfg.max_depth = scene_params.FindOr<uint32>("max depth", 4);
-	cfg.samples_per_pixel = scene_params.FindOr<uint32>("samples per pixel", 16);
+	cfg.width = scene_params.FindOr<Uint32>("width", 1080);
+	cfg.height = scene_params.FindOr<Uint32>("height", 720);
+	cfg.max_depth = scene_params.FindOr<Uint32>("max depth", 4);
+	cfg.samples_per_pixel = scene_params.FindOr<Uint32>("samples per pixel", 16);
 
 	json camera_json = scene_params.FindJson("camera");
 	if (camera_json.is_null())
