@@ -9,7 +9,7 @@
 namespace amber
 {
 
-	void WriteImageToFile(ImageFormat type, char const* filename, Uint32 width, Uint32 height, void const* data, Uint32 stride)
+	void WriteImageToFile(ImageFormat type, Char const* filename, Uint32 width, Uint32 height, void const* data, Uint32 stride)
 	{
 		switch (type)
 		{
@@ -23,7 +23,7 @@ namespace amber
 	}
 
 
-	Image::Image(char const* file, bool srgb) : srgb(srgb)
+	Image::Image(Char const* file, Bool srgb) : srgb(srgb)
 	{
 		stbi_set_flip_vertically_on_load(1);
 		Uint8* image_data = stbi_load(file, &width, &height, &channels, 4);

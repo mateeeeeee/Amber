@@ -317,7 +317,7 @@ namespace amber
 
 			if (ImGui::TreeNode("Debug Options"))
 			{
-				static char ss_name[32 + 1] = {};
+				static Char ss_name[32 + 1] = {};
 				ImGui::InputText("Name", ss_name, sizeof(ss_name) - 1);
 				if (ImGui::Button("Take Screenshot"))
 				{

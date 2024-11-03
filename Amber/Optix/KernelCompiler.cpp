@@ -14,7 +14,7 @@ namespace amber
         }
     }
 
-	bool ReadFileContents(std::string_view file_path, std::vector<char>& buffer)
+	Bool ReadFileContents(std::string_view file_path, std::vector<Char>& buffer)
 	{
 		std::ifstream file(file_path.data(), std::ios::ate);
 		if (!file.is_open()) 
@@ -34,7 +34,7 @@ namespace amber
 	{
 		std::string_view kernel_file = compiler_input.kernel_file;
 
-		std::vector<char> kernel;
+		std::vector<Char> kernel;
 		if (!ReadFileContents(kernel_file, kernel))
 		{
 			return std::unexpected(CompilerError::ReadFileFailed);
@@ -42,7 +42,7 @@ namespace amber
 		
 		nvrtcProgram prog;
 		NvrtcCheck(nvrtcCreateProgram(&prog, kernel.data(), kernel_file.data(), 0, nullptr, nullptr));
-		std::vector<char const*> compile_options;
+		std::vector<Char const*> compile_options;
 		compile_options.push_back("-I" OPTIX_PATH "/include");
 		compile_options.push_back("-I" CUDA_PATH "/include");
 		compile_options.push_back("-I" CUDA_PATH "/include/cuda/std");

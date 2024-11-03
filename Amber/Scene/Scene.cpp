@@ -489,7 +489,7 @@ namespace amber
 						cgltf_attribute const& gltf_attribute = gltf_primitive.attributes[k];
 						std::string const& attr_name = gltf_attribute.name;
 
-						auto ReadAttributeData = [&]<typename T>(std::vector<T>&stream, const char* stream_name)
+						auto ReadAttributeData = [&]<typename T>(std::vector<T>&stream, const Char* stream_name)
 						{
 							if (!attr_name.compare(stream_name))
 							{
@@ -554,7 +554,7 @@ namespace amber
 		}
 	}
 
-	std::unique_ptr<Scene> LoadScene(char const* _scene_file, char const* _environment_texture, Float scale)
+	std::unique_ptr<Scene> LoadScene(Char const* _scene_file, Char const* _environment_texture, Float scale)
 	{
 		std::string_view scene_file(_scene_file);
 		std::string_view environment_texture(_environment_texture);

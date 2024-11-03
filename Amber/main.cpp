@@ -27,13 +27,13 @@ struct SceneConfig
 	Uint32 samples_per_pixel;
 	Camera camera;
 };
-bool ParseSceneConfig(char const* config_file, SceneConfig& cfg);
-void ProcessCVarIniFile(char const* cvar_file);
+Bool ParseSceneConfig(Char const* config_file, SceneConfig& cfg);
+void ProcessCVarIniFile(Char const* cvar_file);
 
-int main(int argc, char* argv[])
+int main(int argc, Char* argv[])
 {
 	std::string config_file, log_file, output_file;
-	bool use_editor = true, maximize_window = false, stats_enabled = false;
+	Bool use_editor = true, maximize_window = false, stats_enabled = false;
 	{
 		CLI::App cli_parser{ "Amber" };
 		cli_parser.add_option("--config-file", config_file, "Config file");
@@ -45,8 +45,8 @@ int main(int argc, char* argv[])
 		if (log_file.empty()) log_file = "amber.log";
 		if (config_file.empty()) config_file = "sponza.json";
 		if (output_file.empty()) output_file = "output";
-		use_editor = !(bool)*no_editor_opt;
-		maximize_window = (bool)*max_window_opt;
+		use_editor = !(Bool)*no_editor_opt;
+		maximize_window = (Bool)*max_window_opt;
 	}
 #ifdef _DEBUG
 	g_LogManager.Initialize(log_file.c_str(), LogLevel::Debug);
@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
+Bool ParseSceneConfig(Char const* scene_config, SceneConfig& cfg)
 {
 	json json_scene;
 	try
@@ -120,7 +120,7 @@ bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
 	JsonParams scene_params(json_scene);
 
 	std::string model_file;
-	bool model_file_found = scene_params.Find<std::string>("model file", model_file);
+	Bool model_file_found = scene_params.Find<std::string>("model file", model_file);
 	if (!model_file_found)
 	{
 		AMBER_ERROR("Scene file not specified in config file!");
@@ -158,7 +158,7 @@ bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
 	return true;
 }
 
-void ProcessCVarIniFile(char const* cvar_file)
+void ProcessCVarIniFile(Char const* cvar_file)
 {
 	std::string cvar_ini_path = paths::IniDir + cvar_file;
 	std::ifstream cvar_ini_file(cvar_ini_path);

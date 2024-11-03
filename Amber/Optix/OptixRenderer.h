@@ -31,7 +31,7 @@ namespace amber
 		void Render(Camera const& camera);
 
 		void OnResize(Uint32 w, Uint32 h);
-		void WriteFramebuffer(char const* outfile);
+		void WriteFramebuffer(Char const* outfile);
 
 		auto const& GetFramebuffer() const { return framebuffer; }
 		Uint32 GetMaxDepth() const { return MAX_DEPTH; }

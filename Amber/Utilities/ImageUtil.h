@@ -10,12 +10,12 @@ namespace amber
 		TGA,
 		BMP
 	};
-	void WriteImageToFile(ImageFormat type, char const* filename, Uint32 width, Uint32 height, void const* data, Uint32 stride);
+	void WriteImageToFile(ImageFormat type, Char const* filename, Uint32 width, Uint32 height, void const* data, Uint32 stride);
 
 	class Image
 	{
 	public:
-		explicit Image(char const* file, bool srgb = false);
+		explicit Image(Char const* file, Bool srgb = false);
 
 		Sint32 GetWidth() const { return width; }
 		Sint32 GetHeight() const { return height; }
@@ -25,14 +25,14 @@ namespace amber
 		{
 			return reinterpret_cast<T const*>(data.data());
 		}
-		bool IsSRGB() const { return srgb; }
+		Bool IsSRGB() const { return srgb; }
 
 	private:
 		Sint32 width;
 		Sint32 height;
 		Sint32 channels;
 		std::vector<Uint8> data;
-		bool srgb;
+		Bool srgb;
 	};
 
 }

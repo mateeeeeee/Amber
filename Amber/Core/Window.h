@@ -14,14 +14,14 @@ namespace amber
 	{
 		friend class Editor;
 	public:
-		Window(Uint32 w, Uint32 h, char const* title = "");
+		Window(Uint32 w, Uint32 h, Char const* title = "");
 		~Window();
 
 		Uint32 Width() const;
 		Uint32 Height() const;
 
 		void Maximize();
-		bool Loop();
+		Bool Loop();
 		WindowEvent& GetWindowEvent() { return window_event; }
 
 	private:

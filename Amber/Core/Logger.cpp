@@ -20,7 +20,7 @@ namespace amber
 		return spdlog::level::debug;
 	}
 
-	void LogManager::Initialize(char const* log_file, LogLevel log_level)
+	void LogManager::Initialize(Char const* log_file, LogLevel log_level)
 	{
 		spdlog::level::level_enum spdlog_level = GetSpdlogLevel(log_level);
 		auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();

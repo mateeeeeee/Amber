@@ -17,15 +17,15 @@ namespace amber::optix
 	{
 		Uint32 payload_values = 3;
 		Uint32 attribute_values = 3;
-		char const* launch_params_name;
-		char const* input_file_name;
+		Char const* launch_params_name;
+		Char const* input_file_name;
 	};
 	struct CompileOptions
 	{
 		Uint32 payload_values = 3;
 		Uint32 attribute_values = 3;
-		char const* launch_params_name;
-		char const* input_file_name;
+		Char const* launch_params_name;
+		Char const* input_file_name;
 	};
 	class Pipeline
 	{
@@ -35,9 +35,9 @@ namespace amber::optix
 		Pipeline(OptixDeviceContext optix_ctx, CompileOptions const& options);
 		~Pipeline();
 
-		OptixProgramGroup AddRaygenGroup(char const* entry);
-		OptixProgramGroup AddMissGroup(char const* entry);
-		OptixProgramGroup AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry);
+		OptixProgramGroup AddRaygenGroup(Char const* entry);
+		OptixProgramGroup AddMissGroup(Char const* entry);
+		OptixProgramGroup AddHitGroup(Char const* anyhit_entry, Char const* closesthit_entry, Char const* intersection_entry);
 
 		void Create(Uint32 max_depth = 3);
 
@@ -248,7 +248,7 @@ namespace amber::optix
 	class Texture2D : public ITexture
 	{
 	public:
-		Texture2D(Uint32 w, Uint32 h, cudaChannelFormatDesc format, bool srgb);
+		Texture2D(Uint32 w, Uint32 h, cudaChannelFormatDesc format, Bool srgb);
 		AMBER_NONCOPYABLE_NONMOVABLE(Texture2D)
 		~Texture2D();
 
@@ -266,7 +266,7 @@ namespace amber::optix
 	};
 
 	template<typename FormatT>
-	inline std::unique_ptr<Texture2D> MakeTexture2D(Uint32 w, Uint32 h, bool srgb = false)
+	inline std::unique_ptr<Texture2D> MakeTexture2D(Uint32 w, Uint32 h, Bool srgb = false)
 	{
 		return std::make_unique<Texture2D>(w, h, cudaCreateChannelDesc<FormatT>(), srgb);
 	}

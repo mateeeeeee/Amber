@@ -8,8 +8,8 @@ namespace amber
 		void Initialize(Vector3 const& position, Vector3 const& lookat);
 
 		void Update(Float dt);
-		void Enable(bool _enabled) { enabled = _enabled; }
-		bool IsChanged() const { return changed; }
+		void Enable(Bool _enabled) { enabled = _enabled; }
+		Bool IsChanged() const { return changed; }
 
 		Vector3 const& GetPosition() const { return position; }
 		void SetPosition(Vector3 const& val) { position = val; }
@@ -30,7 +30,7 @@ namespace amber
 
 		Float fovy;
 		Float aspect_ratio;
-		bool changed;
-		bool enabled;
+		Bool changed;
+		Bool enabled;
 	};
 }

@@ -17,6 +17,6 @@ namespace amber
 		CompilationFailed
 	};
 
-	using KernelPTX = std::vector<char>;
+	using KernelPTX = std::vector<Char>;
 	std::expected<KernelPTX, CompilerError> CompileKernel(KernelCompilerInput const& compiler_input);
 }

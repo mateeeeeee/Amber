@@ -8,8 +8,8 @@ namespace amber
 	{
 		std::wstring out{};
 		out.reserve(in.length());
-		const char* ptr = in.data();
-		const char* const end = in.data() + in.length();
+		const Char* ptr = in.data();
+		const Char* const end = in.data() + in.length();
 
 		mbstate_t state{};
 		wchar_t wc;
@@ -32,7 +32,7 @@ namespace amber
 		mbstate_t state{};
 		for (wchar_t wc : in)
 		{
-			char mb[8]{}; // ensure null-terminated for UTF-8 (maximum 4 byte)
+			Char mb[8]{}; // ensure null-terminated for UTF-8 (maximum 4 byte)
 			const auto len = wcrtomb(mb, wc, &state);
 			out += std::string_view{ mb, len };
 		}
@@ -42,38 +42,38 @@ namespace amber
 	std::string ToLower(std::string const& in)
 	{
 		std::string out; out.resize(in.size());
-		std::transform(std::begin(in), std::end(in), std::begin(out), [](char c) {return std::tolower(c); });
+		std::transform(std::begin(in), std::end(in), std::begin(out), [](Char c) {return std::tolower(c); });
 		return out;
 	}
 	std::string ToUpper(std::string const& in)
 	{
 		std::string out; out.resize(in.size());
-		std::transform(std::begin(in), std::end(in), std::begin(out), [](char c) {return std::toupper(c); });
+		std::transform(std::begin(in), std::end(in), std::begin(out), [](Char c) {return std::toupper(c); });
 		return out;
 	}
 
 
-	bool FromCString(const char* in, int& out)
+	Bool FromCString(const Char* in, int& out)
 	{
 		std::istringstream iss(in);
 		iss >> out;
 		return !iss.fail() && iss.eof();
 	}
 
-	bool FromCString(const char* in, Float& out)
+	Bool FromCString(const Char* in, Float& out)
 	{
 		std::istringstream iss(in);
 		iss >> out;
 		return !iss.fail() && iss.eof();
 	}
 
-	bool FromCString(const char* in, std::string& out)
+	Bool FromCString(const Char* in, std::string& out)
 	{
 		out = in;
 		return true;
 	}
 
-	bool FromCString(const char* in, bool& out)
+	Bool FromCString(const Char* in, Bool& out)
 	{
 		std::string str(in);
 		std::transform(str.begin(), str.end(), str.begin(), ::tolower);
@@ -90,10 +90,10 @@ namespace amber
 		return false;
 	}
 
-	bool FromCString(char const* in, Vector3& out)
+	Bool FromCString(Char const* in, Vector3& out)
 	{
 		std::istringstream iss(in);
-		char open_parenthesis, comma1, comma2, close_parenthesis;
+		Char open_parenthesis, comma1, comma2, close_parenthesis;
 		if (iss >> open_parenthesis >> out.x >> comma1 >> out.y >> comma2 >> out.z >> close_parenthesis)
 		{
 			return open_parenthesis == '(' && comma1 == ',' && comma2 == ',' && close_parenthesis == ')' && iss.eof();
@@ -109,11 +109,11 @@ namespace amber
 	{
 		return std::to_string(val);
 	}
-	std::string CStrToString(char const* val)
+	std::string CStrToString(Char const* val)
 	{
 		return val;
 	}
-	std::string BoolToString(bool val)
+	std::string BoolToString(Bool val)
 	{
 		return val ? "true" : "false";
 	}
@@ -123,7 +123,7 @@ namespace amber
 		return "(" + std::to_string(val.x) + "," + std::to_string(val.y) + "," + std::to_string(val.z) + ")";
 	}
 
-	std::vector<std::string> SplitString(const std::string& text, char delimeter)
+	std::vector<std::string> SplitString(const std::string& text, Char delimeter)
 	{
 		std::vector<std::string> tokens;
 		size_t start = 0, end = 0;

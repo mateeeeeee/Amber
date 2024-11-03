@@ -19,7 +19,7 @@ namespace amber
 {
 	using namespace optix;
 
-	static void OptixLogCallback(unsigned int level, const char* tag, const char* message, void* cbdata)
+	static void OptixLogCallback(unsigned int level, const Char* tag, const Char* message, void* cbdata)
 	{
 		switch (level)
 		{
@@ -392,7 +392,7 @@ namespace amber
 		cudaMemset(accum_memory, 0, accum_memory.GetSize());
 	}
 
-	void OptixRenderer::WriteFramebuffer(char const* outfile)
+	void OptixRenderer::WriteFramebuffer(Char const* outfile)
 	{
 		std::string output_path = paths::ScreenshotDir + outfile + ".png";
 		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), framebuffer.Cols() * sizeof(uchar4));
@@ -413,7 +413,7 @@ namespace amber
 	{
 		if (ImGui::TreeNode("Lights"))
 		{
-			bool changed = false;
+			Bool changed = false;
 			int light_index = 0;
 			for (LightGPU& light : lights)
 			{
@@ -426,7 +426,7 @@ namespace amber
 
 				ImGui::Text("Light %d", light_index);
 				ImGui::NextColumn();
-				const char* light_types[] = { "Directional", "Point" };
+				const Char* light_types[] = { "Directional", "Point" };
 				ImGui::Combo("Type", (int*)&light.type, light_types, IM_ARRAYSIZE(light_types));
 				ImGui::NextColumn();
 

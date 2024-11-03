@@ -32,7 +32,7 @@ namespace amber
 		template<typename T>
 		[[nodiscard]] T FindOr(std::string const& name, std::type_identity_t<T> const& default_value)
 		{
-			bool has_field = _json.contains(name);
+			Bool has_field = _json.contains(name);
 			if (!has_field) return default_value;
 			else
 			{
@@ -44,9 +44,9 @@ namespace amber
 		}
 
 		template<typename T>
-		[[maybe_unused]] bool Find(std::string const& name, std::type_identity_t<T>& value)
+		[[maybe_unused]] Bool Find(std::string const& name, std::type_identity_t<T>& value)
 		{
-			bool has_field = _json.contains(name);
+			Bool has_field = _json.contains(name);
 			if (!has_field) return false;
 			else
 			{
@@ -56,9 +56,9 @@ namespace amber
 		}
 
 		template<typename T, Uint64 N>
-		[[maybe_unused]] bool FindArray(std::string const& name, T(&arr)[N])
+		[[maybe_unused]] Bool FindArray(std::string const& name, T(&arr)[N])
 		{
-			bool has_field = _json.contains(name);
+			Bool has_field = _json.contains(name);
 			if (has_field)
 			{
 				json const key_value_json = _json[name];
@@ -75,9 +75,9 @@ namespace amber
 		}
 
 		template<typename T>
-		[[maybe_unused]] bool FindDynamicArray(std::string const& name, std::vector<T>& arr)
+		[[maybe_unused]] Bool FindDynamicArray(std::string const& name, std::vector<T>& arr)
 		{
-			bool has_field = _json.contains(name);
+			Bool has_field = _json.contains(name);
 			if (has_field)
 			{
 				json const key_value_json = _json[name];
@@ -101,7 +101,7 @@ namespace amber
 	private:
 
 		template<typename T>
-		static constexpr bool CheckValueTypeAndAssign(json const& key_value_json, T& return_value)
+		static constexpr Bool CheckValueTypeAndAssign(json const& key_value_json, T& return_value)
 		{
 			AMBER_ASSERT(!key_value_json.is_null());
 			if (key_value_json.is_string())
@@ -143,9 +143,9 @@ namespace amber
 			}
 			else if (key_value_json.is_boolean())
 			{
-				if constexpr (std::is_same_v<std::decay_t<T>, bool>)
+				if constexpr (std::is_same_v<std::decay_t<T>, Bool>)
 				{
-					return_value = key_value_json.get<bool>();
+					return_value = key_value_json.get<Bool>();
 					return true;
 				}
 				else return false;
