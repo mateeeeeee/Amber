@@ -63,7 +63,7 @@ namespace amber::optix
 
 			if (ptx.has_value())
 			{
-				char log[512];
+				Char log[512];
 				Uint64 log_size = sizeof(log);
 				OptixCheck(optixModuleCreate(
 					optix_ctx,
@@ -84,7 +84,7 @@ namespace amber::optix
 		OptixPipelineLinkOptions pipeline_link_options{};
 		pipeline_link_options.maxTraceDepth = max_depth;
 
-		char log[512];
+		Char log[512];
 		Uint64 log_size = sizeof(log);
 		OptixCheck(optixPipelineCreate(
 			optix_ctx,
@@ -116,7 +116,7 @@ namespace amber::optix
 		));
 	}
 
-	OptixProgramGroup Pipeline::AddRaygenGroup(char const* entry)
+	OptixProgramGroup Pipeline::AddRaygenGroup(Char const* entry)
 	{
 		OptixProgramGroup prog_group = nullptr;
 		OptixProgramGroupOptions program_group_options{};
@@ -126,7 +126,7 @@ namespace amber::optix
 		prog_group_desc.raygen.module = module;
 		prog_group_desc.raygen.entryFunctionName = entry;
 
-		char log[512];
+		Char log[512];
 		Uint64 log_size = sizeof(log);
 		OptixCheck(optixProgramGroupCreate(
 			optix_ctx,
@@ -141,7 +141,7 @@ namespace amber::optix
 		return program_groups.emplace_back(prog_group);
 	}
 
-	OptixProgramGroup Pipeline::AddMissGroup(char const* entry)
+	OptixProgramGroup Pipeline::AddMissGroup(Char const* entry)
 	{
 		OptixProgramGroup prog_group = nullptr;
 		OptixProgramGroupOptions program_group_options{};
@@ -151,7 +151,7 @@ namespace amber::optix
 		prog_group_desc.miss.module = module;
 		prog_group_desc.miss.entryFunctionName = entry;
 
-		char log[512];
+		Char log[512];
 		Uint64 log_size = sizeof(log);
 		OptixCheck(optixProgramGroupCreate(
 			optix_ctx,
@@ -165,7 +165,7 @@ namespace amber::optix
 		return program_groups.emplace_back(prog_group);
 	}
 
-	OptixProgramGroup Pipeline::AddHitGroup(char const* anyhit_entry, char const* closesthit_entry, char const* intersection_entry)
+	OptixProgramGroup Pipeline::AddHitGroup(Char const* anyhit_entry, Char const* closesthit_entry, Char const* intersection_entry)
 	{
 		OptixProgramGroup prog_group = nullptr;
 		OptixProgramGroupOptions program_group_options{};
@@ -188,7 +188,7 @@ namespace amber::optix
 			prog_group_desc.hitgroup.entryFunctionNameIS = intersection_entry;
 		}
 
-		char log[512];
+		Char log[512];
 		Uint64 log_size = sizeof(log);
 		OptixCheck(optixProgramGroupCreate(
 			optix_ctx,
@@ -282,7 +282,7 @@ namespace amber::optix
 		}
 	}
 
-	Texture2D::Texture2D(Uint32 w, Uint32 h, cudaChannelFormatDesc format, bool srgb) : width(w), height(h), format(format)
+	Texture2D::Texture2D(Uint32 w, Uint32 h, cudaChannelFormatDesc format, Bool srgb) : width(w), height(h), format(format)
 	{
 		CudaCheck(cudaMallocArray(&data, &format, w, h));
 

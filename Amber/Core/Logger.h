@@ -22,7 +22,7 @@ namespace amber
 		using LogCallbackType = void (*)(std::string const&);
 	public:
 
-		void Initialize(char const* log_file, LogLevel level);
+		void Initialize(Char const* log_file, LogLevel level);
 		void Destroy();
 
 		void CLog(LogLevel level, std::string_view fmt, ...);

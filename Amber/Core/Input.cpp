@@ -156,7 +156,7 @@ namespace amber
 		}
 	}
 
-	void Input::SetMouseVisibility(bool visible)
+	void Input::SetMouseVisibility(Bool visible)
 	{
 		SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE);
 	}

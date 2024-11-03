@@ -18,5 +18,5 @@ namespace amber
 		std::unique_ptr<Image> environment;
 	};
 
-	std::unique_ptr<Scene> LoadScene(char const* scene_file, char const* environment_texture, Float scale = 1.0f);
+	std::unique_ptr<Scene> LoadScene(Char const* scene_file, Char const* environment_texture, Float scale = 1.0f);
 }

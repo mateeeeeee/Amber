@@ -4,7 +4,7 @@
 namespace amber
 {
 
-	Window::Window(Uint32 w, Uint32 h, char const* title) : width(w), height(h)
+	Window::Window(Uint32 w, Uint32 h, Char const* title) : width(w), height(h)
 	{
 		SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE);
 		sdl_window.reset(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, window_flags));
@@ -29,7 +29,7 @@ namespace amber
 		SDL_MaximizeWindow(sdl_window.get());
 	}
 
-	bool Window::Loop()
+	Bool Window::Loop()
 	{
 		SDL_Event event;
 		while (SDL_PollEvent(&event))

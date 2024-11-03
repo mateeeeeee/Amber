@@ -46,9 +46,9 @@ namespace amber
 		SDLTexturePtr render_target = nullptr;
 		SDLTexturePtr gui_target = nullptr;
 
-		bool gui_enabled = true;
-		bool scene_focused = false;
-		bool visibility_flags[Visibility_Count] = {false};
+		Bool gui_enabled = true;
+		Bool scene_focused = false;
+		Bool visibility_flags[Visibility_Count] = {false};
 		std::unique_ptr<EditorConsole> editor_console;
 		EditorSink* editor_sink;
 

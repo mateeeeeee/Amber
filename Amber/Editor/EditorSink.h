@@ -16,7 +16,7 @@ namespace amber
 		virtual void set_pattern(const std::string& pattern) override {}
 		virtual void set_formatter(std::unique_ptr<spdlog::formatter> sink_formatter)  override {}
 
-		void Draw(const char* title, bool* p_open = nullptr);
+		void Draw(const Char* title, Bool* p_open = nullptr);
 
 	private:
 		std::unique_ptr<struct ImGuiLogger> imgui_log;

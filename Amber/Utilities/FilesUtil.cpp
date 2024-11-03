@@ -20,7 +20,7 @@ namespace amber
 		fs::path p(complete_path);
 		return p.filename().replace_extension().string();
 	}
-	bool FileExists(std::string_view file_path)
+	Bool FileExists(std::string_view file_path)
 	{
 		fs::path p(file_path);
 		return fs::exists(p);

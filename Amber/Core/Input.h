@@ -55,11 +55,11 @@ namespace amber
 		void Tick();
 		void OnWindowEvent(WindowEventData const&);
 
-		bool GetKey(KeyCode key)    const { return keys[(Uint64)key]; }
-		bool IsKeyDown(KeyCode key) const { return GetKey(key) && !prev_keys[(Uint64)key]; }
-		bool IsKeyUp(KeyCode key)   const { return !GetKey(key) && prev_keys[(Uint64)key]; }
+		Bool GetKey(KeyCode key)    const { return keys[(Uint64)key]; }
+		Bool IsKeyDown(KeyCode key) const { return GetKey(key) && !prev_keys[(Uint64)key]; }
+		Bool IsKeyUp(KeyCode key)   const { return !GetKey(key) && prev_keys[(Uint64)key]; }
 
-		void SetMouseVisibility(bool visible);
+		void SetMouseVisibility(Bool visible);
 
 		Sint32 GetMousePositionX()  const { return mouse_position_x; }
 		Sint32 GetMousePositionY()  const { return mouse_position_y; }
@@ -70,8 +70,8 @@ namespace amber
 
 	private:
 		InputEvents input_events;
-		std::array<bool, (Uint64)KeyCode::Count> keys = {};
-		std::array<bool, (Uint64)KeyCode::Count> prev_keys = {};
+		std::array<Bool, (Uint64)KeyCode::Count> keys = {};
+		std::array<Bool, (Uint64)KeyCode::Count> prev_keys = {};
 		
 		Sint32 mouse_position_x = 0;
 		Sint32 mouse_position_y = 0;
@@ -80,8 +80,8 @@ namespace amber
 		Sint32 prev_mouse_position_y = 0;
 		Float mmouse_wheel_delta = 0.0f;
 
-		bool new_frame = false;
-		bool resizing = false;
+		Bool new_frame = false;
+		Bool resizing = false;
 
 	private:
 		Input() = default;
