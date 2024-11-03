@@ -23,20 +23,20 @@ namespace amber
 		Sint32 emissive_tex_id = -1;
 
 		Sint32 metallic_roughness_tex_id = -1;
-		float metallic = 0.0f;
-		float specular = 0.0f;
-		float roughness = 1.0f;
-		float specular_tint = 0.0f;
-		float anisotropy = 0.0f;
-		float alpha_cutoff = 0.5f;
+		Float metallic = 0.0f;
+		Float specular = 0.0f;
+		Float roughness = 1.0f;
+		Float specular_tint = 0.0f;
+		Float anisotropy = 0.0f;
+		Float alpha_cutoff = 0.5f;
 
-		float sheen = 0.0f;
-		float sheen_tint = 0.0f;
-		float clearcoat = 0.0f;
-		float clearcoat_gloss = 0.0f;
+		Float sheen = 0.0f;
+		Float sheen_tint = 0.0f;
+		Float clearcoat = 0.0f;
+		Float clearcoat_gloss = 0.0f;
 
-		float ior = 1.5f;
-		float specular_transmission = 0.0f;
+		Float ior = 1.5f;
+		Float specular_transmission = 0.0f;
 
 	};
 	struct MeshGPU
@@ -77,8 +77,8 @@ namespace amber
 
 		float3					cam_eye;
 		float3					cam_u, cam_v, cam_w;
-		float					cam_fovy;
-		float					cam_aspect_ratio;
+		Float					cam_fovy;
+		Float					cam_aspect_ratio;
 #ifdef __CUDACC__
 		float3*					vertices;
 		float3*					normals;

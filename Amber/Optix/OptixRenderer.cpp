@@ -328,7 +328,7 @@ namespace amber
 	OptixRenderer::~OptixRenderer()
 	{}
 
-	void OptixRenderer::Update(float dt)
+	void OptixRenderer::Update(Float dt)
 	{
 	}
 
@@ -439,13 +439,13 @@ namespace amber
 				{
 					ImGui::Text("Sun Elevation");
 					ImGui::NextColumn();
-					static float sun_elevation = 75.0f;
+					static Float sun_elevation = 75.0f;
 					changed |= ImGui::SliderFloat("##Elevation", &sun_elevation, -90.0f, 90.0f);
 					ImGui::NextColumn();
 
 					ImGui::Text("Sun Azimuth");
 					ImGui::NextColumn();
-					static float sun_azimuth = 260.0f;
+					static Float sun_azimuth = 260.0f;
 					changed |= ImGui::SliderFloat("##Azimuth", &sun_azimuth, 0.0f, 360.0f);
 
 					Vector3 light_direction = ConvertElevationAndAzimuthToDirection(sun_elevation, sun_azimuth);

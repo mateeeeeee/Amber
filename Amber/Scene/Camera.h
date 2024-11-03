@@ -7,7 +7,7 @@ namespace amber
 	public:
 		void Initialize(Vector3 const& position, Vector3 const& lookat);
 
-		void Update(float dt);
+		void Update(Float dt);
 		void Enable(bool _enabled) { enabled = _enabled; }
 		bool IsChanged() const { return changed; }
 
@@ -16,10 +16,10 @@ namespace amber
 		Vector3 GetLookDir() const;
 		void SetLookDir(Vector3 val);
 
-		float GetFovY() const { return fovy; }
-		void  SetFovY(float val) { fovy = val; }
-		float GetAspectRatio() const { return aspect_ratio; }
-		void  SetAspectRatio(float val) { aspect_ratio = val; }
+		Float GetFovY() const { return fovy; }
+		void  SetFovY(Float val) { fovy = val; }
+		Float GetAspectRatio() const { return aspect_ratio; }
+		void  SetAspectRatio(Float val) { aspect_ratio = val; }
 
 		void GetFrame(Vector3& U, Vector3& V, Vector3& W) const;
 
@@ -28,8 +28,8 @@ namespace amber
 		Vector3     velocity;
 		Quaternion  orientation;
 
-		float fovy;
-		float aspect_ratio;
+		Float fovy;
+		Float aspect_ratio;
 		bool changed;
 		bool enabled;
 	};
