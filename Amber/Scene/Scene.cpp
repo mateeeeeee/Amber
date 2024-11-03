@@ -266,7 +266,7 @@ namespace amber
 			return scene;
 		}
 
-		std::unique_ptr<Scene> LoadObjScene(std::string_view scene_file, float scale)
+		std::unique_ptr<Scene> LoadObjScene(std::string_view scene_file, Float scale)
 		{
 			tinyobj::ObjReaderConfig reader_config{};
 			tinyobj::ObjReader reader;
@@ -361,7 +361,7 @@ namespace amber
 			return obj_scene;
 		}
 
-		std::unique_ptr<Scene> LoadGltfScene(std::string_view scene_file, float scale)
+		std::unique_ptr<Scene> LoadGltfScene(std::string_view scene_file, Float scale)
 		{
 			cgltf_options options{};
 			cgltf_data* gltf_data = nullptr;
@@ -390,15 +390,15 @@ namespace amber
 				Material& material = gltf_scene->materials.emplace_back();
 
 				cgltf_pbr_metallic_roughness pbr_metallic_roughness = gltf_material.pbr_metallic_roughness;
-				material.base_color.x = (float)pbr_metallic_roughness.base_color_factor[0];
-				material.base_color.y = (float)pbr_metallic_roughness.base_color_factor[1];
-				material.base_color.z = (float)pbr_metallic_roughness.base_color_factor[2];
-				material.metallic = (float)pbr_metallic_roughness.metallic_factor;
-				material.roughness = (float)pbr_metallic_roughness.roughness_factor;
-				material.emissive_color.x = (float)gltf_material.emissive_factor[0];
-				material.emissive_color.y = (float)gltf_material.emissive_factor[1];
-				material.emissive_color.z = (float)gltf_material.emissive_factor[2];
-				material.alpha_cutoff = (float)gltf_material.alpha_cutoff;
+				material.base_color.x = (Float)pbr_metallic_roughness.base_color_factor[0];
+				material.base_color.y = (Float)pbr_metallic_roughness.base_color_factor[1];
+				material.base_color.z = (Float)pbr_metallic_roughness.base_color_factor[2];
+				material.metallic = (Float)pbr_metallic_roughness.metallic_factor;
+				material.roughness = (Float)pbr_metallic_roughness.roughness_factor;
+				material.emissive_color.x = (Float)gltf_material.emissive_factor[0];
+				material.emissive_color.y = (Float)gltf_material.emissive_factor[1];
+				material.emissive_color.z = (Float)gltf_material.emissive_factor[2];
+				material.alpha_cutoff = (Float)gltf_material.alpha_cutoff;
 
 				if (cgltf_texture* texture = pbr_metallic_roughness.base_color_texture.texture)
 				{
@@ -496,7 +496,7 @@ namespace amber
 								stream.resize(gltf_attribute.data->count);
 								for (Uint64 i = 0; i < gltf_attribute.data->count; ++i)
 								{
-									cgltf_accessor_read_float(gltf_attribute.data, i, &stream[i].x, sizeof(T) / sizeof(float));
+									cgltf_accessor_read_float(gltf_attribute.data, i, &stream[i].x, sizeof(T) / sizeof(Float));
 								}
 							}
 						};
@@ -554,7 +554,7 @@ namespace amber
 		}
 	}
 
-	std::unique_ptr<Scene> LoadScene(char const* _scene_file, char const* _environment_texture, float scale)
+	std::unique_ptr<Scene> LoadScene(char const* _scene_file, char const* _environment_texture, Float scale)
 	{
 		std::string_view scene_file(_scene_file);
 		std::string_view environment_texture(_environment_texture);

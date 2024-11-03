@@ -11,13 +11,13 @@ namespace amber
 
 		virtual IConsoleVariable* RegisterConsoleVariable(char const* name, bool default_value, char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariable(char const* name, int default_value, char const* help) override;
-		virtual IConsoleVariable* RegisterConsoleVariable(char const* name, float default_value, char const* help) override;
+		virtual IConsoleVariable* RegisterConsoleVariable(char const* name, Float default_value, char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariable(char const* name, char const* default_value, char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariable(char const* name, std::string const& default_value, char const* help) override;
 
 		virtual IConsoleVariable* RegisterConsoleVariableRef(char const* name, bool& value, char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariableRef(char const* name, int& value, char const* help) override;
-		virtual IConsoleVariable* RegisterConsoleVariableRef(char const* name, float& value, char const* help) override;
+		virtual IConsoleVariable* RegisterConsoleVariableRef(char const* name, Float& value, char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariableRef(char const* name, std::string& value, char const* help) override;
 
 		virtual IConsoleCommand* RegisterConsoleCommand(char const* name, char const* help, ConsoleCommandDelegate const& command) override;
@@ -83,7 +83,7 @@ namespace amber
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 		}
-		AutoConsoleVariable(char const* name, float default_value, char const* help)
+		AutoConsoleVariable(char const* name, Float default_value, char const* help)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 		}
@@ -102,7 +102,7 @@ namespace amber
 		{
 			AsVariable()->AddOnChanged(callback);
 		}
-		AutoConsoleVariable(char const* name, float default_value, char const* help, ConsoleVariableDelegate const& callback)
+		AutoConsoleVariable(char const* name, Float default_value, char const* help, ConsoleVariableDelegate const& callback)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 			AsVariable()->AddOnChanged(callback);
@@ -143,14 +143,14 @@ namespace amber
 		{
 			if constexpr (std::is_same_v<T, bool>) return AsVariable()->GetBool();
 			if constexpr (std::is_same_v<T, int>) return  AsVariable()->GetInt();
-			if constexpr (std::is_same_v<T, float>) return AsVariable()->GetFloat();
+			if constexpr (std::is_same_v<T, Float>) return AsVariable()->GetFloat();
 			if constexpr (std::is_same_v<T, std::string>) return AsVariable()->GetString();
 		}
 		T* GetPtr()
 		{
 			if constexpr (std::is_same_v<T, bool>) return AsVariable()->GetBoolPtr();
 			if constexpr (std::is_same_v<T, int>) return  AsVariable()->GetIntPtr();
-			if constexpr (std::is_same_v<T, float>) return AsVariable()->GetFloatPtr();
+			if constexpr (std::is_same_v<T, Float>) return AsVariable()->GetFloatPtr();
 			if constexpr (std::is_same_v<T, std::string>) return AsVariable()->GetStringPtr();
 		}
 
@@ -169,7 +169,7 @@ namespace amber
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariableRef(name, ref_value, help))
 		{
 		}
-		AutoConsoleVariableRef(char const* name, float& ref_value, char const* help)
+		AutoConsoleVariableRef(char const* name, Float& ref_value, char const* help)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariableRef(name, ref_value, help))
 		{
 		}
@@ -187,7 +187,7 @@ namespace amber
 		{
 			AsVariable()->AddOnChanged(callback);
 		}
-		AutoConsoleVariableRef(char const* name, float& ref_value, char const* help, ConsoleVariableDelegate const& callback)
+		AutoConsoleVariableRef(char const* name, Float& ref_value, char const* help, ConsoleVariableDelegate const& callback)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariableRef(name, ref_value, help))
 		{
 			AsVariable()->AddOnChanged(callback);
@@ -233,14 +233,14 @@ namespace amber
 		{
 			if constexpr (std::is_same_v<T, bool>) return AsVariable()->GetBool();
 			if constexpr (std::is_same_v<T, int>) return  AsVariable()->GetInt();
-			if constexpr (std::is_same_v<T, float>) return AsVariable()->GetFloat();
+			if constexpr (std::is_same_v<T, Float>) return AsVariable()->GetFloat();
 			if constexpr (std::is_same_v<T, std::string>) return AsVariable()->GetString();
 		}
 		T* GetPtr() const
 		{
 			if constexpr (std::is_same_v<T, bool>) return AsVariable()->GetBoolPtr();
 			if constexpr (std::is_same_v<T, int>) return  AsVariable()->GetIntPtr();
-			if constexpr (std::is_same_v<T, float>) return AsVariable()->GetFloatPtr();
+			if constexpr (std::is_same_v<T, Float>) return AsVariable()->GetFloatPtr();
 			if constexpr (std::is_same_v<T, std::string>) return AsVariable()->GetStringPtr();
 		}
 

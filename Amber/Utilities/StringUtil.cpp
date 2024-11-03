@@ -60,7 +60,7 @@ namespace amber
 		return !iss.fail() && iss.eof();
 	}
 
-	bool FromCString(const char* in, float& out)
+	bool FromCString(const char* in, Float& out)
 	{
 		std::istringstream iss(in);
 		iss >> out;
@@ -105,7 +105,7 @@ namespace amber
 	{
 		return std::to_string(val);
 	}
-	std::string FloatToString(float val)
+	std::string FloatToString(Float val)
 	{
 		return std::to_string(val);
 	}

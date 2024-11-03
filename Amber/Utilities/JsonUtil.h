@@ -115,14 +115,14 @@ namespace amber
 			}
 			else if (key_value_json.is_number_float())
 			{
-				if constexpr (std::is_same_v<std::decay_t<T>, float>)
+				if constexpr (std::is_same_v<std::decay_t<T>, Float>)
 				{
-					return_value = key_value_json.get<float>();
+					return_value = key_value_json.get<Float>();
 					return true;
 				}
-				else if constexpr (std::is_same_v<std::decay_t<T>, double>)
+				else if constexpr (std::is_same_v<std::decay_t<T>, Float64>)
 				{
-					return_value = key_value_json.get<double>();
+					return_value = key_value_json.get<Float64>();
 					return true;
 				}
 				else return false;

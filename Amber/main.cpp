@@ -19,7 +19,7 @@ using namespace amber;
 struct SceneConfig
 {
 	std::string model_file;
-	float  model_scale;
+	Float  model_scale;
 	std::string scene_environment;
 	Uint32 width;
 	Uint32 height;
@@ -130,7 +130,7 @@ bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
 	scene_params.Find<std::string>("scene environment", scene_environment);
 
 	cfg.model_file = paths::ModelDir + model_file;
-	cfg.model_scale = scene_params.FindOr<float>("model scale", 1.0f);
+	cfg.model_scale = scene_params.FindOr<Float>("model scale", 1.0f);
 	cfg.scene_environment = paths::ModelDir + scene_environment;
 	cfg.width = scene_params.FindOr<Uint32>("width", 1080);
 	cfg.height = scene_params.FindOr<Uint32>("height", 720);
@@ -146,15 +146,15 @@ bool ParseSceneConfig(char const* scene_config, SceneConfig& cfg)
 
 	JsonParams camera_params(camera_json);
 
-	float camera_position[3] = { 0.0f, 0.0f, 0.0f };
+	Float camera_position[3] = { 0.0f, 0.0f, 0.0f };
 	camera_params.FindArray("position", camera_position);
-	float look_at[3] = { 0.0f, 0.0f, 1.0f };
+	Float look_at[3] = { 0.0f, 0.0f, 1.0f };
 	camera_params.FindArray("look_at", look_at);
 	cfg.camera.Initialize(Vector3(camera_position), Vector3(look_at));
 
-	float fovy = camera_params.FindOr<float>("fov", 45.0f);
+	Float fovy = camera_params.FindOr<Float>("fov", 45.0f);
 	cfg.camera.SetFovY(fovy);
-	cfg.camera.SetAspectRatio((float)cfg.width / cfg.height);
+	cfg.camera.SetAspectRatio((Float)cfg.width / cfg.height);
 	return true;
 }
 

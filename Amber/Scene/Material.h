@@ -7,20 +7,20 @@ namespace amber
 	{
 		Vector3 base_color = Vector3(0.9f, 0.9f, 0.9f);
 		Vector3 emissive_color = Vector3(0.0f, 0.0f, 0.0f);
-		float metallic = 0.0f;
-		float specular = 0.0f;
-		float roughness = 1.0f;
-		float specular_tint = 0.0f;
-		float anisotropy = 0.0f;
-		float alpha_cutoff = 0.5f;
+		Float metallic = 0.0f;
+		Float specular = 0.0f;
+		Float roughness = 1.0f;
+		Float specular_tint = 0.0f;
+		Float anisotropy = 0.0f;
+		Float alpha_cutoff = 0.5f;
 
-		float sheen = 0.0f;
-		float sheen_tint = 0.0f;
-		float clearcoat = 0.0f;
-		float clearcoat_gloss = 0.0f;
+		Float sheen = 0.0f;
+		Float sheen_tint = 0.0f;
+		Float clearcoat = 0.0f;
+		Float clearcoat_gloss = 0.0f;
 
-		float ior = 1.5f;
-		float specular_transmission = 0.0f;
+		Float ior = 1.5f;
+		Float specular_transmission = 0.0f;
 
 		Sint32 diffuse_tex_id = -1;
 		Sint32 metallic_roughness_tex_id = -1;

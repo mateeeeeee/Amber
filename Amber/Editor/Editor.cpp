@@ -78,7 +78,7 @@ namespace amber
 		if (gui_enabled) camera.Enable(scene_focused);
 		else camera.Enable(true);
 
-		float dt = ImGui::GetIO().DeltaTime;
+		Float dt = ImGui::GetIO().DeltaTime;
 		camera.Update(dt);
 		renderer.Update(dt);
 		Begin();
@@ -113,7 +113,7 @@ namespace amber
 		SDLCheck(gui_target.get());
 
 		renderer.OnResize(w, h);
-		camera.SetAspectRatio((float)w / h);
+		camera.SetAspectRatio((Float)w / h);
 	}
 
 	void Editor::OnWindowEvent(WindowEventData const& data)
@@ -166,7 +166,7 @@ namespace amber
 		for (int i = 0; i <= ImGuiCol_COUNT; i++)
 		{
 			ImVec4& col = style.Colors[i];
-			float H, S, V;
+			Float H, S, V;
 			ImGui::ColorConvertRGBtoHSV(col.x, col.y, col.z, H, S, V);
 
 			if (S < 0.1f)

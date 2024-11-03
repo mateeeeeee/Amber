@@ -3,10 +3,10 @@
 
 namespace amber
 {
-	using Uint8  = uint8_t;
-	using Uint16 = uint16_t;
-	using Uint32 = uint32_t;
-	using Uint64 = uint64_t;
+	using Uint8   = uint8_t;
+	using Uint16  = uint16_t;
+	using Uint32  = uint32_t;
+	using Uint64  = uint64_t;
 	using Sint8   = int8_t;
 	using Sint16  = int16_t;
 	using Sint32  = int32_t;
@@ -14,6 +14,8 @@ namespace amber
 	using Bool32 = Sint32;
 	using Bool = bool;
 	using Char = char;
+	using Float = float;
+	using Float64 = double;
 	using Uintptr  = uintptr_t;
 	using Sintptr  = intptr_t;
 }

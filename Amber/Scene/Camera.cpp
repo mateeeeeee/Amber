@@ -3,7 +3,7 @@
 
 namespace amber
 {
-	static constexpr float speed = 0.1f;
+	static constexpr Float speed = 0.1f;
 
 	void Camera::Initialize(Vector3 const& eye, Vector3 const& look_at)
 	{
@@ -11,8 +11,8 @@ namespace amber
 		Vector3 look_vector = look_at - position;
 		look_vector.Normalize();
 
-		float yaw = std::atan2(look_vector.x, look_vector.z);
-		float pitch = std::asin(-look_vector.y);
+		Float yaw = std::atan2(look_vector.x, look_vector.z);
+		Float pitch = std::asin(-look_vector.y);
 		Quaternion pitch_quat = Quaternion::CreateFromYawPitchRoll(0, pitch, 0);
 		Quaternion yaw_quat = Quaternion::CreateFromYawPitchRoll(yaw, 0, 0);
 		orientation = pitch_quat * orientation * yaw_quat;
@@ -21,7 +21,7 @@ namespace amber
 		changed = false;
 	}
 
-	void Camera::Update(float dt)
+	void Camera::Update(Float dt)
 	{
 		changed = false;
 		if (!enabled || g_Input.GetKey(KeyCode::Space))
@@ -31,8 +31,8 @@ namespace amber
 
 		if (g_Input.GetKey(KeyCode::MouseRight))
 		{
-			float dx = g_Input.GetMouseDeltaX();
-			float dy = g_Input.GetMouseDeltaY();
+			Float dx = g_Input.GetMouseDeltaX();
+			Float dy = g_Input.GetMouseDeltaY();
 			Quaternion yaw_quaternion = Quaternion::CreateFromYawPitchRoll(0, dy * dt * 0.25f, 0);
 			Quaternion pitch_quaternion = Quaternion::CreateFromYawPitchRoll(dx * dt * 0.25f, 0, 0);
 			orientation = yaw_quaternion * orientation * pitch_quaternion;
@@ -51,7 +51,7 @@ namespace amber
 
 		if (velocity.LengthSquared() > 1e-4)
 		{
-			float speed_factor = 1.0f;
+			Float speed_factor = 1.0f;
 			if (g_Input.GetKey(KeyCode::ShiftLeft)) speed_factor *= 5.0f;
 			if (g_Input.GetKey(KeyCode::CtrlLeft))  speed_factor *= 0.2f;
 			position += velocity * dt * speed_factor * 5.0f;
@@ -67,8 +67,8 @@ namespace amber
 	void Camera::SetLookDir(Vector3 look_vector)
 	{
 		look_vector.Normalize();
-		float yaw = std::atan2(look_vector.x, look_vector.z);
-		float pitch = std::asin(-look_vector.y);
+		Float yaw = std::atan2(look_vector.x, look_vector.z);
+		Float pitch = std::asin(-look_vector.y);
 		Quaternion pitch_quat = Quaternion::CreateFromYawPitchRoll(0, pitch, 0);
 		Quaternion yaw_quat = Quaternion::CreateFromYawPitchRoll(yaw, 0, 0);
 		orientation = pitch_quat * orientation * yaw_quat;

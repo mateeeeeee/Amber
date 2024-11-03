@@ -66,7 +66,7 @@ namespace amber
 
 		Sint32 GetMouseDeltaX()     const { return mouse_position_x - prev_mouse_position_x; }
 		Sint32 GetMouseDeltaY()     const { return mouse_position_y - prev_mouse_position_y; }
-		float GetMouseWheelDelta() const { return mmouse_wheel_delta; }
+		Float GetMouseWheelDelta() const { return mmouse_wheel_delta; }
 
 	private:
 		InputEvents input_events;
@@ -78,7 +78,7 @@ namespace amber
 
 		Sint32 prev_mouse_position_x = 0;
 		Sint32 prev_mouse_position_y = 0;
-		float mmouse_wheel_delta = 0.0f;
+		Float mmouse_wheel_delta = 0.0f;
 
 		bool new_frame = false;
 		bool resizing = false;

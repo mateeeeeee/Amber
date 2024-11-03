@@ -27,7 +27,7 @@ namespace amber
 		OptixRenderer(Uint32 width, Uint32 height, std::unique_ptr<Scene>&& scene);
 		~OptixRenderer();
 
-		void Update(float dt);
+		void Update(Float dt);
 		void Render(Camera const& camera);
 
 		void OnResize(Uint32 w, Uint32 h);
