@@ -115,6 +115,7 @@ __device__ __forceinline__ void UnpackMaterial(DisneyMaterial& mat_params, Uint3
 	{
 		float4 sampled = tex2D<float4>(params.textures[material.normal_tex_id], uv.x, uv.y);
 		mat_params.normal = make_float3(sampled.x, sampled.y, sampled.z);
+		mat_params.normal = 2.0f * mat_params.normal - 1.0f;
 	}
 	else
 	{
@@ -129,6 +130,11 @@ __device__ __forceinline__ void UnpackMaterial(DisneyMaterial& mat_params, Uint3
 	mat_params.clearcoat_gloss = material.clearcoat_gloss;
 	mat_params.ior = material.ior;
 	mat_params.specular_transmission = material.specular_transmission;
+}
+
+__device__ __forceinline__ float3 ApplyNormalMap(const float3& normal_map, const float3& v_x, const float3& v_y, const float3& v_z)
+{
+	return normalize(normal_map.x * v_x + normal_map.y * v_y + normal_map.z * v_z);
 }
 
 __device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, unsigned int seed)
@@ -269,9 +275,18 @@ __global__ void RG_NAME(rg)()
 			{
 				v_z = -v_z;
 			}
+
 			OrthonormalBasis ort(v_z);
 			v_x = ort.tangent;
 			v_y = ort.binormal;
+
+			if (length(material.normal - make_float3(0.0f, 0.0f, 1.0f)) > 1e-4)
+			{
+				v_z = ApplyNormalMap(material.normal, v_x, v_y, v_z);
+				ort = OrthonormalBasis(v_z);
+				v_x = ort.tangent;
+				v_y = ort.binormal;
+			}
 
 			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, seed) * throughput;
 
