@@ -346,7 +346,6 @@ namespace amber
 				material.ior = m.ior;
 				material.specular_transmission = m.dissolve < 1.0f ? 1.0f - m.dissolve : 0.0f;
 				material.roughness = Clamp(1.0f - (m.shininess / 1000.0f), 0.0f, 1.0f);
-				material.specular_transmission = 0.0f;
 				material.metallic = m.metallic;
 				material.sheen = m.sheen;
 				material.clearcoat = m.clearcoat_thickness;
@@ -430,6 +429,55 @@ namespace amber
 				material.emissive_color.y = (Float)gltf_material.emissive_factor[1];
 				material.emissive_color.z = (Float)gltf_material.emissive_factor[2];
 				material.alpha_cutoff = (Float)gltf_material.alpha_cutoff;
+
+				if (gltf_material.has_clearcoat)
+				{
+					cgltf_clearcoat const& gltf_clearcoat = gltf_material.clearcoat;
+					material.clearcoat = gltf_clearcoat.clearcoat_factor;
+					material.clearcoat_gloss = 1.0f - gltf_clearcoat.clearcoat_roughness_factor;
+				}
+				if (gltf_material.has_sheen)
+				{
+					cgltf_sheen const& gltf_sheen = gltf_material.sheen;
+					material.sheen = 0.2126f * gltf_sheen.sheen_color_factor[0] +
+									 0.7152f * gltf_sheen.sheen_color_factor[1] +
+									 0.0722f * gltf_sheen.sheen_color_factor[2];
+
+					Float average_color = (gltf_sheen.sheen_color_factor[0] +
+										   gltf_sheen.sheen_color_factor[1] +
+										   gltf_sheen.sheen_color_factor[2]) / 3.0f;
+
+					material.sheen_tint = material.sheen > 0.0f ? (average_color / material.sheen) : 0.0f;
+				}
+				if (gltf_material.has_emissive_strength)
+				{
+					material.emissive_color.x *= gltf_material.emissive_strength.emissive_strength;
+					material.emissive_color.y *= gltf_material.emissive_strength.emissive_strength;
+					material.emissive_color.z *= gltf_material.emissive_strength.emissive_strength;
+				}
+				if (gltf_material.has_ior)
+				{
+					material.ior = gltf_material.ior.ior;
+				}
+				if (gltf_material.has_specular)
+				{
+					cgltf_specular const& gltf_specular = gltf_material.specular;
+
+					material.specular = gltf_specular.specular_factor;
+					material.specular_tint = 0.2126f * gltf_specular.specular_color_factor[0] +
+											 0.7152f * gltf_specular.specular_color_factor[1] +
+											 0.0722f * gltf_specular.specular_color_factor[2];
+
+					Float average_color = (gltf_specular.specular_color_factor[0] +
+										   gltf_specular.specular_color_factor[1] +
+										   gltf_specular.specular_color_factor[2]) / 3.0f;
+
+					material.specular_tint = material.specular_tint > 0.0f ? (average_color / material.specular_tint) : 0.0f;
+				}
+				if (gltf_material.has_transmission)
+				{
+					material.specular_transmission = gltf_material.transmission.transmission_factor;
+				}
 
 				if (cgltf_texture* texture = pbr_metallic_roughness.base_color_texture.texture)
 				{
