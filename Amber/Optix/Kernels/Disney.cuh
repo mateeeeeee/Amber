@@ -376,8 +376,10 @@ __device__ float3 DisneyBrdf(const DisneyMaterial& mat,
     const float3& v_x,
     const float3& v_y)
 {
-    if (!SameHemisphere(w_o, w_i, n)) {
-        if (mat.specular_transmission > 0.f) {
+    if (!SameHemisphere(w_o, w_i, n)) 
+    {
+        if (mat.specular_transmission > 0.f) 
+        {
             float3 spec_trans = DisneyMicrofacetTransmissionIsotropic(mat, n, w_o, w_i);
             return spec_trans * (1.f - mat.metallic) * mat.specular_transmission;
         }
@@ -388,10 +390,12 @@ __device__ float3 DisneyBrdf(const DisneyMaterial& mat,
     float3 sheen = DisneySheen(mat, n, w_o, w_i);
     float3 diffuse = DisneyDiffuse(mat, n, w_o, w_i);
     float3 gloss;
-    if (mat.anisotropy == 0.f) {
+    if (mat.anisotropy == 0.f)
+    {
         gloss = DisneyMicrofacetIsotropic(mat, n, w_o, w_i);
     }
-    else {
+    else 
+    {
         gloss = DisneyMicrofacetAnisotropic(mat, n, w_o, w_i, v_x, v_y);
     }
     return (diffuse + sheen) * (1.f - mat.metallic) * (1.f - mat.specular_transmission) +
@@ -423,7 +427,8 @@ __device__ float DisneyPdf(const DisneyMaterial& mat,
     else {
         microfacet = Gtr2AnisoPdf(w_o, w_i, n, v_x, v_y, alpha_aniso);
     }
-    if (mat.specular_transmission > 0.f) {
+    if (mat.specular_transmission > 0.f) 
+    {
         n_comp = 4.f;
         microfacet_transmission = Gtr2TransmissionPdf(w_o, w_i, n, alpha, mat.ior);
     }
@@ -443,27 +448,33 @@ __device__ float3 SampleDisneyBrdf(const DisneyMaterial& mat,
     float& pdf)
 {
     int component = 0;
-    if (mat.specular_transmission == 0.f) {
+    if (mat.specular_transmission == 0.f) 
+    {
         component = rnd(seed) * 3.f;
         component = clamp(component, 0, 2);
     }
-    else {
+    else 
+    {
         component = rnd(seed) * 4.f;
         component = clamp(component, 0, 3);
     }
 
     float2 samples = make_float2(rnd(seed), rnd(seed));
-    if (component == 0) {
+    if (component == 0) 
+    {
         // Sample diffuse component
         w_i = SampleLambertianDir(n, v_x, v_y, samples);
     }
-    else if (component == 1) {
+    else if (component == 1) 
+    {
         float3 w_h;
         float alpha = max(0.001f, mat.roughness * mat.roughness);
-        if (mat.anisotropy == 0.f) {
+        if (mat.anisotropy == 0.f) 
+        {
             w_h = SampleGtr2H(n, v_x, v_y, alpha, samples);
         }
-        else {
+        else
+        {
             float aspect = sqrt(1.f - mat.anisotropy * 0.9f);
             float2 alpha_aniso =
                 make_float2(max(0.001f, alpha / aspect), max(0.001f, alpha * aspect));
@@ -479,24 +490,28 @@ __device__ float3 SampleDisneyBrdf(const DisneyMaterial& mat,
             return make_float3(0.f);
         }
     }
-    else if (component == 2) {
+    else if (component == 2) 
+    {
         // Sample clear coat component
         float alpha = lerp(0.1f, 0.001f, mat.clearcoat_gloss);
         float3 w_h = SampleGtr1H(n, v_x, v_y, alpha, samples);
         w_i = reflect(-w_o, w_h);
 
         // Invalid reflection, terminate ray
-        if (!SameHemisphere(w_o, w_i, n)) {
+        if (!SameHemisphere(w_o, w_i, n)) 
+        {
             pdf = 0.f;
             w_i = make_float3(0.f);
             return make_float3(0.f);
         }
     }
-    else {
+    else 
+    {
         // Sample microfacet transmission component
         float alpha = max(0.001f, mat.roughness * mat.roughness);
         float3 w_h = SampleGtr2H(n, v_x, v_y, alpha, samples);
-        if (dot(w_o, w_h) < 0.f) {
+        if (dot(w_o, w_h) < 0.f) 
+        {
             w_h = -w_h;
         }
         bool entering = dot(w_o, n) > 0.f;
