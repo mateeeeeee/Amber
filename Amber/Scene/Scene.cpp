@@ -341,9 +341,18 @@ namespace amber
 			{
 				Material material{};
 				material.base_color = Vector3(m.diffuse[0], m.diffuse[1], m.diffuse[2]);
-				material.specular = Clamp(m.shininess / 500.f, 0.0f, 1.0f);
-				material.roughness = Clamp(1.f - material.specular, 0.0f, 1.0f);
+				material.emissive_color = Vector3(m.emission[0], m.emission[1], m.emission[2]);
+				material.specular = (m.specular[0] + m.specular[1] + m.specular[2]) / 3.0f;
+				material.ior = m.ior;
+				material.specular_transmission = m.dissolve < 1.0f ? 1.0f - m.dissolve : 0.0f;
+				material.roughness = Clamp(1.0f - (m.shininess / 1000.0f), 0.0f, 1.0f);
 				material.specular_transmission = 0.0f;
+				material.metallic = m.metallic;
+				material.sheen = m.sheen;
+				material.clearcoat = m.clearcoat_thickness;
+				material.clearcoat_gloss = 1.0f - m.clearcoat_roughness;
+				material.anisotropy = m.anisotropy;
+
 				if (!m.diffuse_texname.empty()) 
 				{
 					if (!texture_ids.contains(m.diffuse_texname))
@@ -354,6 +363,28 @@ namespace amber
 					}
 					const Sint32 id = texture_ids[m.diffuse_texname];
 					material.diffuse_tex_id = id;
+				}
+				if (!m.normal_texname.empty())
+				{
+					if (!texture_ids.contains(m.normal_texname))
+					{
+						texture_ids[m.normal_texname] = obj_scene->textures.size();
+						std::string texture_path = obj_base_dir + "/" + m.normal_texname;
+						obj_scene->textures.emplace_back(texture_path.c_str(), false);
+					}
+					const Sint32 id = texture_ids[m.normal_texname];
+					material.normal_tex_id = id;
+				}
+				if (!m.emissive_texname.empty())
+				{
+					if (!texture_ids.contains(m.emissive_texname))
+					{
+						texture_ids[m.emissive_texname] = obj_scene->textures.size();
+						std::string texture_path = obj_base_dir + "/" + m.emissive_texname;
+						obj_scene->textures.emplace_back(texture_path.c_str(), false);
+					}
+					const Sint32 id = texture_ids[m.emissive_texname];
+					material.emissive_tex_id = id;
 				}
 				obj_scene->materials.push_back(material);
 			}
