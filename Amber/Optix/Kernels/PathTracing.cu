@@ -313,14 +313,12 @@ __global__ void RG_NAME(rg)()
 
 	radiance = radiance / params.sample_count;
 
-	float4 old_accum_color = params.accum[pixel.x + pixel.y * screen.x];
+	float4 old_accum_color = params.accum_buffer[pixel.x + pixel.y * screen.x];
 	if (params.frame_index > 0)
 	{
 		radiance += make_float3(old_accum_color.x, old_accum_color.y, old_accum_color.z);
 	}
-	params.accum[pixel.x + pixel.y * screen.x] = make_float4(radiance.x, radiance.y, radiance.z, 1.0f);
-	radiance /= (1 + params.frame_index);
-	params.output[pixel.x + pixel.y * screen.x] = MakeColor(radiance);
+	params.accum_buffer[pixel.x + pixel.y * screen.x] = make_float4(radiance.x, radiance.y, radiance.z, 1.0f);
 }
 
 extern "C" 

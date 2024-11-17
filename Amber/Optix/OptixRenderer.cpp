@@ -15,6 +15,8 @@
 #include "Utilities/ImageUtil.h"
 
 
+extern "C" void LaunchPostProcessKernel(uchar4* ldr_output, float4* hdr_input, int width, int height, int frame_index);
+
 namespace amber
 {
 	using namespace optix;
@@ -90,7 +92,7 @@ namespace amber
 
 
 	OptixRenderer::OptixRenderer(Uint32 width, Uint32 height, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(), 
-		framebuffer(height, width), device_memory(width * height), accum_memory(width * height), denoiser_output(width * height),
+		framebuffer(height, width), device_memory(width * height), accum_buffer(width * height), denoiser_output(width * height),
 		frame_index(0), scene(std::move(_scene))
 	{
 		OnResize(width, height);
@@ -362,8 +364,7 @@ namespace amber
 		params.cam_fovy = camera.GetFovY();
 		params.cam_aspect_ratio = camera.GetAspectRatio();
 
-		params.output = device_memory.As<uchar4>();
-		params.accum = accum_memory.As<float4>();
+		params.accum_buffer = accum_buffer.As<float4>();
 		params.traversable = tlas_handle;
 		params.sample_count = sample_count;
 		params.max_depth = depth_count;
@@ -385,10 +386,13 @@ namespace amber
 		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), sbt.Get(), width, height, 1));
 		CudaSyncCheck();
 
-		//if (denoising)
-		//{
-		//}
+		LaunchPostProcessKernel(device_memory.As<uchar4>(), accum_buffer.As<float4>(), width, height, frame_index);
+		CudaSyncCheck();
 
+		//if (frame_index == target_accumulation && denoising)
+		//{
+		//	//denoise
+		//}
 		cudaMemcpy(framebuffer, device_memory, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
 		CudaSyncCheck();
 
@@ -400,11 +404,11 @@ namespace amber
 		framebuffer.Resize(h, w);
 
 		device_memory.Realloc(w * h);
-		accum_memory.Realloc(w * h);
+		accum_buffer.Realloc(w * h);
 		denoiser_output.Realloc(w * h);
 		cudaMemset(device_memory, 0, device_memory.GetSize());
-		cudaMemset(accum_memory, 0, accum_memory.GetSize());
-		cudaMemset(denoiser_output, 0, accum_memory.GetSize());
+		cudaMemset(accum_buffer, 0, accum_buffer.GetSize());
+		cudaMemset(denoiser_output, 0, accum_buffer.GetSize());
 
 #if 0
 		OptixDenoiserSizes optix_denoiser_sizes{};
