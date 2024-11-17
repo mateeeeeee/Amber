@@ -183,7 +183,7 @@ namespace amber
 
 	void Editor::OnKeyPressed(KeyCode keycode)
 	{
-		if (keycode == KeyCode::I)
+		if (scene_focused && keycode == KeyCode::I)
 		{
 			gui_enabled = !gui_enabled;
 			g_Input.SetMouseVisibility(gui_enabled);
@@ -252,6 +252,8 @@ namespace amber
 					visibility_flags[Visibility_Console] = !visibility_flags[Visibility_Console];
 				if (ImGui::MenuItem(ICON_FA_GEAR" Options", 0, visibility_flags[Visibility_Options]))
 					visibility_flags[Visibility_Options] = !visibility_flags[Visibility_Options];
+				if (ImGui::MenuItem(ICON_FA_BUG" Debug", 0, visibility_flags[Visibility_Debug]))
+					visibility_flags[Visibility_Debug] = !visibility_flags[Visibility_Debug];
 				if (ImGui::MenuItem(ICON_FA_CLOCK" Stats", 0, visibility_flags[Visibility_Stats]))
 					visibility_flags[Visibility_Stats] = !visibility_flags[Visibility_Stats];
 				if (ImGui::MenuItem(ICON_FA_CAMERA" Camera", 0, visibility_flags[Visibility_Camera]))
@@ -287,18 +289,21 @@ namespace amber
 	void Editor::LogWindow()
 	{
 		if (!visibility_flags[Visibility_Log]) return;
+
 		if(editor_sink) editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Log]);
 	}
 
 	void Editor::ConsoleWindow()
 	{
 		if (!visibility_flags[Visibility_Console]) return;
+
 		editor_console->Draw(ICON_FA_TERMINAL" Console ", &visibility_flags[Visibility_Console]);
 	}
 
 	void Editor::StatsWindow()
 	{
 		if (!visibility_flags[Visibility_Stats]) return;
+
 		ImGui::Begin(ICON_FA_CLOCK" Stats");
 		{
 			ImGuiIO& io = ImGui::GetIO();
@@ -313,6 +318,7 @@ namespace amber
 	void Editor::OptionsWindow()
 	{
 		if (!visibility_flags[Visibility_Options]) return;
+
 		ImGui::Begin(ICON_FA_GEAR" Options");
 		{
 			renderer.OptionsGUI();
@@ -331,9 +337,30 @@ namespace amber
 		ImGui::End();
 	}
 
+	void Editor::DebugWindow()
+	{
+		if (!visibility_flags[Visibility_Debug]) return;
+
+		ImGui::Begin(ICON_FA_BUG" Debug");
+		{
+			if (ImGui::TreeNode("Debug Options"))
+			{
+				static Char ss_name[32] = {};
+				ImGui::InputText("Name", ss_name, sizeof(ss_name) - 1);
+				if (ImGui::Button("Take Screenshot"))
+				{
+					renderer.WriteFramebuffer(ss_name);
+				}
+				ImGui::TreePop();
+			}
+		}
+		ImGui::End();
+	}
+
 	void Editor::CameraWindow()
 	{
 		if (!visibility_flags[Visibility_Camera]) return;
+
 		ImGui::Begin(ICON_FA_CAMERA" Camera");
 		{
 			Vector3 camera_eye = camera.GetPosition();
@@ -349,6 +376,7 @@ namespace amber
 	void Editor::LightsWindow()
 	{
 		if (!visibility_flags[Visibility_Lights]) return;
+
 		ImGui::Begin(ICON_FA_LIGHTBULB " Lights");
 		{
 			renderer.LightsGUI();

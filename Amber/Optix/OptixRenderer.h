@@ -80,15 +80,15 @@ namespace amber
 
 		Bool denoising = false;
 		Sint32 denoising_accumulation_target;
-		//allocate this stuff only when denoising is enabled
 		std::unique_ptr<optix::Buffer> denoiser_state_buffer;
 		std::unique_ptr<optix::Buffer> denoiser_scratch_buffer;
-
-		OptixImage2D input_image;
-		OptixImage2D output_image;
 		optix::TBuffer<float3> denoiser_output;
-		optix::TBuffer<float3> albedo_input;
-		optix::TBuffer<float3> normal_input;
+		optix::TBuffer<float3> denoiser_albedo;
+		optix::TBuffer<float3> denoiser_normals;
+		OptixImage2D input_image;
+		OptixImage2D input_albedo;
+		OptixImage2D input_normals;
+		OptixImage2D output_image;
 
 		Uint32 frame_index;
 		Sint32 depth_count;

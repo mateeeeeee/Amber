@@ -5,18 +5,26 @@
 
 Simple path tracer using Optix API. Early work in progress. 
 
+Some of the current features include:
+	- Disney BRDF
+	- OptiX Denoiser
+	- Supported scene formats: OBJ, GLTF (todo PBRT)
+
 ## Screenshots
 ![](Amber/Saved/Screenshots/sanmiguel.png "San Miguel") 
 ![](Amber/Saved/Screenshots/sanmiguel2.png "San Miguel") 
 ![](Amber/Saved/Screenshots/sanmiguel3.png "San Miguel") 
 ![](Amber/Saved/Screenshots/sponza.png "Sponza") 
 ![](Amber/Saved/Screenshots/toyshop.png "Toy Shop") 
-![](Amber/Saved/Screenshots/bain.png "Salle de Bain") 
+
+| Noisy scene |  Denoised scene |
+|---|---|
+|  ![](Amber/Saved/Screenshots/noisy.png) | ![](Amber/Saved/Screenshots/denoised.png) |
 
 ## Building
 ### Prerequisites
 * CUDA
-* Optix
+* Optix 8.0
 * CMake
 
 With the prerequisites installed, you just have to run the CMake:

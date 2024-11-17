@@ -14,7 +14,6 @@
 #include "Utilities/Random.h"
 #include "Utilities/ImageUtil.h"
 
-
 extern "C" void LaunchGammaCorrectionKernel(float3* ldr_output, float3* hdr_input, int width, int height, int frame_index);
 extern "C" void LaunchConvertLDRBufferKernel(uchar4* ldr_output, float3* hdr_input, int width, int height);
 
@@ -78,8 +77,8 @@ namespace amber
 #endif
 
 		OptixDenoiserOptions optix_denoiser_options{};
-		optix_denoiser_options.guideAlbedo = 0;
-		optix_denoiser_options.guideNormal = 0;
+		optix_denoiser_options.guideAlbedo = 1;
+		optix_denoiser_options.guideNormal = 1;
 		optix_denoiser_options.denoiseAlpha = OPTIX_DENOISER_ALPHA_MODE_COPY;
 		OptixCheck(optixDenoiserCreate(optix_context, OPTIX_DENOISER_MODEL_KIND_LDR, &optix_denoiser_options, &optix_denoiser));
 	}
@@ -377,6 +376,8 @@ namespace amber
 		params.meshes = mesh_list_buffer->GetDevicePtr();
 		params.lights = light_list_buffer->GetDevicePtr();
 		params.light_count = light_list_buffer->GetSize() / sizeof(LightGPU);
+		params.denoiser_albedo = denoiser_albedo.GetDevicePtr();
+		params.denoiser_normals = denoiser_normals.GetDevicePtr();
 		params.sky = sky_texture->GetHandle();
 
 		TBuffer<LaunchParams> gpu_params{};
@@ -385,7 +386,6 @@ namespace amber
 		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), sbt.Get(), width, height, 1));
 		CudaSyncCheck();
 
-		//I could use hdr denoiser if I convert accum buffer to radiance buffer (using the ldr buffer, not creating a new one)?
 		LaunchGammaCorrectionKernel(ldr_buffer, accum_buffer, width, height, frame_index);
 		CudaSyncCheck();
 
@@ -396,8 +396,8 @@ namespace amber
 			denoiser_layer.input = input_image;
 			denoiser_layer.output = output_image;
 		
-			//guide_layer.albedo = empty_image;  // No albedo
-			//guide_layer.normal = empty_image;  // No normal
+			guide_layer.albedo = input_albedo;  
+			guide_layer.normal = input_normals; 
 		
 			OptixDenoiserParams denoiser_params{};
 			denoiser_params.blendFactor = 0.0f;
@@ -562,28 +562,35 @@ namespace amber
 				denoiser_state_buffer->GetDevicePtr(), denoiser_state_buffer->GetSize(),
 				denoiser_scratch_buffer->GetDevicePtr(), denoiser_scratch_buffer->GetSize()));
 
-			input_image.width = width;
-			input_image.height = height;
-			input_image.format = OPTIX_PIXEL_FORMAT_FLOAT3;
-			input_image.pixelStrideInBytes = sizeof(float3);
-			input_image.rowStrideInBytes = width * sizeof(float3);
-			input_image.data = ldr_buffer.GetDevicePtr();
+			auto FillDenoiserImageData = [this](OptixImage2D& image_data, TBuffer<float3> const& buffer) 
+			{
+					image_data.width = width;
+					image_data.height = height;
+					image_data.format = OPTIX_PIXEL_FORMAT_FLOAT3;
+					image_data.pixelStrideInBytes = sizeof(float3);
+					image_data.rowStrideInBytes = width * sizeof(float3);
+					image_data.data = buffer.GetDevicePtr();
+			};
 
 			denoiser_output.Realloc(width * height);
+			denoiser_albedo.Realloc(width * height);
+			denoiser_normals.Realloc(width * height);
 			cudaMemset(denoiser_output, 0, denoiser_output.GetSize());
+			cudaMemset(denoiser_albedo, 0, denoiser_albedo.GetSize());
+			cudaMemset(denoiser_normals, 0, denoiser_normals.GetSize());
 
-			output_image.width = width;
-			output_image.height = height;
-			output_image.format = OPTIX_PIXEL_FORMAT_FLOAT3;
-			output_image.pixelStrideInBytes = sizeof(float3);
-			output_image.rowStrideInBytes = width * sizeof(float3);
-			output_image.data = denoiser_output.GetDevicePtr();
+			FillDenoiserImageData(input_image, ldr_buffer);
+			FillDenoiserImageData(output_image, denoiser_output);
+			FillDenoiserImageData(input_normals, denoiser_normals);
+			FillDenoiserImageData(input_albedo, denoiser_albedo);
 		}
 		else
 		{
 			denoiser_state_buffer.reset(nullptr);
 			denoiser_scratch_buffer.reset(nullptr);
 			denoiser_output.Realloc(0);
+			denoiser_albedo.Realloc(0);
+			denoiser_normals.Realloc(0);
 		}
 	}
 }

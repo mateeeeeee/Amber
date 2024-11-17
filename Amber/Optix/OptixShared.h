@@ -87,6 +87,9 @@ namespace amber
 		MaterialGPU*			materials;
 		MeshGPU*				meshes;
 		LightGPU*				lights;
+
+		float3*					denoiser_albedo;
+		float3*					denoiser_normals;
 #else
 		CUdeviceptr				vertices;
 		CUdeviceptr				normals;
@@ -96,6 +99,8 @@ namespace amber
 		CUdeviceptr				materials;
 		CUdeviceptr				meshes;
 		CUdeviceptr				lights;
+		CUdeviceptr				denoiser_albedo;
+		CUdeviceptr				denoiser_normals;
 #endif
 		Uint32					light_count;
 		cudaTextureObject_t		sky;
