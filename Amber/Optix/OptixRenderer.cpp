@@ -15,7 +15,8 @@
 #include "Utilities/ImageUtil.h"
 
 
-extern "C" void LaunchPostProcessKernel(uchar4* ldr_output, float4* hdr_input, int width, int height, int frame_index);
+extern "C" void LaunchGammaCorrectionKernel(float3* ldr_output, float3* hdr_input, int width, int height, int frame_index);
+extern "C" void LaunchConvertLDRBufferKernel(uchar4* ldr_output, float3* hdr_input, int width, int height);
 
 namespace amber
 {
@@ -77,10 +78,10 @@ namespace amber
 #endif
 
 		OptixDenoiserOptions optix_denoiser_options{};
-		optix_denoiser_options.guideAlbedo = 1;
-		optix_denoiser_options.guideNormal = 1;
+		optix_denoiser_options.guideAlbedo = 0;
+		optix_denoiser_options.guideNormal = 0;
 		optix_denoiser_options.denoiseAlpha = OPTIX_DENOISER_ALPHA_MODE_COPY;
-		OptixCheck(optixDenoiserCreate(optix_context, OPTIX_DENOISER_MODEL_KIND_HDR, &optix_denoiser_options, &optix_denoiser));
+		OptixCheck(optixDenoiserCreate(optix_context, OPTIX_DENOISER_MODEL_KIND_LDR, &optix_denoiser_options, &optix_denoiser));
 	}
 
 	OptixInitializer::~OptixInitializer()
@@ -92,7 +93,8 @@ namespace amber
 
 
 	OptixRenderer::OptixRenderer(Uint32 width, Uint32 height, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(), 
-		framebuffer(height, width), device_memory(width * height), accum_buffer(width * height), denoiser_output(width * height),
+		framebuffer(height, width), ldr_buffer(width * height), uchar4_ldr_buffer(width* height),
+		accum_buffer(width * height), denoiser_output(width * height),
 		frame_index(0), scene(std::move(_scene))
 	{
 		OnResize(width, height);
@@ -364,7 +366,7 @@ namespace amber
 		params.cam_fovy = camera.GetFovY();
 		params.cam_aspect_ratio = camera.GetAspectRatio();
 
-		params.accum_buffer = accum_buffer.As<float4>();
+		params.accum_buffer = accum_buffer.As<float3>();
 		params.traversable = tlas_handle;
 		params.sample_count = sample_count;
 		params.max_depth = depth_count;
@@ -386,14 +388,45 @@ namespace amber
 		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), sbt.Get(), width, height, 1));
 		CudaSyncCheck();
 
-		LaunchPostProcessKernel(device_memory.As<uchar4>(), accum_buffer.As<float4>(), width, height, frame_index);
+		//I could convert accum buffer to hdr radiance buffer and just reuse the same buffer as ldr_buffer?
+		LaunchGammaCorrectionKernel(ldr_buffer, accum_buffer, width, height, frame_index);
 		CudaSyncCheck();
 
-		//if (frame_index == target_accumulation && denoising)
-		//{
-		//	//denoise
-		//}
-		cudaMemcpy(framebuffer, device_memory, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
+		if (denoising)
+		{
+			OptixDenoiserLayer denoiser_layer{};
+			OptixDenoiserGuideLayer guide_layer{};
+		
+			denoiser_layer.input = input_image;  // Set this later during denoising invoke
+			denoiser_layer.output = output_image;
+		
+			//guide_layer.albedo = empty_image;  // No albedo
+			//guide_layer.normal = empty_image;  // No normal
+		
+			OptixDenoiserParams denoiser_params{};
+			denoiser_params.blendFactor = 0.0f;
+			denoiser_params.temporalModeUsePreviousLayers = 0;
+		
+			OptixCheck(optixDenoiserInvoke(optix_denoiser, 0, &denoiser_params,
+				denoiser_state_buffer->GetDevicePtr(), denoiser_state_buffer->GetSize(),
+				&guide_layer, &denoiser_layer, 1, 0, 0,
+				denoiser_scratch_buffer->GetDevicePtr(),
+				denoiser_scratch_buffer->GetSize()));
+			CudaSyncCheck();
+		
+			cudaMemcpy(framebuffer, denoiser_output, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
+			CudaSyncCheck();
+
+			LaunchConvertLDRBufferKernel(uchar4_ldr_buffer, denoiser_output, width, height);
+			CudaSyncCheck();
+		}
+		else
+		{
+			LaunchConvertLDRBufferKernel(uchar4_ldr_buffer, ldr_buffer, width, height);
+			CudaSyncCheck();
+		}
+
+		cudaMemcpy(framebuffer, uchar4_ldr_buffer, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
 		CudaSyncCheck();
 
 		++frame_index;
@@ -403,16 +436,15 @@ namespace amber
 	{
 		framebuffer.Resize(h, w);
 
-		device_memory.Realloc(w * h);
+		ldr_buffer.Realloc(w * h);
 		accum_buffer.Realloc(w * h);
 		denoiser_output.Realloc(w * h);
-		cudaMemset(device_memory, 0, device_memory.GetSize());
+		cudaMemset(ldr_buffer, 0, ldr_buffer.GetSize());
 		cudaMemset(accum_buffer, 0, accum_buffer.GetSize());
 		cudaMemset(denoiser_output, 0, accum_buffer.GetSize());
 
-#if 0
 		OptixDenoiserSizes optix_denoiser_sizes{};
-		//max width and max height here
+		//max width and max height here, #todo maybe create these stuff only when denoising is used
 		OptixCheck(optixDenoiserComputeMemoryResources(optix_denoiser, w, h, &optix_denoiser_sizes));
 		denoiser_state_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.stateSizeInBytes);
 		denoiser_scratch_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.withOverlapScratchSizeInBytes);
@@ -423,18 +455,17 @@ namespace amber
 
 		input_image.width = w;
 		input_image.height = h;
-		input_image.format = OPTIX_PIXEL_FORMAT_FLOAT4;
-		input_image.pixelStrideInBytes = sizeof(float4);
-		input_image.rowStrideInBytes = w * sizeof(float4);
-		input_image.data = accum_memory.GetDevicePtr();
+		input_image.format = OPTIX_PIXEL_FORMAT_FLOAT3;
+		input_image.pixelStrideInBytes = sizeof(float3);
+		input_image.rowStrideInBytes = w * sizeof(float3);
+		input_image.data = ldr_buffer.GetDevicePtr();
 
 		output_image.width = w;
 		output_image.height = h;
-		output_image.format = OPTIX_PIXEL_FORMAT_FLOAT4;
-		output_image.pixelStrideInBytes = sizeof(float4);
-		output_image.rowStrideInBytes = w * sizeof(float4);
+		output_image.format = OPTIX_PIXEL_FORMAT_FLOAT3;
+		output_image.pixelStrideInBytes = sizeof(float3);
+		output_image.rowStrideInBytes = w * sizeof(float3);
 		output_image.data = denoiser_output.GetDevicePtr();
-#endif
 	}
 
 	void OptixRenderer::WriteFramebuffer(Char const* outfile)
@@ -518,6 +549,27 @@ namespace amber
 				frame_index = 0;
 				light_list_buffer = CreateBuffer(lights);
 			}
+			ImGui::TreePop();
+		}
+	}
+
+	void OptixRenderer::MemoryUsageGUI()
+	{
+		if (ImGui::TreeNode("GPU Memory Usage"))
+		{
+			size_t free_bytes;
+			size_t total_bytes;
+			CudaCheck(cudaMemGetInfo(&free_bytes, &total_bytes));
+			Float free_db = (Float)free_bytes;
+			Float total_db = (Float)total_bytes;
+			Float used_db = total_db - free_db;
+			Float used_mb = used_db / 1024.0f / 1024.0f;
+			Float free_mb = free_db / 1024.0f / 1024.0f;
+			Float total_mb = total_db / 1024.0f / 1024.0f;
+
+			ImGui::Text("  Used Memory: %f MB", used_mb);
+			ImGui::Text("  Free Memory: %f MB", free_mb);
+			ImGui::Text("  Total Memory: %f MB", total_mb); 
 			ImGui::TreePop();
 		}
 	}

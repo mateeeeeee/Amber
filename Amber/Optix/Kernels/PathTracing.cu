@@ -16,15 +16,21 @@ extern "C"
 	__constant__ LaunchParams params;
 }
 
-__device__ inline Uint32 PackPointer0(void* ptr) 
+__forceinline__ __device__ Uint32 PackPointer0(void* ptr)
 {
 	Uintptr uptr = reinterpret_cast<Uintptr>(ptr);
 	return static_cast<Uint32>(uptr >> 32);
 }
-__device__ inline Uint32 PackPointer1(void* ptr) 
+__forceinline__ __device__ Uint32 PackPointer1(void* ptr)
 {
 	Uintptr uptr = reinterpret_cast<Uintptr>(ptr);
 	return static_cast<Uint32>(uptr);
+}
+
+template<typename T>
+__forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
+{
+	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
 }
 
 template <typename T>
@@ -313,12 +319,12 @@ __global__ void RG_NAME(rg)()
 
 	radiance = radiance / params.sample_count;
 
-	float4 old_accum_color = params.accum_buffer[pixel.x + pixel.y * screen.x];
+	float3 old_accum_color = params.accum_buffer[pixel.x + pixel.y * screen.x];
 	if (params.frame_index > 0)
 	{
-		radiance += make_float3(old_accum_color.x, old_accum_color.y, old_accum_color.z);
+		radiance += old_accum_color;
 	}
-	params.accum_buffer[pixel.x + pixel.y * screen.x] = make_float4(radiance.x, radiance.y, radiance.z, 1.0f);
+	params.accum_buffer[pixel.x + pixel.y * screen.x] = radiance;
 }
 
 extern "C" 

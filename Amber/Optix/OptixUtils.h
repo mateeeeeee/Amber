@@ -248,6 +248,12 @@ namespace amber::optix
 	class Texture2D : public ITexture
 	{
 	public:
+		template<typename FormatT>
+		Texture2D(Uint32 w, Uint32 h, Bool srgb)
+			: Texture2D(w, h, cudaCreateChannelDesc<FormatT>(), srgb)
+		{
+		}
+
 		Texture2D(Uint32 w, Uint32 h, cudaChannelFormatDesc format, Bool srgb);
 		AMBER_NONCOPYABLE_NONMOVABLE(Texture2D)
 		~Texture2D();
