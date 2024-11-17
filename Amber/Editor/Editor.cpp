@@ -274,6 +274,7 @@ namespace amber
 		ConsoleWindow();
 		StatsWindow();
 		OptionsWindow();
+		DebugWindow();
 		CameraWindow();
 		LightsWindow();
 	}

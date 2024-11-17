@@ -16,7 +16,11 @@ Some of the current features include:
 ![](Amber/Saved/Screenshots/sanmiguel3.png "San Miguel") 
 ![](Amber/Saved/Screenshots/sponza.png "Sponza") 
 ![](Amber/Saved/Screenshots/toyshop.png "Toy Shop") 
-![](Amber/Saved/Screenshots/denoised.png "Salle de Bain") 
+![](Amber/Saved/Screenshots/bain.png "Salle de Bain") 
+
+| Denoising disabled |  Denoising enabled |
+|---|---|
+|  ![](Amber/Saved/Screenshots/noisy_sponza.png) | ![](Amber/Saved/Screenshots/denoised_sponza.png) |
 
 ## Building
 ### Prerequisites

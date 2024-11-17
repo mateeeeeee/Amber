@@ -90,6 +90,7 @@ namespace amber
 		OptixImage2D input_normals;
 		OptixImage2D output_image;
 
+		Bool   accumulate = true;
 		Uint32 frame_index;
 		Sint32 depth_count;
 		Sint32 sample_count;
