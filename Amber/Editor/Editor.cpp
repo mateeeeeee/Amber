@@ -322,17 +322,6 @@ namespace amber
 		ImGui::Begin(ICON_FA_GEAR" Options");
 		{
 			renderer.OptionsGUI();
-
-			if (ImGui::TreeNode("Debug Options"))
-			{
-				static Char ss_name[32 + 1] = {};
-				ImGui::InputText("Name", ss_name, sizeof(ss_name) - 1);
-				if (ImGui::Button("Take Screenshot"))
-				{
-					renderer.WriteFramebuffer(ss_name);
-				}
-				ImGui::TreePop();
-			}
 		}
 		ImGui::End();
 	}
