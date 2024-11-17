@@ -52,6 +52,8 @@ namespace amber
 		}
 
 	private:
+		Uint32 width;
+		Uint32 height;
 		std::unique_ptr<Scene>		scene;
 		optix::TBuffer<float3>		accum_buffer;
 		optix::TBuffer<float3>		ldr_buffer;
@@ -91,5 +93,8 @@ namespace amber
 		Uint32 frame_index;
 		Sint32 depth_count;
 		Sint32 sample_count;
+
+	private:
+		void ManageDenoiserResources();
 	};
 }

@@ -93,9 +93,9 @@ namespace amber
 
 
 	OptixRenderer::OptixRenderer(Uint32 width, Uint32 height, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(), 
-		framebuffer(height, width), ldr_buffer(width * height), uchar4_ldr_buffer(width* height),
-		accum_buffer(width * height), denoiser_output(width * height),
-		frame_index(0), scene(std::move(_scene))
+		width(width), height(height), scene(std::move(_scene)), framebuffer(height, width), 
+		ldr_buffer(width * height), uchar4_ldr_buffer(width * height), accum_buffer(width * height),
+		frame_index(0), denoising_accumulation_target(12)
 	{
 		OnResize(width, height);
 
@@ -346,9 +346,6 @@ namespace amber
 
 	void OptixRenderer::Render(Camera const& camera)
 	{
-		Uint64 const width = framebuffer.Cols();
-		Uint64 const height = framebuffer.Rows();
-
 		LaunchParams params{};
 
 		if (camera.IsChanged())
@@ -388,16 +385,15 @@ namespace amber
 		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), sbt.Get(), width, height, 1));
 		CudaSyncCheck();
 
-		//I could convert accum buffer to hdr radiance buffer and just reuse the same buffer as ldr_buffer?
+		//I could use hdr denoiser if I convert accum buffer to radiance buffer (using the ldr buffer, not creating a new one)?
 		LaunchGammaCorrectionKernel(ldr_buffer, accum_buffer, width, height, frame_index);
 		CudaSyncCheck();
 
-		if (denoising)
+		if (denoising && frame_index >= denoising_accumulation_target)
 		{
 			OptixDenoiserLayer denoiser_layer{};
 			OptixDenoiserGuideLayer guide_layer{};
-		
-			denoiser_layer.input = input_image;  // Set this later during denoising invoke
+			denoiser_layer.input = input_image;
 			denoiser_layer.output = output_image;
 		
 			//guide_layer.albedo = empty_image;  // No albedo
@@ -412,9 +408,6 @@ namespace amber
 				&guide_layer, &denoiser_layer, 1, 0, 0,
 				denoiser_scratch_buffer->GetDevicePtr(),
 				denoiser_scratch_buffer->GetSize()));
-			CudaSyncCheck();
-		
-			cudaMemcpy(framebuffer, denoiser_output, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
 			CudaSyncCheck();
 
 			LaunchConvertLDRBufferKernel(uchar4_ldr_buffer, denoiser_output, width, height);
@@ -434,38 +427,16 @@ namespace amber
 
 	void OptixRenderer::OnResize(Uint32 w, Uint32 h)
 	{
+		width = w, height = h;
 		framebuffer.Resize(h, w);
 
-		ldr_buffer.Realloc(w * h);
 		accum_buffer.Realloc(w * h);
-		denoiser_output.Realloc(w * h);
-		cudaMemset(ldr_buffer, 0, ldr_buffer.GetSize());
+		ldr_buffer.Realloc(w * h);
+		uchar4_ldr_buffer.Realloc(w * h);
 		cudaMemset(accum_buffer, 0, accum_buffer.GetSize());
-		cudaMemset(denoiser_output, 0, accum_buffer.GetSize());
-
-		OptixDenoiserSizes optix_denoiser_sizes{};
-		//max width and max height here, #todo maybe create these stuff only when denoising is used
-		OptixCheck(optixDenoiserComputeMemoryResources(optix_denoiser, w, h, &optix_denoiser_sizes));
-		denoiser_state_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.stateSizeInBytes);
-		denoiser_scratch_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.withOverlapScratchSizeInBytes);
-
-		OptixCheck(optixDenoiserSetup(optix_denoiser, 0, w, h, 
-					denoiser_state_buffer->GetDevicePtr(), denoiser_state_buffer->GetSize(),
-					denoiser_scratch_buffer->GetDevicePtr(), denoiser_scratch_buffer->GetSize()));
-
-		input_image.width = w;
-		input_image.height = h;
-		input_image.format = OPTIX_PIXEL_FORMAT_FLOAT3;
-		input_image.pixelStrideInBytes = sizeof(float3);
-		input_image.rowStrideInBytes = w * sizeof(float3);
-		input_image.data = ldr_buffer.GetDevicePtr();
-
-		output_image.width = w;
-		output_image.height = h;
-		output_image.format = OPTIX_PIXEL_FORMAT_FLOAT3;
-		output_image.pixelStrideInBytes = sizeof(float3);
-		output_image.rowStrideInBytes = w * sizeof(float3);
-		output_image.data = denoiser_output.GetDevicePtr();
+		cudaMemset(ldr_buffer, 0, ldr_buffer.GetSize());
+		cudaMemset(uchar4_ldr_buffer, 0, ldr_buffer.GetSize());
+		ManageDenoiserResources();
 	}
 
 	void OptixRenderer::WriteFramebuffer(Char const* outfile)
@@ -480,7 +451,11 @@ namespace amber
 		{
 			ImGui::SliderInt("Samples", &sample_count, 1, 8);
 			ImGui::SliderInt("Max Depth", &depth_count, 1, MAX_DEPTH);
-			ImGui::Checkbox("Denoiser", &denoising);
+			if (ImGui::Checkbox("Use Denoiser", &denoising))
+			{
+				ManageDenoiserResources();
+			}
+			ImGui::SliderInt("Denoiser Accumulation Target", &denoising_accumulation_target, 1, 32);
 
 			ImGui::TreePop();
 		}
@@ -574,5 +549,42 @@ namespace amber
 		}
 	}
 
+	void OptixRenderer::ManageDenoiserResources()
+	{
+		if (denoising)
+		{
+			OptixDenoiserSizes optix_denoiser_sizes{};
+			OptixCheck(optixDenoiserComputeMemoryResources(optix_denoiser, width, height, &optix_denoiser_sizes));
+			denoiser_state_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.stateSizeInBytes);
+			denoiser_scratch_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.withOverlapScratchSizeInBytes);
+
+			OptixCheck(optixDenoiserSetup(optix_denoiser, 0, width, height,
+				denoiser_state_buffer->GetDevicePtr(), denoiser_state_buffer->GetSize(),
+				denoiser_scratch_buffer->GetDevicePtr(), denoiser_scratch_buffer->GetSize()));
+
+			input_image.width = width;
+			input_image.height = height;
+			input_image.format = OPTIX_PIXEL_FORMAT_FLOAT3;
+			input_image.pixelStrideInBytes = sizeof(float3);
+			input_image.rowStrideInBytes = width * sizeof(float3);
+			input_image.data = ldr_buffer.GetDevicePtr();
+
+			denoiser_output.Realloc(width * height);
+			cudaMemset(denoiser_output, 0, denoiser_output.GetSize());
+
+			output_image.width = width;
+			output_image.height = height;
+			output_image.format = OPTIX_PIXEL_FORMAT_FLOAT3;
+			output_image.pixelStrideInBytes = sizeof(float3);
+			output_image.rowStrideInBytes = width * sizeof(float3);
+			output_image.data = denoiser_output.GetDevicePtr();
+		}
+		else
+		{
+			denoiser_state_buffer.reset(nullptr);
+			denoiser_scratch_buffer.reset(nullptr);
+			denoiser_output.Realloc(0);
+		}
+	}
 }
 
