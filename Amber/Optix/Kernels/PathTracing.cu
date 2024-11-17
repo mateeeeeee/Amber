@@ -228,6 +228,24 @@ __device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_pa
 	return radiance;
 }
 
+__device__ void WriteToDenoiserBuffers(Uint32 idx, float3 const& albedo, float3 const& normal)
+{
+	if (params.denoiser_albedo != NULL)
+	{
+		params.denoiser_albedo[idx] = albedo;
+	}
+
+	if (params.denoiser_normals != NULL)
+	{
+		float3 view_normal;
+		view_normal.x = dot(normal,  params.cam_u);
+		view_normal.y = dot(normal,  params.cam_v);
+		view_normal.z = dot(normal, -params.cam_w);
+		params.denoiser_normals[idx] = view_normal;
+	}
+}
+
+
 extern "C" 
 __global__ void RG_NAME(rg)()
 {
@@ -236,12 +254,13 @@ __global__ void RG_NAME(rg)()
 	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
 	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
 	Uint32 samples = params.sample_count;
+	Uint32 idx = pixel.x + pixel.y * screen.x;
 
 	float3 radiance = make_float3(0.0f);
 	float3 throughput = make_float3(1.0f);
 	do
 	{
-		Uint32 seed = tea<4>(pixel.y * screen.x + pixel.x, samples + params.frame_index);
+		Uint32 seed = tea<4>(idx, samples + params.frame_index);
 		float3 ray_origin = eye;
 		float3 ray_direction = GetRayDirection(pixel, screen, seed);
 
@@ -265,6 +284,11 @@ __global__ void RG_NAME(rg)()
 				}
 
 				radiance += env_map_color * throughput;
+
+				if (depth == 0)
+				{
+					WriteToDenoiserBuffers(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f));
+				}
 				break;
 			}
 
@@ -277,7 +301,7 @@ __global__ void RG_NAME(rg)()
 			float3 w_o = -ray_direction;
 			float3 v_x, v_y;
 			float3 v_z = hit_record.N;
-			if (material.specular_transmission == 0.0f && dot(w_o, v_z) < 0.0)
+			if (material.specular_transmission == 0.0f && dot(w_o, v_z) < 0.0f)
 			{
 				v_z = -v_z;
 			}
@@ -286,12 +310,17 @@ __global__ void RG_NAME(rg)()
 			v_x = ort.tangent;
 			v_y = ort.binormal;
 
-			if (length(material.normal - make_float3(0.0f, 0.0f, 1.0f)) > 1e-4)
+			if (length(material.normal - make_float3(0.0f, 0.0f, 1.0f)) > 1e-4f)
 			{
 				v_z = ApplyNormalMap(material.normal, v_x, v_y, v_z);
 				ort = OrthonormalBasis(v_z);
 				v_x = ort.tangent;
 				v_y = ort.binormal;
+			}
+
+			if (depth == 0)
+			{
+				WriteToDenoiserBuffers(idx, material.base_color, v_z);
 			}
 
 			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, seed) * throughput;
@@ -319,12 +348,12 @@ __global__ void RG_NAME(rg)()
 
 	radiance = radiance / params.sample_count;
 
-	float3 old_accum_color = params.accum_buffer[pixel.x + pixel.y * screen.x];
+	float3 old_accum_color = params.accum_buffer[idx];
 	if (params.frame_index > 0)
 	{
 		radiance += old_accum_color;
 	}
-	params.accum_buffer[pixel.x + pixel.y * screen.x] = radiance;
+	params.accum_buffer[idx] = radiance;
 }
 
 extern "C" 
