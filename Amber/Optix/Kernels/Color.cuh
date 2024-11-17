@@ -23,16 +23,10 @@ __device__ __forceinline__ unsigned char QuantizeUnsigned8Bits(float x)
 	static constexpr unsigned int Np1 = (1 << 8);
 	return (unsigned char)min((unsigned int)(x * (float)Np1), (unsigned int)N);
 }
-__device__ __forceinline__ uchar4 MakeColor(float3 const& c)
+__device__ __forceinline__ uchar4 MakeUChar4(float3 const& srgb)
 {
-	float3 srgb = ToSRGB(c);
 	return make_uchar4(QuantizeUnsigned8Bits(srgb.x), QuantizeUnsigned8Bits(srgb.y), QuantizeUnsigned8Bits(srgb.z), 255u);
 }
 
-template<typename T>
-__forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
-{
-	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
-}
 
 #endif

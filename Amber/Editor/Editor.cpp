@@ -304,6 +304,8 @@ namespace amber
 			ImGuiIO& io = ImGui::GetIO();
 			ImGui::Text("FPS: %.1f ms", io.Framerate);
 			ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
+
+			renderer.MemoryUsageGUI();
 		}
 		ImGui::End();
 	}

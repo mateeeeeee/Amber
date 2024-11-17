@@ -39,6 +39,7 @@ namespace amber
 
 		void OptionsGUI();
 		void LightsGUI();
+		void MemoryUsageGUI();
 
 		void SetDepthCount(Uint32 depth)
 		{
@@ -52,9 +53,10 @@ namespace amber
 
 	private:
 		std::unique_ptr<Scene>		scene;
+		optix::TBuffer<float3>		accum_buffer;
+		optix::TBuffer<float3>		ldr_buffer;
+		optix::TBuffer<uchar4>		uchar4_ldr_buffer;
 		CpuBuffer2D<uchar4>			framebuffer;
-		optix::TBuffer<uchar4>		device_memory;
-		optix::TBuffer<float4>		accum_buffer;
 
 		std::unique_ptr<optix::Pipeline> pipeline;
 		optix::ShaderBindingTable sbt;
@@ -75,12 +77,16 @@ namespace amber
 		std::vector<LightGPU> lights;
 
 		Bool denoising = false;
+		Sint32 denoising_accumulation_target;
+		//allocate this stuff only when denoising is enabled
 		std::unique_ptr<optix::Buffer> denoiser_state_buffer;
 		std::unique_ptr<optix::Buffer> denoiser_scratch_buffer;
 
 		OptixImage2D input_image;
 		OptixImage2D output_image;
-		optix::TBuffer<float4> denoiser_output;
+		optix::TBuffer<float3> denoiser_output;
+		optix::TBuffer<float3> albedo_input;
+		optix::TBuffer<float3> normal_input;
 
 		Uint32 frame_index;
 		Sint32 depth_count;
