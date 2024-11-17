@@ -54,7 +54,7 @@ namespace amber
 		std::unique_ptr<Scene>		scene;
 		CpuBuffer2D<uchar4>			framebuffer;
 		optix::TBuffer<uchar4>		device_memory;
-		optix::TBuffer<float4>		accum_memory;
+		optix::TBuffer<float4>		accum_buffer;
 
 		std::unique_ptr<optix::Pipeline> pipeline;
 		optix::ShaderBindingTable sbt;

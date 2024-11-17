@@ -1,19 +1,22 @@
 #include "Color.cuh"
 
 
-__global__ void PostProcess(float3* hdr_input, uchar4* ldr_output, int width, int height)
+__global__ void PostProcess(uchar4* ldr_output, float4* hdr_input, int width, int height, int frame_index)
 {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	if (x >= width || y >= height) return;
 
-	//int idx = y * width + x;
-	//float3 color = hdr_input[idx];
-	//color = aces_tonemap(color); // Apply tone mapping
-	//color = pow(color, make_float3(1.0f / 2.2f)); // Gamma correction
-	//ldr_output[idx] = make_uchar4(
-	//	(unsigned char)(255.0f * clamp(color.x, 0.0f, 1.0f)),
-	//	(unsigned char)(255.0f * clamp(color.y, 0.0f, 1.0f)),
-	//	(unsigned char)(255.0f * clamp(color.z, 0.0f, 1.0f)),
-	//	255);
+	int idx = y * width + x;
+	float4 color = hdr_input[idx];
+	color /= (1 + frame_index);
+
+	ldr_output[idx] = MakeColor(make_float3(color.x, color.y, color.z));
+}
+
+extern "C" void LaunchPostProcessKernel(uchar4* ldr_output, float4* hdr_input, int width, int height, int frame_index)
+{
+	dim3 blockDim(16, 16);  
+	dim3 gridDim((width + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);  
+	PostProcess<<<gridDim, blockDim>>>(ldr_output, hdr_input, width, height, frame_index);
 }
