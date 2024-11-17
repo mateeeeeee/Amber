@@ -11,6 +11,7 @@ Simple path tracer using Optix API. Early work in progress.
 ![](Amber/Saved/Screenshots/sanmiguel3.png "San Miguel") 
 ![](Amber/Saved/Screenshots/sponza.png "Sponza") 
 ![](Amber/Saved/Screenshots/toyshop.png "Toy Shop") 
+![](Amber/Saved/Screenshots/bain.png "Salle de Bain") 
 
 ## Building
 ### Prerequisites
