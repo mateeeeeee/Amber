@@ -347,7 +347,7 @@ namespace amber
 	{
 		LaunchParams params{};
 
-		if (camera.IsChanged())
+		if (camera.IsChanged() || !accumulate)
 		{
 			frame_index = 0;
 		}
@@ -389,7 +389,7 @@ namespace amber
 		LaunchGammaCorrectionKernel(ldr_buffer, accum_buffer, width, height, frame_index);
 		CudaSyncCheck();
 
-		if (denoising && frame_index >= denoising_accumulation_target)
+		if (denoising && (!accumulate || frame_index >= denoising_accumulation_target))
 		{
 			OptixDenoiserLayer denoiser_layer{};
 			OptixDenoiserGuideLayer guide_layer{};
@@ -451,11 +451,15 @@ namespace amber
 		{
 			ImGui::SliderInt("Samples", &sample_count, 1, 8);
 			ImGui::SliderInt("Max Depth", &depth_count, 1, MAX_DEPTH);
+			ImGui::Checkbox("Accumulate Radiance", &accumulate);
 			if (ImGui::Checkbox("Use Denoiser", &denoising))
 			{
 				ManageDenoiserResources();
 			}
-			ImGui::SliderInt("Denoiser Accumulation Target", &denoising_accumulation_target, 1, 32);
+			if (denoising && accumulate)
+			{
+				ImGui::SliderInt("Denoiser Accumulation Target", &denoising_accumulation_target, 1, 32);
+			}
 
 			ImGui::TreePop();
 		}
