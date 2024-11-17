@@ -30,7 +30,7 @@ struct SceneConfig
 Bool ParseSceneConfig(Char const* config_file, SceneConfig& cfg);
 void ProcessCVarIniFile(Char const* cvar_file);
 
-int main(int argc, Char* argv[])
+int main(Sint32 argc, Char* argv[])
 {
 	std::string config_file, log_file, output_file;
 	Bool use_editor = true, maximize_window = false, stats_enabled = false;

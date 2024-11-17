@@ -108,15 +108,18 @@ set(OPTIX_BACKEND_FILES
     Optix/OptixShared.h
     Optix/KernelCompiler.h
     Optix/KernelCompiler.cpp
-
 )
 
- set(OPTIX_KERNEL_FILES
+set(CUDA_KERNEL_FILES
     Optix/Kernels/Math.cuh
     Optix/Kernels/Random.cuh
     Optix/Kernels/Color.cuh
     Optix/Kernels/Sampling.cuh
     Optix/Kernels/Disney.cuh
+    Optix/Kernels/PostProcessing.cu
+)
+
+ set(OPTIX_KERNEL_FILES
     Optix/Kernels/PathTracing.cu
  )
 
@@ -139,11 +142,11 @@ set(MISC_FILES
 )
 
 
-add_executable(Amber ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${MISC_FILES})
+add_executable(Amber ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${MISC_FILES})
 set_target_properties(Amber PROPERTIES OUTPUT_NAME Amber)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${MISC_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${MISC_FILES})
 
 # Exclude the .cu files from the build
 foreach(file ${OPTIX_KERNEL_FILES})

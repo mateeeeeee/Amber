@@ -18,6 +18,7 @@ namespace amber
 	protected:
 		CUcontext cuda_context = nullptr;
 		OptixDeviceContext optix_context = nullptr;
+		OptixDenoiser optix_denoiser = nullptr;
 	};
 
 	class OptixRenderer : public OptixInitializer
@@ -71,8 +72,15 @@ namespace amber
 		std::unique_ptr<optix::Buffer> normals_buffer;
 		std::unique_ptr<optix::Buffer> uvs_buffer;
 		std::unique_ptr<optix::Buffer> indices_buffer;
-
 		std::vector<LightGPU> lights;
+
+		Bool denoising = false;
+		std::unique_ptr<optix::Buffer> denoiser_state_buffer;
+		std::unique_ptr<optix::Buffer> denoiser_scratch_buffer;
+
+		OptixImage2D input_image;
+		OptixImage2D output_image;
+		optix::TBuffer<float4> denoiser_output;
 
 		Uint32 frame_index;
 		Sint32 depth_count;
