@@ -12,8 +12,8 @@ namespace amber
 	{
 		switch (level)
 		{
-		case LogLevel::Debug: return spdlog::level::debug;
-		case LogLevel::Info:  return spdlog::level::info;
+		case LogLevel::Debug:	return spdlog::level::debug;
+		case LogLevel::Info:	return spdlog::level::info;
 		case LogLevel::Warning: return spdlog::level::warn;
 		case LogLevel::Error:   return spdlog::level::err;
 		}

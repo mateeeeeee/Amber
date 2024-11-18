@@ -9,28 +9,26 @@
 #include "Editor/Editor.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
-#include "Optix/OptixRenderer.h"
+#include "Optix/OptixPathTracer.h"
 #include "Utilities/CpuBuffer2D.h"
 #include "Utilities/JsonUtil.h"
-
 
 using namespace amber;
 
 struct SceneConfig
 {
-	std::string model_file;
-	Float  model_scale;
-	std::string scene_environment;
-	Uint32 width;
-	Uint32 height;
-	Uint32 max_depth;
-	Uint32 samples_per_pixel;
 	Camera camera;
+	std::string scene_environment;
+	std::string model_file;
+	Float		model_scale;
+	Uint32		width;
+	Uint32		height;
+	PathTracerConfig path_tracer_config;
 };
 Bool ParseSceneConfig(Char const* config_file, SceneConfig& cfg);
 void ProcessCVarIniFile(Char const* cvar_file);
 
-int main(Sint32 argc, Char* argv[])
+int main(Sint argc, Char* argv[])
 {
 	std::string config_file, log_file, output_file;
 	Bool use_editor = true, maximize_window = false, stats_enabled = false;
@@ -43,7 +41,7 @@ int main(Sint32 argc, Char* argv[])
 		CLI::Option* max_window_opt = cli_parser.add_flag("--max", "Maximize editor window");
 		CLI11_PARSE(cli_parser, argc, argv);
 		if (log_file.empty()) log_file = "amber.log";
-		if (config_file.empty()) config_file = "sponza.json";
+		if (config_file.empty()) config_file = "toyshop.json";
 		if (output_file.empty()) output_file = "output";
 		use_editor = !(Bool)*no_editor_opt;
 		maximize_window = (Bool)*max_window_opt;
@@ -77,16 +75,16 @@ int main(Sint32 argc, Char* argv[])
 		return EXIT_FAILURE;
 	}
 	Camera camera = std::move(cfg.camera);
-	OptixRenderer renderer(cfg.width, cfg.height, std::move(scene));
+	Uint32 windowWidth = cfg.width;
+	Uint32 windowHeight = cfg.height;
+	OptixPathTracer path_tracer(windowWidth, windowHeight, cfg.path_tracer_config, std::move(scene));
 	ProcessCVarIniFile("cvars.ini");
 	if(use_editor)
 	{
-		Window window(cfg.width, cfg.height, "amber");
+		Window window(windowWidth, windowHeight, "amber");
 		if (maximize_window) window.Maximize();
-		Editor editor(window, camera, renderer);
+		Editor editor(window, camera, path_tracer);
 		editor.SetEditorSink(g_LogManager.GetEditorSink());
-		renderer.SetDepthCount(cfg.max_depth);
-		renderer.SetSampleCount(cfg.samples_per_pixel);
 		while (window.Loop())
 		{
 			editor.Run();
@@ -94,10 +92,8 @@ int main(Sint32 argc, Char* argv[])
 	}
 	else
 	{
-		renderer.SetDepthCount(cfg.max_depth);
-		renderer.SetSampleCount(cfg.samples_per_pixel);
-		renderer.Render(camera);
-		renderer.WriteFramebuffer(output_file.c_str()); 
+		path_tracer.Render(camera);
+		path_tracer.WriteFramebuffer(output_file.c_str()); 
 	}
 	g_LogManager.Destroy();
 
@@ -134,8 +130,10 @@ Bool ParseSceneConfig(Char const* scene_config, SceneConfig& cfg)
 	cfg.scene_environment = paths::ModelDir + scene_environment;
 	cfg.width = scene_params.FindOr<Uint32>("width", 1080);
 	cfg.height = scene_params.FindOr<Uint32>("height", 720);
-	cfg.max_depth = scene_params.FindOr<Uint32>("max depth", 4);
-	cfg.samples_per_pixel = scene_params.FindOr<Uint32>("samples per pixel", 16);
+	cfg.path_tracer_config.max_depth = scene_params.FindOr<Uint32>("max depth", 4);
+	cfg.path_tracer_config.samples_per_pixel = scene_params.FindOr<Uint32>("samples per pixel", 16);
+	cfg.path_tracer_config.use_denoiser = scene_params.FindOr<Bool>("denoise", false);
+	cfg.path_tracer_config.accumulate = scene_params.FindOr<Bool>("accumulate", true);
 
 	json camera_json = scene_params.FindJson("camera");
 	if (camera_json.is_null())

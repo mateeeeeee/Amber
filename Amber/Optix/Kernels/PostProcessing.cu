@@ -1,7 +1,18 @@
 #include "Color.cuh"
 
+__global__ void ResolveAccumulation(float3* hdr_output, float3* accum_input, int width, int height, int frame_index)
+{
+	int x = threadIdx.x + blockIdx.x * blockDim.x;
+	int y = threadIdx.y + blockIdx.y * blockDim.y;
+	if (x >= width || y >= height) return;
 
-__global__ void GammaCorrection(float3* ldr_output, float3* hdr_input, int width, int height, int frame_index)
+	int idx = y * width + x;
+	float3 color = accum_input[idx];
+	color /= (1 + frame_index);
+	hdr_output[idx] = color;
+}
+
+__global__ void Tonemap(uchar4* ldr_output, float3* hdr_input, int width, int height)
 {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -9,30 +20,28 @@ __global__ void GammaCorrection(float3* ldr_output, float3* hdr_input, int width
 
 	int idx = y * width + x;
 	float3 color = hdr_input[idx];
-	color /= (1 + frame_index);
-	ldr_output[idx] = ToSRGB(color);
+
+	float luma = Luminance(color);
+	float toneMappedLuma = luma / (1. + luma);
+	if (luma > 1e-6)
+	{
+		color *= toneMappedLuma / luma;
+	}
+
+	ldr_output[idx] = MakeUChar4(ToSRGB(color));
 }
 
-__global__ void ConvertLDRBuffer(uchar4* ldr_output, float3* ldr_input, int width, int height)
-{
-	int x = threadIdx.x + blockIdx.x * blockDim.x;
-	int y = threadIdx.y + blockIdx.y * blockDim.y;
-	if (x >= width || y >= height) return;
 
-	int idx = y * width + x;
-	ldr_output[idx] = MakeUChar4(ldr_input[idx]);
-}
-
-extern "C" void LaunchGammaCorrectionKernel(float3* ldr_output, float3* hdr_input, int width, int height, int frame_index)
-{
-	dim3 blockDim(16, 16);  
-	dim3 gridDim((width + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);  
-	GammaCorrection<<<gridDim, blockDim>>>(ldr_output, hdr_input, width, height, frame_index);
-}
-
-extern "C" void LaunchConvertLDRBufferKernel(uchar4* ldr_output, float3* hdr_input, int width, int height)
+extern "C" void LaunchResolveAccumulationKernel(float3* hdr_output, float3* accum_input, int width, int height, int frame_index)
 {
 	dim3 blockDim(16, 16);
 	dim3 gridDim((width + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
-	ConvertLDRBuffer<<<gridDim, blockDim>>>(ldr_output, hdr_input, width, height);
+	ResolveAccumulation<<<gridDim, blockDim>>>(hdr_output, accum_input, width, height, frame_index);
+}
+
+extern "C" void LaunchTonemapKernel(uchar4* ldr_output, float3* hdr_input, int width, int height)
+{
+	dim3 blockDim(16, 16);
+	dim3 gridDim((width + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
+	Tonemap<<<gridDim, blockDim>>>(ldr_output, hdr_input, width, height);
 }
