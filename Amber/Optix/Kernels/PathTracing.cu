@@ -348,6 +348,13 @@ __global__ void RG_NAME(rg)()
 
 	radiance = radiance / params.sample_count;
 
+	//temporary to reduce fireflies
+	float lum = dot(radiance, make_float3(0.212671f, 0.715160f, 0.072169f));
+	if (lum > 50.0f)
+	{
+		radiance *= 50.0f / lum;
+	}
+
 	float3 old_accum_color = params.accum_buffer[idx];
 	if (params.frame_index > 0)
 	{
