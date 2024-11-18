@@ -14,7 +14,6 @@ namespace amber
 	{
 		OBJ,
 		GLTF,
-		GLB,
 		PBRT,
 		PBF,
 		Unknown
@@ -26,7 +25,6 @@ namespace amber
 		else if (scene_file.ends_with(".pbf")) return SceneFormat::PBF;
 		else if (scene_file.ends_with(".obj")) return SceneFormat::OBJ;
 		else if (scene_file.ends_with(".gltf")) return SceneFormat::GLTF;
-		else if (scene_file.ends_with(".glb")) return SceneFormat::GLB;
 		else return SceneFormat::Unknown;
 	}
 	
@@ -39,9 +37,9 @@ namespace amber
 			std::unordered_map<pbrt::Texture::SP, Uint32>& pbrt_textures)
 		{
 			auto fnd = pbrt_textures.find(texture);
-			if (fnd != pbrt_textures.end())
+			if (pbrt_textures.contains(texture))
 			{
-				return fnd->second;
+				return pbrt_textures[texture];
 			}
 
 			if (auto t = texture->as<pbrt::ImageTexture>())
@@ -49,12 +47,12 @@ namespace amber
 				std::string path = std::string(pbrt_base_dir) + t->fileName;
 				const Uint32 id = scene.textures.size();
 				pbrt_textures[texture] = id;
-				//scene.textures.emplace_back(path.c_str());
-				//AMBER_INFO("Loaded image texture: %s\n", t->fileName.c_str());
+				scene.textures.emplace_back(path.c_str(), true);
 				return id;
 			}
 			else if (auto t = texture->as<pbrt::ConstantTexture>())
 			{
+				AMBER_WARN("LoadPBRTTexture for ConstantTexture! This case should be covered in LoadPBRTMaterial!");
 			}
 			else if (auto t = texture->as<pbrt::CheckerTexture>())
 			{
@@ -81,81 +79,172 @@ namespace amber
 				return pbrt_materials[mat];
 			}
 
-			Material loaded_mat{};
+			Material material{};
 			if (auto m = mat->as<pbrt::DisneyMaterial>())
 			{
-				loaded_mat.anisotropy = m->anisotropic;
-				loaded_mat.clearcoat = m->clearCoat;
-				loaded_mat.clearcoat_gloss = m->clearCoatGloss;
-				loaded_mat.base_color = Vector3(m->color.x, m->color.y, m->color.z);
-				loaded_mat.ior = m->eta;
-				loaded_mat.metallic = m->metallic;
-				loaded_mat.roughness = m->roughness;
-				loaded_mat.sheen = m->sheen;
-				loaded_mat.sheen_tint = m->sheenTint;
-				loaded_mat.specular_tint = m->specularTint;
-				loaded_mat.specular = 0.0f;
+				material.anisotropy = m->anisotropic;
+				material.clearcoat = m->clearCoat;
+				material.clearcoat_gloss = m->clearCoatGloss;
+				material.base_color = Vector3(m->color.x, m->color.y, m->color.z);
+				material.ior = m->eta;
+				material.metallic = m->metallic;
+				material.roughness = m->roughness;
+				material.sheen = m->sheen;
+				material.sheen_tint = m->sheenTint;
+				material.specular_tint = m->specularTint;
+				material.specular_transmission = m->specTrans;
+				material.specular = 0.0f;
 			}
 			else if (auto m = mat->as<pbrt::PlasticMaterial>())
 			{
-				loaded_mat.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
+				material.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
 				if (m->map_kd) 
 				{
 					if (auto const_tex = m->map_kd->as<pbrt::ConstantTexture>())
 					{
-						loaded_mat.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
+						material.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
 					}
 					else 
 					{
 						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
-						loaded_mat.diffuse_tex_id = tex_id;
+						material.diffuse_tex_id = tex_id;
 					}
 				}
+				if (m->map_bump)
+				{
+					Sint32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
+					material.normal_tex_id = tex_id;
+				}
+
 				Vector3 ks(m->ks.x, m->ks.y, m->ks.z);
-				loaded_mat.specular = ks.x * 0.2126f +  0.7152f * ks.y + 0.0722f * ks.z;
-				loaded_mat.roughness = m->roughness;
+				material.specular = ks.x * 0.2126f +  0.7152f * ks.y + 0.0722f * ks.z;
+				material.roughness = m->roughness;
 			}
 			else if (auto m = mat->as<pbrt::MatteMaterial>())
 			{
-				loaded_mat.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
+				material.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
 				if (m->map_kd) 
 				{
 					if (auto const_tex = m->map_kd->as<pbrt::ConstantTexture>())
 					{
-						loaded_mat.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
+						material.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
 					}
 					else 
 					{
 						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
-						loaded_mat.diffuse_tex_id = tex_id;
+						material.diffuse_tex_id = tex_id;
 					}
+				}
+				if (m->map_bump)
+				{
+					Sint32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
+					material.normal_tex_id = tex_id;
 				}
 			}
 			else if (auto m = mat->as<pbrt::SubstrateMaterial>())
 			{
-				loaded_mat.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
+				material.base_color = Vector3(m->kd.x, m->kd.y, m->kd.z);
 				if (m->map_kd) 
 				{
 					if (auto const_tex = m->map_kd->as<pbrt::ConstantTexture>())
 					{
-						loaded_mat.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
+						material.base_color = Vector3(const_tex->value.x, const_tex->value.y, const_tex->value.z);
 					}
 					else 
 					{
 						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
-						loaded_mat.diffuse_tex_id = tex_id;
+						material.diffuse_tex_id = tex_id;
 					}
 				}
-				Vector3 ks(m->ks.x, m->ks.y, m->ks.z);
-				loaded_mat.specular = ks.x * 0.2126f + 0.7152f * ks.y + 0.0722f * ks.z;
-				loaded_mat.roughness = 1.0f;
-				loaded_mat.clearcoat = 1.0f;
-				loaded_mat.clearcoat_gloss = loaded_mat.specular;
-			}
+				if (m->map_bump)
+				{
+					Sint32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
+					material.normal_tex_id = tex_id;
+				}
 
+				Vector3 ks(m->ks.x, m->ks.y, m->ks.z);
+				material.specular = ks.x * 0.2126f + 0.7152f * ks.y + 0.0722f * ks.z;
+				material.roughness = 1.0f;
+				material.clearcoat = 1.0f;
+				material.clearcoat_gloss = material.specular;
+			}
+			else if (auto m = mat->as<pbrt::MetalMaterial>())
+			{
+				// Metallic property
+				material.metallic = 1.0f;
+
+				// Roughness
+				material.roughness = m->roughness;
+				if (m->remapRoughness) 
+				{
+					material.roughness = sqrt(m->roughness); // Example remapping
+				}
+
+				auto ComputeReflectance = [](const pbrt::vec3f& eta, const pbrt::vec3f& k)
+					{
+						pbrt::vec3f numerator = (eta - pbrt::vec3f(1.0f)) * (eta - pbrt::vec3f(1.0f)) + k * k;
+						pbrt::vec3f denominator = (eta + pbrt::vec3f(1.0f)) * (eta + pbrt::vec3f(1.0f)) + k * k;
+						return Vector3(numerator.x / denominator.x, numerator.y / denominator.y, numerator.z / denominator.z); 
+					};
+				material.base_color = ComputeReflectance(m->eta, m->k);
+
+				float avg_eta = (m->eta.x + m->eta.y + m->eta.z) / 3.0f;
+				float avg_k = (m->k.x + m->k.y + m->k.z) / 3.0f;
+				float avg_reflectance = avg_eta / (avg_eta + avg_k);
+				material.specular_tint = 1.0f - avg_reflectance;
+
+				if (m->uRoughness != m->vRoughness)
+				{
+					material.anisotropy = fabs(m->uRoughness - m->vRoughness) / (m->uRoughness + m->vRoughness);
+				}
+				else 
+				{
+					material.anisotropy = 0.0f;
+				}
+
+				material.clearcoat = 0.0f;
+				material.sheen = 0.0f;
+				material.ior = (m->eta.x + m->eta.y + m->eta.z) / 3.0f;
+
+				if (m->map_bump)
+				{
+					Sint32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
+					material.normal_tex_id = tex_id;
+				}
+			}
+			else if (auto m = mat->as<pbrt::GlassMaterial>())
+			{
+				material.anisotropy = 0.0f;
+				material.clearcoat = 0.0f;
+				material.clearcoat_gloss = 1.0f;
+				material.base_color = Vector3(m->kr.x, m->kr.y, m->kr.z);
+
+				material.ior = m->index;
+				material.metallic = 0.0f;
+				material.roughness = 0.0f;
+				material.sheen = 0.0f;
+				material.sheen_tint = 0.0f;
+				material.specular_transmission = 1.0f;
+				material.specular = 0.0f;
+
+				float kr_intensity = (m->kr.x + m->kr.y + m->kr.z) / 3.0f;
+				if (kr_intensity > 0.0f) 
+				{
+					auto min = []<typename T>(T a, T b) { return a < b ? a : b; };
+					material.specular_tint = 1.0f - min(m->kr.x, min(m->kr.y, m->kr.z)) / kr_intensity;
+				}
+				else 
+				{
+					material.specular_tint = 0.0f;
+				}
+
+				material.base_color.x *= (1.0f - m->kt.x);
+				material.base_color.y *= (1.0f - m->kt.y);
+				material.base_color.z *= (1.0f - m->kt.z);
+			}
 			Uint32 mat_id = scene.materials.size();
 			pbrt_materials[mat] = mat_id;
-			scene.materials.push_back(loaded_mat);
+			scene.materials.push_back(material);
 			return mat_id;
 		}
 
@@ -164,14 +253,6 @@ namespace amber
 			pbrt_scene->makeSingleLevel();
 			std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 			auto const& pbrt_world = pbrt_scene->world;
-			if (pbrt_world->haveComputedBounds)
-			{
-				pbrt::box3f pbrt_bounds = pbrt_world->getBounds();
-				pbrt::vec3f pbrt_center = (pbrt_bounds.lower + pbrt_bounds.upper) * 0.5f;
-				pbrt::vec3f pbrt_extents = (pbrt_bounds.upper - pbrt_bounds.lower) * 0.5f;
-				Vector3 center(&pbrt_center.x);
-				Vector3 extents(&pbrt_extents.x);
-			}
 			for (auto const& pbrt_light : pbrt_world->lightSources)
 			{
 				if (auto pbrt_distant_light = pbrt_light->as<pbrt::DistantLightSource>())
@@ -187,12 +268,15 @@ namespace amber
 				}
 			}
 
+			// For PBRTv3 Each Mesh corresponds to a PBRT Object, consisting of potentially
+			// multiple Shapes. This maps to a Mesh with multiple geometries, which can then be
+			// instanced
 			std::unordered_map<pbrt::Material::SP, Uint32>	pbrt_materials;
 			std::unordered_map<pbrt::Texture::SP, Uint32>	pbrt_textures;
 			std::unordered_map<std::string, Uint32>			pbrt_objects;
 			for (auto const& instance : pbrt_world->instances)
 			{
-				Uint64 primitive_id = -1;
+				Uint32 primitive_id = -1;
 				if (!pbrt_objects.contains(instance->object->name))
 				{
 					std::vector<Uint32> material_ids;
@@ -214,50 +298,63 @@ namespace amber
 
 							Geometry geom{};
 							geom.vertices.reserve(mesh->vertex.size());
-							//std::transform(
-							//	mesh->vertex.begin(),
-							//	mesh->vertex.end(),
-							//	std::back_inserter(geom.vertices),
-							//	[](pbrt::vec3f const& v) { return Vector3(v.x, v.y, v.z); });
-
+							for (pbrt::vec3f const& v : mesh->vertex)
+							{
+								geom.vertices.emplace_back(v.x, v.y, v.z);
+							}
+	
 							geom.indices.reserve(mesh->index.size());
-							//std::transform(
-							//	mesh->index.begin(),
-							//	mesh->index.end(),
-							//	std::back_inserter(geom.indices),
-							//	[](pbrt::vec3i const& v) { return Vector3u(v.x, v.y, v.z); });
+							for (pbrt::vec3i const& i : mesh->index)
+							{
+								geom.indices.emplace_back(i.x, i.y, i.z);
+							}
 
 							geom.uvs.reserve(mesh->texcoord.size());
-							//std::transform(mesh->texcoord.begin(),
-							//	mesh->texcoord.end(),
-							//	std::back_inserter(geom.uvs),
-							//	[](pbrt::vec2f const& v) { return Vector2(v.x, v.y); });
+							for (pbrt::vec2f const& t : mesh->texcoord)
+							{
+								geom.uvs.emplace_back(t.x, t.y);
+							}
 
+							geom.normals.reserve(mesh->normal.size());
+							for (pbrt::vec3f const& n : mesh->normal)
+							{
+								geom.normals.emplace_back(n.x, n.y, n.z);
+							}
+			
 							geometries.push_back(geom);
 						}
-						if (pbrt::Sphere::SP mesh = shape->as<pbrt::Sphere>())
+						else if (pbrt::Sphere::SP mesh = shape->as<pbrt::Sphere>())
 						{
-
+							AMBER_WARN("Sphere mesh encountered! Not supported yet.");
+						}
+						else if (pbrt::QuadMesh::SP mesh = shape->as<pbrt::QuadMesh>())
+						{
+							AMBER_WARN("Quad mesh encountered! Not supported yet.");
+						}
+						else
+						{
+							AMBER_WARN("Unsupported mesh type encountered!");
 						}
 					}
 
-					Uint64 const mesh_id = scene->meshes.size();
+					if (geometries.empty()) 
+					{
+						AMBER_WARN("Skipping instance with unsupported geometry...");
+						continue;
+					}
+
+					Uint32 const mesh_id = scene->meshes.size();
 					scene->meshes.emplace_back(geometries);
 
 					pbrt_objects[instance->object->name] = mesh_id;
 				}
-				else
-				{
-					auto fnd = pbrt_objects.find(instance->object->name);
-					primitive_id = fnd->second;
-				}
+				primitive_id = pbrt_objects[instance->object->name];
 
 				Vector4 v0 = Vector4(instance->xfm.l.vx.x, instance->xfm.l.vx.y, instance->xfm.l.vx.z, 0.f);
 				Vector4 v1 = Vector4(instance->xfm.l.vy.x, instance->xfm.l.vy.y, instance->xfm.l.vy.z, 0.f);
 				Vector4 v2 = Vector4(instance->xfm.l.vz.x, instance->xfm.l.vz.y, instance->xfm.l.vz.z, 0.f);
 				Vector4 v3 = Vector4(instance->xfm.p.x, instance->xfm.p.y, instance->xfm.p.z, 1.f);
 				Matrix transform(v0, v1, v2, v3);
-
 				scene->instances.emplace_back(transform, primitive_id);
 
 				return scene;
@@ -648,7 +745,6 @@ namespace amber
 		}
 		break;
 		case SceneFormat::GLTF:
-		case SceneFormat::GLB:
 		{
 			scene = LoadGltfScene(scene_file, scale);
 		}
