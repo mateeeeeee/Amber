@@ -6,7 +6,7 @@
 #include "Core/Logger.h"
 #include "Core/Paths.h"
 #include "Scene/Camera.h"
-#include "Optix/OptixRenderer.h"
+#include "Optix/OptixPathTracer.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_sdl.h"
 #include "ImGui/imgui_impl_sdlrenderer.h"
@@ -15,8 +15,8 @@
 namespace amber
 {
 
-	Editor::Editor(Window& window, Camera& camera, OptixRenderer& renderer)
-		: window(window), camera(camera), renderer(renderer)
+	Editor::Editor(Window& window, Camera& camera, OptixPathTracer& path_tracer)
+		: window(window), camera(camera), path_tracer(path_tracer)
 	{
 		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
 		window.GetWindowEvent().AddMember(&Editor::OnWindowEvent, *this);
@@ -80,7 +80,7 @@ namespace amber
 
 		Float dt = ImGui::GetIO().DeltaTime;
 		camera.Update(dt);
-		renderer.Update(dt);
+		path_tracer.Update(dt);
 		Begin();
 		{
 			Render();
@@ -112,7 +112,7 @@ namespace amber
 			w, h));
 		SDLCheck(gui_target.get());
 
-		renderer.OnResize(w, h);
+		path_tracer.OnResize(w, h);
 		camera.SetAspectRatio((Float)w / h);
 	}
 
@@ -190,7 +190,7 @@ namespace amber
 		}
 		if (keycode == KeyCode::F12)
 		{
-			renderer.WriteFramebuffer("screenshot");
+			path_tracer.WriteFramebuffer("screenshot");
 		}
 	}
 
@@ -202,8 +202,8 @@ namespace amber
 
 	void Editor::Render()
 	{
-		renderer.Render(camera);
-		auto const& fb = renderer.GetFramebuffer();
+		path_tracer.Render(camera);
+		auto const& fb = path_tracer.GetFramebuffer();
 
 		int width, height, pitch = -1; void* data = nullptr;
 		SDL_QueryTexture(render_target.get(), nullptr, nullptr, &width, &height);
@@ -305,13 +305,13 @@ namespace amber
 	{
 		if (!visibility_flags[Visibility_Stats]) return;
 
-		ImGui::Begin(ICON_FA_CLOCK" Stats");
+		if(ImGui::Begin(ICON_FA_CLOCK" Stats", &visibility_flags[Visibility_Stats]))
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			ImGui::Text("FPS: %.1f ms", io.Framerate);
 			ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
 
-			renderer.MemoryUsageGUI();
+			path_tracer.MemoryUsageGUI();
 		}
 		ImGui::End();
 	}
@@ -320,9 +320,9 @@ namespace amber
 	{
 		if (!visibility_flags[Visibility_Options]) return;
 
-		ImGui::Begin(ICON_FA_GEAR" Options");
+		if(ImGui::Begin(ICON_FA_GEAR" Options", &visibility_flags[Visibility_Options]))
 		{
-			renderer.OptionsGUI();
+			path_tracer.OptionsGUI();
 		}
 		ImGui::End();
 	}
@@ -331,7 +331,7 @@ namespace amber
 	{
 		if (!visibility_flags[Visibility_Debug]) return;
 
-		ImGui::Begin(ICON_FA_BUG" Debug");
+		if(ImGui::Begin(ICON_FA_BUG" Debug", &visibility_flags[Visibility_Debug]))
 		{
 			if (ImGui::TreeNode("Debug Options"))
 			{
@@ -339,7 +339,7 @@ namespace amber
 				ImGui::InputText("Name", ss_name, sizeof(ss_name) - 1);
 				if (ImGui::Button("Take Screenshot"))
 				{
-					renderer.WriteFramebuffer(ss_name);
+					path_tracer.WriteFramebuffer(ss_name);
 				}
 				ImGui::TreePop();
 			}
@@ -351,7 +351,7 @@ namespace amber
 	{
 		if (!visibility_flags[Visibility_Camera]) return;
 
-		ImGui::Begin(ICON_FA_CAMERA" Camera");
+		if(ImGui::Begin(ICON_FA_CAMERA" Camera", &visibility_flags[Visibility_Camera]))
 		{
 			Vector3 camera_eye = camera.GetPosition();
 			ImGui::InputFloat3("Camera Position", &camera_eye.x);
@@ -367,9 +367,9 @@ namespace amber
 	{
 		if (!visibility_flags[Visibility_Lights]) return;
 
-		ImGui::Begin(ICON_FA_LIGHTBULB " Lights");
+		if (ImGui::Begin(ICON_FA_LIGHTBULB " Lights", &visibility_flags[Visibility_Lights]))
 		{
-			renderer.LightsGUI();
+			path_tracer.LightsGUI();
 		}
 		ImGui::End();
 	}

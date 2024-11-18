@@ -9,7 +9,7 @@ namespace amber
 	class EditorSink;
 	class EditorConsole;
 	class Camera;
-	class OptixRenderer;
+	class OptixPathTracer;
 
 	class Editor
 	{
@@ -26,7 +26,7 @@ namespace amber
 		};
 
 	public:
-		Editor(Window& window, Camera& camera, OptixRenderer& renderer);
+		Editor(Window& window, Camera& camera, OptixPathTracer& path_tracer);
 		~Editor();
 
 		void Run();
@@ -42,7 +42,7 @@ namespace amber
 	private:
 		Window& window;
 		Camera& camera;
-		OptixRenderer& renderer;
+		OptixPathTracer& path_tracer;
 		SDLRendererPtr sdl_renderer;
 		SDLTexturePtr render_target = nullptr;
 		SDLTexturePtr gui_target = nullptr;

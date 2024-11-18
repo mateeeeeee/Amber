@@ -7,21 +7,21 @@
 #include "ImGui/imgui.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
-#include "OptixRenderer.h"
+#include "OptixPathTracer.h"
 #include "Core/Logger.h"
 #include "Core/Paths.h"
 #include "Math/MathCommon.h"
 #include "Utilities/Random.h"
 #include "Utilities/ImageUtil.h"
 
-extern "C" void LaunchGammaCorrectionKernel(float3* ldr_output, float3* hdr_input, int width, int height, int frame_index);
-extern "C" void LaunchConvertLDRBufferKernel(uchar4* ldr_output, float3* hdr_input, int width, int height);
+extern "C" void LaunchResolveAccumulationKernel(float3* hdr_output, float3* accum_input, int width, int height, int frame_index);
+extern "C" void LaunchTonemapKernel(uchar4* ldr_output, float3* hdr_input, int width, int height);
 
 namespace amber
 {
 	using namespace optix;
 
-	static void OptixLogCallback(unsigned int level, const Char* tag, const Char* message, void* cbdata)
+	static void OptixLogCallback(Uint level, const Char* tag, const Char* message, void* cbdata)
 	{
 		switch (level)
 		{
@@ -48,7 +48,7 @@ namespace amber
 
 	OptixInitializer::OptixInitializer()
 	{
-		int num_devices = 0;
+		Sint num_devices = 0;
 		cudaGetDeviceCount(&num_devices);
 		if (num_devices == 0) 
 		{
@@ -58,7 +58,7 @@ namespace amber
 
 		OptixCheck(optixInit());
 
-		int const device = 0;
+		Sint const device = 0;
 		CudaCheck(cudaSetDevice(device));
 		cudaDeviceProp props{};
 		CudaCheck(cudaGetDeviceProperties(&props, device));
@@ -80,7 +80,7 @@ namespace amber
 		optix_denoiser_options.guideAlbedo = 1;
 		optix_denoiser_options.guideNormal = 1;
 		optix_denoiser_options.denoiseAlpha = OPTIX_DENOISER_ALPHA_MODE_COPY;
-		OptixCheck(optixDenoiserCreate(optix_context, OPTIX_DENOISER_MODEL_KIND_LDR, &optix_denoiser_options, &optix_denoiser));
+		OptixCheck(optixDenoiserCreate(optix_context, OPTIX_DENOISER_MODEL_KIND_HDR, &optix_denoiser_options, &optix_denoiser));
 	}
 
 	OptixInitializer::~OptixInitializer()
@@ -90,11 +90,10 @@ namespace amber
 		CudaCheck(cudaDeviceReset());
 	}
 
-
-	OptixRenderer::OptixRenderer(Uint32 width, Uint32 height, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(), 
+	OptixPathTracer::OptixPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(),
 		width(width), height(height), scene(std::move(_scene)), framebuffer(height, width), 
-		ldr_buffer(width * height), uchar4_ldr_buffer(width * height), accum_buffer(width * height),
-		frame_index(0), denoising_accumulation_target(12)
+		hdr_buffer(width * height), ldr_buffer(width * height), accum_buffer(width * height),
+		accumulate(config.accumulate), denoise(config.use_denoiser), depth_count(config.max_depth), sample_count(config.samples_per_pixel)
 	{
 		OnResize(width, height);
 
@@ -335,15 +334,15 @@ namespace amber
 		sbt.Commit();
 	}
 
-	OptixRenderer::~OptixRenderer()
+	OptixPathTracer::~OptixPathTracer()
 	{
 	}
 
-	void OptixRenderer::Update(Float dt)
+	void OptixPathTracer::Update(Float dt)
 	{
 	}
 
-	void OptixRenderer::Render(Camera const& camera)
+	void OptixPathTracer::Render(Camera const& camera)
 	{
 		LaunchParams params{};
 
@@ -386,10 +385,10 @@ namespace amber
 		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), sbt.Get(), width, height, 1));
 		CudaSyncCheck();
 
-		LaunchGammaCorrectionKernel(ldr_buffer, accum_buffer, width, height, frame_index);
+		LaunchResolveAccumulationKernel(hdr_buffer, accum_buffer, width, height, frame_index);
 		CudaSyncCheck();
 
-		if (denoising && (!accumulate || frame_index >= denoising_accumulation_target))
+		if (denoise && (!accumulate || frame_index >= denoise_accumulation_target))
 		{
 			OptixDenoiserLayer denoiser_layer{};
 			OptixDenoiserGuideLayer guide_layer{};
@@ -400,7 +399,7 @@ namespace amber
 			guide_layer.normal = input_normals; 
 		
 			OptixDenoiserParams denoiser_params{};
-			denoiser_params.blendFactor = 0.0f;
+			denoiser_params.blendFactor = denoise_blend_factor;
 			denoiser_params.temporalModeUsePreviousLayers = 0;
 		
 			OptixCheck(optixDenoiserInvoke(optix_denoiser, 0, &denoiser_params,
@@ -410,62 +409,108 @@ namespace amber
 				denoiser_scratch_buffer->GetSize()));
 			CudaSyncCheck();
 
-			LaunchConvertLDRBufferKernel(uchar4_ldr_buffer, denoiser_output, width, height);
+			LaunchTonemapKernel(ldr_buffer, denoiser_output, width, height);
 			CudaSyncCheck();
 		}
 		else
 		{
-			LaunchConvertLDRBufferKernel(uchar4_ldr_buffer, ldr_buffer, width, height);
+			LaunchTonemapKernel(ldr_buffer, hdr_buffer, width, height);
 			CudaSyncCheck();
 		}
 
-		cudaMemcpy(framebuffer, uchar4_ldr_buffer, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
+		cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
 		CudaSyncCheck();
 
 		++frame_index;
 	}
 
-	void OptixRenderer::OnResize(Uint32 w, Uint32 h)
+	void OptixPathTracer::OnResize(Uint32 w, Uint32 h)
 	{
 		width = w, height = h;
 		framebuffer.Resize(h, w);
 
 		accum_buffer.Realloc(w * h);
+		hdr_buffer.Realloc(w * h);
 		ldr_buffer.Realloc(w * h);
-		uchar4_ldr_buffer.Realloc(w * h);
 		cudaMemset(accum_buffer, 0, accum_buffer.GetSize());
-		cudaMemset(ldr_buffer, 0, ldr_buffer.GetSize());
-		cudaMemset(uchar4_ldr_buffer, 0, ldr_buffer.GetSize());
+		cudaMemset(hdr_buffer, 0, hdr_buffer.GetSize());
+		cudaMemset(ldr_buffer, 0, hdr_buffer.GetSize());
 		ManageDenoiserResources();
 	}
 
-	void OptixRenderer::WriteFramebuffer(Char const* outfile)
+	void OptixPathTracer::WriteFramebuffer(Char const* outfile)
 	{
 		std::string output_path = paths::ScreenshotDir + outfile + ".png";
 		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), framebuffer.Cols() * sizeof(uchar4));
 	}
 
-	void OptixRenderer::OptionsGUI()
+	void OptixPathTracer::ManageDenoiserResources()
 	{
-		if (ImGui::TreeNode("Renderer Options"))
+		if (denoise)
+		{
+			OptixDenoiserSizes optix_denoiser_sizes{};
+			OptixCheck(optixDenoiserComputeMemoryResources(optix_denoiser, width, height, &optix_denoiser_sizes));
+			denoiser_state_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.stateSizeInBytes);
+			denoiser_scratch_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.withOverlapScratchSizeInBytes);
+
+			OptixCheck(optixDenoiserSetup(optix_denoiser, 0, width, height,
+				denoiser_state_buffer->GetDevicePtr(), denoiser_state_buffer->GetSize(),
+				denoiser_scratch_buffer->GetDevicePtr(), denoiser_scratch_buffer->GetSize()));
+
+			denoiser_output.Realloc(width * height);
+			denoiser_albedo.Realloc(width * height);
+			denoiser_normals.Realloc(width * height);
+			cudaMemset(denoiser_output, 0, denoiser_output.GetSize());
+			cudaMemset(denoiser_albedo, 0, denoiser_albedo.GetSize());
+			cudaMemset(denoiser_normals, 0, denoiser_normals.GetSize());
+
+
+			auto FillDenoiserImageData = [this](OptixImage2D& image_data, TBuffer<float3> const& buffer)
+				{
+					image_data.width = width;
+					image_data.height = height;
+					image_data.format = OPTIX_PIXEL_FORMAT_FLOAT3;
+					image_data.pixelStrideInBytes = sizeof(float3);
+					image_data.rowStrideInBytes = width * sizeof(float3);
+					image_data.data = buffer.GetDevicePtr();
+				};
+			FillDenoiserImageData(input_image, hdr_buffer);
+			FillDenoiserImageData(output_image, denoiser_output);
+			FillDenoiserImageData(input_normals, denoiser_normals);
+			FillDenoiserImageData(input_albedo, denoiser_albedo);
+		}
+		else
+		{
+			denoiser_state_buffer.reset(nullptr);
+			denoiser_scratch_buffer.reset(nullptr);
+			denoiser_output.Realloc(0);
+			denoiser_albedo.Realloc(0);
+			denoiser_normals.Realloc(0);
+		}
+	}
+
+	void OptixPathTracer::OptionsGUI()
+	{
+		if (ImGui::TreeNode("Path Tracer Options"))
 		{
 			ImGui::SliderInt("Samples", &sample_count, 1, 8);
 			ImGui::SliderInt("Max Depth", &depth_count, 1, MAX_DEPTH);
 			ImGui::Checkbox("Accumulate Radiance", &accumulate);
-			if (ImGui::Checkbox("Use Denoiser", &denoising))
+			if (ImGui::Checkbox("Use Denoiser", &denoise))
 			{
 				ManageDenoiserResources();
 			}
-			if (denoising && accumulate)
+			if (denoise)
 			{
-				ImGui::SliderInt("Denoiser Accumulation Target", &denoising_accumulation_target, 1, 32);
+				ImGui::SliderFloat("Denoiser Blend Factor", &denoise_blend_factor, 0.0f, 1.0f);
+				if(accumulate) ImGui::SliderInt("Denoiser Accumulation Target", &denoise_accumulation_target, 1, 64);
 			}
 
 			ImGui::TreePop();
 		}
 	}
 
-	void OptixRenderer::LightsGUI()
+	void OptixPathTracer::LightsGUI()
 	{
 		if (ImGui::TreeNode("Lights"))
 		{
@@ -532,7 +577,7 @@ namespace amber
 		}
 	}
 
-	void OptixRenderer::MemoryUsageGUI()
+	void OptixPathTracer::MemoryUsageGUI()
 	{
 		if (ImGui::TreeNode("GPU Memory Usage"))
 		{
@@ -548,53 +593,8 @@ namespace amber
 
 			ImGui::Text("  Used Memory: %f MB", used_mb);
 			ImGui::Text("  Free Memory: %f MB", free_mb);
-			ImGui::Text("  Total Memory: %f MB", total_mb); 
+			ImGui::Text("  Total Memory: %f MB", total_mb);
 			ImGui::TreePop();
-		}
-	}
-
-	void OptixRenderer::ManageDenoiserResources()
-	{
-		if (denoising)
-		{
-			OptixDenoiserSizes optix_denoiser_sizes{};
-			OptixCheck(optixDenoiserComputeMemoryResources(optix_denoiser, width, height, &optix_denoiser_sizes));
-			denoiser_state_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.stateSizeInBytes);
-			denoiser_scratch_buffer = std::make_unique<optix::Buffer>(optix_denoiser_sizes.withOverlapScratchSizeInBytes);
-
-			OptixCheck(optixDenoiserSetup(optix_denoiser, 0, width, height,
-				denoiser_state_buffer->GetDevicePtr(), denoiser_state_buffer->GetSize(),
-				denoiser_scratch_buffer->GetDevicePtr(), denoiser_scratch_buffer->GetSize()));
-
-			auto FillDenoiserImageData = [this](OptixImage2D& image_data, TBuffer<float3> const& buffer) 
-			{
-					image_data.width = width;
-					image_data.height = height;
-					image_data.format = OPTIX_PIXEL_FORMAT_FLOAT3;
-					image_data.pixelStrideInBytes = sizeof(float3);
-					image_data.rowStrideInBytes = width * sizeof(float3);
-					image_data.data = buffer.GetDevicePtr();
-			};
-
-			denoiser_output.Realloc(width * height);
-			denoiser_albedo.Realloc(width * height);
-			denoiser_normals.Realloc(width * height);
-			cudaMemset(denoiser_output, 0, denoiser_output.GetSize());
-			cudaMemset(denoiser_albedo, 0, denoiser_albedo.GetSize());
-			cudaMemset(denoiser_normals, 0, denoiser_normals.GetSize());
-
-			FillDenoiserImageData(input_image, ldr_buffer);
-			FillDenoiserImageData(output_image, denoiser_output);
-			FillDenoiserImageData(input_normals, denoiser_normals);
-			FillDenoiserImageData(input_albedo, denoiser_albedo);
-		}
-		else
-		{
-			denoiser_state_buffer.reset(nullptr);
-			denoiser_scratch_buffer.reset(nullptr);
-			denoiser_output.Realloc(0);
-			denoiser_albedo.Realloc(0);
-			denoiser_normals.Realloc(0);
 		}
 	}
 }

@@ -28,5 +28,10 @@ __device__ __forceinline__ uchar4 MakeUChar4(float3 const& srgb)
 	return make_uchar4(QuantizeUnsigned8Bits(srgb.x), QuantizeUnsigned8Bits(srgb.y), QuantizeUnsigned8Bits(srgb.z), 255u);
 }
 
+__device__ float Luminance(float3 color)
+{
+	return dot(color, make_float3(0.2126729, 0.7151522, 0.0721750));
+}
+
 
 #endif
