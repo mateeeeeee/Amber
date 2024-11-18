@@ -4,6 +4,7 @@
 #include "Math.cuh"
 #include "Sampling.cuh"
 #include "Random.cuh"
+#include "Color.cuh"
 
 //https://github.com/Twinklebear/ChameleonRT/blob/master/backends/optix/disney_bsdf.h
 
@@ -27,11 +28,6 @@ struct DisneyMaterial
 	float  ior;
 	float  specular_transmission;
 };
-
-__device__ float Luminance(const float3& c) 
-{
-	return 0.2126f * c.x + 0.7152f * c.y + 0.0722f * c.z;
-}
 
 __device__ bool SameHemisphere(const float3& w_o, const float3& w_i, const float3& n)
 {
