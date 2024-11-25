@@ -17,8 +17,8 @@ namespace amber
 	public:
 		explicit Image(Char const* file, Bool srgb = false);
 
-		Sint32 GetWidth() const { return width; }
-		Sint32 GetHeight() const { return height; }
+		Int32 GetWidth() const { return width; }
+		Int32 GetHeight() const { return height; }
 
 		template<typename T = Uint8>
 		T const* GetData() const
@@ -28,9 +28,9 @@ namespace amber
 		Bool IsSRGB() const { return srgb; }
 
 	private:
-		Sint32 width;
-		Sint32 height;
-		Sint32 channels;
+		Int32 width;
+		Int32 height;
+		Int32 channels;
 		std::vector<Uint8> data;
 		Bool srgb;
 	};

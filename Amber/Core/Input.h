@@ -36,7 +36,7 @@ namespace amber
 	};
 
 	struct WindowEventData;
-	DECLARE_EVENT(WindowResizedEvent, Input, Sint32, Sint32);
+	DECLARE_EVENT(WindowResizedEvent, Input, Int32, Int32);
 	DECLARE_EVENT(KeyPressedEvent, Input, KeyCode);
 
 	struct InputEvents
@@ -61,11 +61,11 @@ namespace amber
 
 		void SetMouseVisibility(Bool visible);
 
-		Sint32 GetMousePositionX()  const { return mouse_position_x; }
-		Sint32 GetMousePositionY()  const { return mouse_position_y; }
+		Int32 GetMousePositionX()  const { return mouse_position_x; }
+		Int32 GetMousePositionY()  const { return mouse_position_y; }
 
-		Sint32 GetMouseDeltaX()     const { return mouse_position_x - prev_mouse_position_x; }
-		Sint32 GetMouseDeltaY()     const { return mouse_position_y - prev_mouse_position_y; }
+		Int32 GetMouseDeltaX()     const { return mouse_position_x - prev_mouse_position_x; }
+		Int32 GetMouseDeltaY()     const { return mouse_position_y - prev_mouse_position_y; }
 		Float GetMouseWheelDelta() const { return mmouse_wheel_delta; }
 
 	private:
@@ -73,11 +73,11 @@ namespace amber
 		std::array<Bool, (Uint64)KeyCode::Count> keys = {};
 		std::array<Bool, (Uint64)KeyCode::Count> prev_keys = {};
 		
-		Sint32 mouse_position_x = 0;
-		Sint32 mouse_position_y = 0;
+		Int32 mouse_position_x = 0;
+		Int32 mouse_position_y = 0;
 
-		Sint32 prev_mouse_position_x = 0;
-		Sint32 prev_mouse_position_y = 0;
+		Int32 prev_mouse_position_x = 0;
+		Int32 prev_mouse_position_y = 0;
 		Float mmouse_wheel_delta = 0.0f;
 
 		Bool new_frame = false;

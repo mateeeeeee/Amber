@@ -13,10 +13,10 @@ namespace amber
 	using Uint16	= STD uint16_t;
 	using Uint32	= STD uint32_t;
 	using Uint64	= STD uint64_t;
-	using Sint8		= STD int8_t;
-	using Sint16	= STD int16_t;
-	using Sint32	= STD int32_t;
-	using Sint64	= STD int64_t;
+	using Int8		= STD int8_t;
+	using Int16		= STD int16_t;
+	using Int32		= STD int32_t;
+	using Int64		= STD int64_t;
 	using Bool32	= STD uint32_t;
 	using Bool		= bool;
 	using Char		= char;

@@ -98,7 +98,7 @@ namespace amber
 		End();
 	}
 
-	void Editor::OnResize(Sint32 w, Sint32 h)
+	void Editor::OnResize(Int32 w, Int32 h)
 	{
 		render_target.reset(SDL_CreateTexture(sdl_renderer.get(),
 			SDL_PIXELFORMAT_RGBA32,
