@@ -31,7 +31,7 @@ namespace amber
 
 		void Run();
 
-		void OnResize(Sint32 w, Sint32 h);
+		void OnResize(Int32 w, Int32 h);
 		void OnWindowEvent(WindowEventData const&);
 
 		void SetEditorSink(EditorSink* sink)

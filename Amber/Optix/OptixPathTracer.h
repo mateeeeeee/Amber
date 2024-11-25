@@ -77,7 +77,7 @@ namespace amber
 		std::vector<LightGPU> lights;
 
 		Bool	denoise = false;
-		Sint32	denoise_accumulation_target = 12;
+		Int32	denoise_accumulation_target = 12;
 		Float	denoise_blend_factor = 0.0f;
 		std::unique_ptr<optix::Buffer> denoiser_state_buffer;
 		std::unique_ptr<optix::Buffer> denoiser_scratch_buffer;
@@ -91,8 +91,8 @@ namespace amber
 
 		Bool   accumulate	= true;
 		Uint32 frame_index	= 0;
-		Sint32 depth_count;
-		Sint32 sample_count;
+		Int32 depth_count;
+		Int32 sample_count;
 
 	private:
 		void ManageDenoiserResources();

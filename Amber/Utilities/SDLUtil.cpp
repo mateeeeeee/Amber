@@ -3,7 +3,7 @@
 
 namespace amber
 {
-	void SDLCheck(Sint32 r)
+	void SDLCheck(Int32 r)
 	{
 		if (r != 0)
 		{

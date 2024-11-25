@@ -79,7 +79,7 @@ namespace amber
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 		}
-		AutoConsoleVariable(Char const* name, Sint32 default_value, Char const* help)
+		AutoConsoleVariable(Char const* name, Int32 default_value, Char const* help)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 		}
@@ -97,7 +97,7 @@ namespace amber
 		{
 			AsVariable()->AddOnChanged(callback);
 		}
-		AutoConsoleVariable(Char const* name, Sint32 default_value, Char const* help, ConsoleVariableDelegate const& callback)
+		AutoConsoleVariable(Char const* name, Int32 default_value, Char const* help, ConsoleVariableDelegate const& callback)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 			AsVariable()->AddOnChanged(callback);
@@ -165,7 +165,7 @@ namespace amber
 	class AutoConsoleVariableRef : private AutoConsoleObject
 	{
 	public:
-		AutoConsoleVariableRef(Char const* name, Sint32& ref_value, Char const* help)
+		AutoConsoleVariableRef(Char const* name, Int32& ref_value, Char const* help)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariableRef(name, ref_value, help))
 		{
 		}
@@ -182,7 +182,7 @@ namespace amber
 		{
 		}
 
-		AutoConsoleVariableRef(Char const* name, Sint32& ref_value, Char const* help, ConsoleVariableDelegate const& callback)
+		AutoConsoleVariableRef(Char const* name, Int32& ref_value, Char const* help, ConsoleVariableDelegate const& callback)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariableRef(name, ref_value, help))
 		{
 			AsVariable()->AddOnChanged(callback);

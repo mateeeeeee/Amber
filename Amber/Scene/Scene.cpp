@@ -30,7 +30,7 @@ namespace amber
 	
 	namespace 
 	{
-		Sint32 LoadPBRTTexture(
+		Int32 LoadPBRTTexture(
 			Scene& scene,
 			pbrt::Texture::SP const& texture,
 			std::string_view pbrt_base_dir,
@@ -106,13 +106,13 @@ namespace amber
 					}
 					else 
 					{
-						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						Int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
 						material.diffuse_tex_id = tex_id;
 					}
 				}
 				if (m->map_bump)
 				{
-					Sint32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
+					Int32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
 					material.normal_tex_id = tex_id;
 				}
 
@@ -131,13 +131,13 @@ namespace amber
 					}
 					else 
 					{
-						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						Int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
 						material.diffuse_tex_id = tex_id;
 					}
 				}
 				if (m->map_bump)
 				{
-					Sint32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
+					Int32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
 					material.normal_tex_id = tex_id;
 				}
 			}
@@ -152,13 +152,13 @@ namespace amber
 					}
 					else 
 					{
-						Sint32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
+						Int32 tex_id = LoadPBRTTexture(scene, m->map_kd, pbrt_base_dir, pbrt_textures);
 						material.diffuse_tex_id = tex_id;
 					}
 				}
 				if (m->map_bump)
 				{
-					Sint32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
+					Int32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
 					material.normal_tex_id = tex_id;
 				}
 
@@ -208,7 +208,7 @@ namespace amber
 
 				if (m->map_bump)
 				{
-					Sint32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
+					Int32 tex_id = LoadPBRTTexture(scene, m->map_bump, pbrt_base_dir, pbrt_textures);
 					material.normal_tex_id = tex_id;
 				}
 			}
@@ -433,7 +433,7 @@ namespace amber
 			}
 			obj_scene->meshes.push_back(std::move(mesh));
 
-			std::unordered_map<std::string, Sint32> texture_ids;
+			std::unordered_map<std::string, Int32> texture_ids;
 			for (auto const& m : materials)
 			{
 				Material material{};
@@ -457,7 +457,7 @@ namespace amber
 						std::string texture_path = obj_base_dir + "/" + m.diffuse_texname;
 						obj_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const Sint32 id = texture_ids[m.diffuse_texname];
+					const Int32 id = texture_ids[m.diffuse_texname];
 					material.diffuse_tex_id = id;
 				}
 				if (!m.normal_texname.empty())
@@ -468,7 +468,7 @@ namespace amber
 						std::string texture_path = obj_base_dir + "/" + m.normal_texname;
 						obj_scene->textures.emplace_back(texture_path.c_str(), false);
 					}
-					const Sint32 id = texture_ids[m.normal_texname];
+					const Int32 id = texture_ids[m.normal_texname];
 					material.normal_tex_id = id;
 				}
 				if (!m.emissive_texname.empty())
@@ -479,7 +479,7 @@ namespace amber
 						std::string texture_path = obj_base_dir + "/" + m.emissive_texname;
 						obj_scene->textures.emplace_back(texture_path.c_str(), false);
 					}
-					const Sint32 id = texture_ids[m.emissive_texname];
+					const Int32 id = texture_ids[m.emissive_texname];
 					material.emissive_tex_id = id;
 				}
 				obj_scene->materials.push_back(material);
@@ -509,7 +509,7 @@ namespace amber
 			std::string gltf_base_dir = std::string(scene_file.substr(0, scene_file.rfind('/')));
 			std::unique_ptr<Scene> gltf_scene = std::make_unique<Scene>();
 
-			std::unordered_map<std::string, Sint32> texture_ids;
+			std::unordered_map<std::string, Int32> texture_ids;
 			gltf_scene->materials.reserve(gltf_data->materials_count);
 			for (Uint32 i = 0; i < gltf_data->materials_count; ++i)
 			{
@@ -585,7 +585,7 @@ namespace amber
 						std::string texture_path = gltf_base_dir + "/" + image->uri;
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const Sint32 id = texture_ids[image->uri];
+					const Int32 id = texture_ids[image->uri];
 					material.diffuse_tex_id = id;
 				}
 
@@ -598,7 +598,7 @@ namespace amber
 						std::string texture_path = gltf_base_dir + "/" + image->uri;
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const Sint32 id = texture_ids[image->uri];
+					const Int32 id = texture_ids[image->uri];
 					material.metallic_roughness_tex_id = id;
 				}
 
@@ -611,7 +611,7 @@ namespace amber
 						std::string texture_path = gltf_base_dir + "/" + image->uri;
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const Sint32 id = texture_ids[image->uri];
+					const Int32 id = texture_ids[image->uri];
 					material.normal_tex_id = id;
 				}
 
@@ -624,19 +624,19 @@ namespace amber
 						std::string texture_path = gltf_base_dir + "/" + image->uri;
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
-					const Sint32 id = texture_ids[image->uri];
+					const Int32 id = texture_ids[image->uri];
 					material.emissive_tex_id = id;
 				}
 
 			}
 
-			std::unordered_map<cgltf_mesh const*, std::vector<Sint32>> mesh_primitives_map; 
-			Sint32 primitive_count = 0;
+			std::unordered_map<cgltf_mesh const*, std::vector<Int32>> mesh_primitives_map; 
+			Int32 primitive_count = 0;
 
 			for (Uint32 i = 0; i < gltf_data->meshes_count; ++i)
 			{
 				cgltf_mesh const& gltf_mesh = gltf_data->meshes[i];
-				std::vector<Sint32>& primitives = mesh_primitives_map[&gltf_mesh];
+				std::vector<Int32>& primitives = mesh_primitives_map[&gltf_mesh];
 
 				Mesh& mesh = gltf_scene->meshes.emplace_back();
 				for (Uint32 j = 0; j < gltf_mesh.primitives_count; ++j)
@@ -645,7 +645,7 @@ namespace amber
 					AMBER_ASSERT(gltf_primitive.indices->count >= 0);
 
 					Geometry& geometry = mesh.geometries.emplace_back();
-					mesh.material_ids.push_back((Sint32)(gltf_primitive.material - gltf_data->materials));
+					mesh.material_ids.push_back((Int32)(gltf_primitive.material - gltf_data->materials));
 
 					geometry.indices.reserve(gltf_primitive.indices->count / 3);
 
@@ -693,7 +693,7 @@ namespace amber
 				local_to_world *= Matrix::CreateScale(scale, scale, -scale);
 				if (gltf_node.mesh)
 				{
-					for (Sint32 primitive : mesh_primitives_map[gltf_node.mesh])
+					for (Int32 primitive : mesh_primitives_map[gltf_node.mesh])
 					{
 						Instance& instance = gltf_scene->instances.emplace_back();
 						instance.mesh_id = primitive;

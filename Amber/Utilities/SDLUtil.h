@@ -40,6 +40,6 @@ namespace amber
 	};
 	using SDLSurfacePtr = std::unique_ptr<SDL_Surface, SDLSurfaceFreer>;
 
-	void SDLCheck(Sint32 r);
+	void SDLCheck(Int32 r);
 	void SDLCheck(void* sdl_type);
 }

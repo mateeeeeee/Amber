@@ -16,13 +16,13 @@ namespace amber
 	struct MaterialGPU
 	{
 		float3 base_color;
-		Sint32 diffuse_tex_id = -1;
-		Sint32 normal_tex_id = -1;
+		Int32 diffuse_tex_id = -1;
+		Int32 normal_tex_id = -1;
 
 		float3 emissive_color;
-		Sint32 emissive_tex_id = -1;
+		Int32 emissive_tex_id = -1;
 
-		Sint32 metallic_roughness_tex_id = -1;
+		Int32 metallic_roughness_tex_id = -1;
 		Float metallic = 0.0f;
 		Float specular = 0.0f;
 		Float roughness = 1.0f;

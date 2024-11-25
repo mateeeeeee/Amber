@@ -41,7 +41,7 @@ int main(Sint argc, Char* argv[])
 		CLI::Option* max_window_opt = cli_parser.add_flag("--max", "Maximize editor window");
 		CLI11_PARSE(cli_parser, argc, argv);
 		if (log_file.empty()) log_file = "amber.log";
-		if (config_file.empty()) config_file = "sponza.json";
+		if (config_file.empty()) config_file = "sanmiguel.json";
 		if (output_file.empty()) output_file = "output";
 		use_editor = !(Bool)*no_editor_opt;
 		maximize_window = (Bool)*max_window_opt;

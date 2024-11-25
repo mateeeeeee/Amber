@@ -42,7 +42,7 @@ namespace amber
 		{
 		public:
 			static Bool GetBool(T Value);
-			static Sint32 GetInt(T Value);
+			static Int32 GetInt(T Value);
 			static Float GetFloat(T Value);
 			static std::string GetString(T Value);
 		};
@@ -50,7 +50,7 @@ namespace amber
 		{
 			return Value;
 		}
-		template<> Sint32 ConsoleVariableConversionHelper<Bool>::GetInt(Bool Value)
+		template<> Int32 ConsoleVariableConversionHelper<Bool>::GetInt(Bool Value)
 		{
 			return Value ? 1 : 0;
 		}
@@ -62,19 +62,19 @@ namespace amber
 		{
 			return Value ? "true" : "false";
 		}
-		template<> Bool ConsoleVariableConversionHelper<Sint32>::GetBool(Sint32 Value)
+		template<> Bool ConsoleVariableConversionHelper<Int32>::GetBool(Int32 Value)
 		{
 			return Value != 0;
 		}
-		template<> Sint32 ConsoleVariableConversionHelper<Sint32>::GetInt(Sint32 Value)
+		template<> Int32 ConsoleVariableConversionHelper<Int32>::GetInt(Int32 Value)
 		{
 			return Value;
 		}
-		template<> Float ConsoleVariableConversionHelper<Sint32>::GetFloat(Sint32 Value)
+		template<> Float ConsoleVariableConversionHelper<Int32>::GetFloat(Int32 Value)
 		{
 			return (Float)Value;
 		}
-		template<> std::string ConsoleVariableConversionHelper<Sint32>::GetString(Sint32 Value)
+		template<> std::string ConsoleVariableConversionHelper<Int32>::GetString(Int32 Value)
 		{
 			return std::to_string(Value);
 		}
@@ -82,9 +82,9 @@ namespace amber
 		{
 			return Value != 0.0f;
 		}
-		template<> Sint32 ConsoleVariableConversionHelper<Float>::GetInt(Float Value)
+		template<> Int32 ConsoleVariableConversionHelper<Float>::GetInt(Float Value)
 		{
-			return (Sint32)Value;
+			return (Int32)Value;
 		}
 		template<> Float ConsoleVariableConversionHelper<Float>::GetFloat(Float Value)
 		{
@@ -100,9 +100,9 @@ namespace amber
 			FromCString(Value.c_str(), out);
 			return out;
 		}
-		template<> Sint32 ConsoleVariableConversionHelper<std::string>::GetInt(std::string Value)
+		template<> Int32 ConsoleVariableConversionHelper<std::string>::GetInt(std::string Value)
 		{
-			Sint32 out = false;
+			Int32 out = false;
 			FromCString(Value.c_str(), out);
 			return out;
 		}
@@ -248,7 +248,7 @@ namespace amber
 		}
 
 		virtual Bool GetBool() const override { return detail::ConsoleVariableConversionHelper<T>::GetBool(value); }
-		virtual Sint32 GetInt() const override { return detail::ConsoleVariableConversionHelper<T>::GetInt(value); }
+		virtual Int32 GetInt() const override { return detail::ConsoleVariableConversionHelper<T>::GetInt(value); }
 		virtual Float GetFloat() const override { return detail::ConsoleVariableConversionHelper<T>::GetFloat(value); }
 		virtual std::string GetString() const override { return detail::ConsoleVariableConversionHelper<T>::GetString(value); }
 
@@ -258,7 +258,7 @@ namespace amber
 		virtual Bool IsString() const override { return false; }
 
 		virtual Bool* GetBoolPtr() override { return nullptr; }
-		virtual Sint32* GetIntPtr() override { return nullptr; }
+		virtual Int32* GetIntPtr() override { return nullptr; }
 		virtual Float* GetFloatPtr() override { return nullptr; }
 		virtual std::string* GetStringPtr() override { return nullptr; }
 
@@ -270,7 +270,7 @@ namespace amber
 	{
 		return true;
 	}
-	template<> Bool ConsoleVariable<Sint32>::IsInt() const
+	template<> Bool ConsoleVariable<Int32>::IsInt() const
 	{
 		return true;
 	}
@@ -286,7 +286,7 @@ namespace amber
 	{
 		return &value;
 	}
-	template<> Sint32* ConsoleVariable<Sint32>::GetIntPtr()
+	template<> Int32* ConsoleVariable<Int32>::GetIntPtr()
 	{
 		return &value;
 	}
@@ -403,7 +403,7 @@ namespace amber
 
 
 		virtual Bool GetBool() const override { return detail::ConsoleVariableConversionHelper<T>::GetBool(value); }
-		virtual Sint32 GetInt() const override { return detail::ConsoleVariableConversionHelper<T>::GetInt(value); }
+		virtual Int32 GetInt() const override { return detail::ConsoleVariableConversionHelper<T>::GetInt(value); }
 		virtual Float GetFloat() const override { return detail::ConsoleVariableConversionHelper<T>::GetFloat(value); }
 		virtual std::string GetString() const override { return detail::ConsoleVariableConversionHelper<T>::GetString(value); }
 
@@ -420,7 +420,7 @@ namespace amber
 	{
 		return true;
 	}
-	template<> Bool ConsoleVariableRef<Sint32>::IsInt() const
+	template<> Bool ConsoleVariableRef<Int32>::IsInt() const
 	{
 		return true;
 	}
