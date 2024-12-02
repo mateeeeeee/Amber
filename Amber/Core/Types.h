@@ -23,10 +23,10 @@ namespace amber
 	using Uchar		= unsigned char;
 	using Short		= short;
 	using Ushort	= unsigned short;
-	using Sint		= int;
+	using Int		= int;
 	using Uint		= unsigned int;
 	using Float		= float;
 	using Float64	= double;
 	using Uintptr	= STD uintptr_t;
-	using Sintptr	= STD intptr_t;
+	using Intptr	= STD intptr_t;
 }

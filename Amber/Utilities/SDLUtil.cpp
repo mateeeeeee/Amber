@@ -1,5 +1,5 @@
 #include "SDLUtil.h"
-#include "Core/Logger.h"
+#include "Core/Log.h"
 
 namespace amber
 {

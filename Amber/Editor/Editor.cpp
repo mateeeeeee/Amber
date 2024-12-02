@@ -3,7 +3,7 @@
 #include "EditorSink.h"
 #include "Core/Window.h"
 #include "Core/Input.h"
-#include "Core/Logger.h"
+#include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Scene/Camera.h"
 #include "Optix/OptixPathTracer.h"

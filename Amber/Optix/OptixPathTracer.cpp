@@ -8,7 +8,7 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "OptixPathTracer.h"
-#include "Core/Logger.h"
+#include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Math/MathCommon.h"
 #include "Utilities/Random.h"
@@ -48,7 +48,7 @@ namespace amber
 
 	OptixInitializer::OptixInitializer()
 	{
-		Sint num_devices = 0;
+		Int num_devices = 0;
 		cudaGetDeviceCount(&num_devices);
 		if (num_devices == 0) 
 		{
@@ -58,7 +58,7 @@ namespace amber
 
 		OptixCheck(optixInit());
 
-		Sint const device = 0;
+		Int const device = 0;
 		CudaCheck(cudaSetDevice(device));
 		cudaDeviceProp props{};
 		CudaCheck(cudaGetDeviceProperties(&props, device));

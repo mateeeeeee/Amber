@@ -1,7 +1,7 @@
 #include <nvrtc.h>
 #include <fstream>
 #include "KernelCompiler.h"
-#include "Core/Logger.h"
+#include "Core/Log.h"
 #include "Core/Paths.h"
 
 namespace amber
