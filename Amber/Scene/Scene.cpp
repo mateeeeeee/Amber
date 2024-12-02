@@ -1,7 +1,7 @@
 #define CGLTF_IMPLEMENTATION
 #include <unordered_map>
 #include "Scene.h"
-#include "Core/Logger.h"
+#include "Core/Log.h"
 #include "Math/MathCommon.h"
 #include "pbrtParser/Scene.h"
 #include "tinyobjloader/tiny_obj_loader.h"

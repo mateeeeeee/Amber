@@ -3,7 +3,7 @@
 #include <optix_stack_size.h>
 #include "OptixUtils.h"
 #include "KernelCompiler.h"
-#include "Core/Logger.h"
+#include "Core/Log.h"
 #include "Core/Paths.h"
 
 namespace amber::optix

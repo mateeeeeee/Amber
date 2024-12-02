@@ -44,6 +44,8 @@ set(UTILITY_FILES
     Utilities/FilesUtil.cpp
     Utilities/JsonUtil.h
     Utilities/CpuBuffer2D.h
+    Utilities/CLIParser.h
+    Utilities/CLIParser.cpp
 )
 
 
@@ -103,8 +105,8 @@ set(EXTERNAL_FILES
 set(OPTIX_BACKEND_FILES
     Optix/OptixUtils.h
     Optix/OptixUtils.cpp
-    Optix/OptixRenderer.h
-    Optix/OptixRenderer.cpp
+    Optix/OptixPathTracer.h
+    Optix/OptixPathTracer.cpp
     Optix/OptixShared.h
     Optix/KernelCompiler.h
     Optix/KernelCompiler.cpp

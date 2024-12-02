@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include "spdlog/spdlog.h"
-#include "Core/Logger.h"
+#include "Core/Log.h"
 
 namespace amber
 {

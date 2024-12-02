@@ -1,9 +1,9 @@
 #define SDL_MAIN_HANDLED
+#include <fstream>
 #include "Utilities/SDLUtil.h"
-#include "CLI/CLI.hpp"
-
+#include "Utilities/CLIParser.h"
 #include "Core/Window.h"
-#include "Core/Logger.h"
+#include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Core/ConsoleManager.h"
 #include "Editor/Editor.h"
@@ -28,23 +28,25 @@ struct SceneConfig
 Bool ParseSceneConfig(Char const* config_file, SceneConfig& cfg);
 void ProcessCVarIniFile(Char const* cvar_file);
 
-int main(Sint argc, Char* argv[])
+int main(Int argc, Char* argv[])
 {
 	std::string config_file, log_file, output_file;
 	Bool use_editor = true, maximize_window = false, stats_enabled = false;
 	{
-		CLI::App cli_parser{ "Amber" };
-		cli_parser.add_option("--config-file", config_file, "Config file");
-		cli_parser.add_option("--log-file", log_file, "Log file");
-		cli_parser.add_option("--output-file", output_file, "Output file");
-		CLI::Option* no_editor_opt = cli_parser.add_flag("--noeditor", "Don't use editor");
-		CLI::Option* max_window_opt = cli_parser.add_flag("--max", "Maximize editor window");
-		CLI11_PARSE(cli_parser, argc, argv);
-		if (log_file.empty()) log_file = "amber.log";
-		if (config_file.empty()) config_file = "sanmiguel.json";
-		if (output_file.empty()) output_file = "output";
-		use_editor = !(Bool)*no_editor_opt;
-		maximize_window = (Bool)*max_window_opt;
+		CLIParser cli_parser;
+		cli_parser.AddArg(true, "--config-file");
+		cli_parser.AddArg(true, "--log-file");
+		cli_parser.AddArg(true, "--output-file");
+		cli_parser.AddArg(false, "--noeditor");
+		cli_parser.AddArg(false, "--max");
+
+		CLIParseResult cli_result = cli_parser.Parse(argc, argv);
+
+		config_file = cli_result["--config-file"].AsStringOr("sponza.json");
+		log_file = cli_result["--log-file"].AsStringOr("amber.log");
+		output_file = cli_result["--output-file"].AsStringOr("output");
+		use_editor = !cli_result["--noeditor"];
+		maximize_window = !cli_result["--max"];
 	}
 #ifdef _DEBUG
 	g_LogManager.Initialize(log_file.c_str(), LogLevel::Debug);

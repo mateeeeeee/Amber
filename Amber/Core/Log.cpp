@@ -1,7 +1,7 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
-#include "Logger.h"
+#include "Log.h"
 #include "Core/Paths.h"
 #include "Editor/EditorSink.h"
 
@@ -55,7 +55,7 @@ namespace amber
 		std::string msg(size, '\0');
 		std::vsnprintf(&msg[0], size, fmt.data(), args);
 		va_end(args);
-		Uint32 i = (Uint32)level;
+		Uint32 i = static_cast<Uint32>(level);
 		AMBER_ASSERT(callbacks[i]);
 		callbacks[i](msg);
 	}
@@ -71,4 +71,3 @@ namespace amber
 	}
 
 }
-
