@@ -1,10 +1,10 @@
 #define SDL_MAIN_HANDLED
 #include <fstream>
 #include "Utilities/SDLUtil.h"
-#include "Utilities/CLIParser.h"
 #include "Core/Window.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
+#include "Core/CommandLineOptions.h"
 #include "Core/ConsoleManager.h"
 #include "Editor/Editor.h"
 #include "Scene/Scene.h"
@@ -30,32 +30,15 @@ void ProcessCVarIniFile(Char const* cvar_file);
 
 int main(Int argc, Char* argv[])
 {
-	std::string config_file, log_file, output_file;
-	Bool use_editor = true, maximize_window = false, stats_enabled = false;
-	{
-		CLIParser cli_parser;
-		cli_parser.AddArg(true, "--config-file");
-		cli_parser.AddArg(true, "--log-file");
-		cli_parser.AddArg(true, "--output-file");
-		cli_parser.AddArg(false, "--noeditor");
-		cli_parser.AddArg(false, "--max");
-
-		CLIParseResult cli_result = cli_parser.Parse(argc, argv);
-
-		config_file = cli_result["--config-file"].AsStringOr("sponza.json");
-		log_file = cli_result["--log-file"].AsStringOr("amber.log");
-		output_file = cli_result["--output-file"].AsStringOr("output");
-		use_editor = !cli_result["--noeditor"];
-		maximize_window = !cli_result["--max"];
-	}
+	CommandLineOptions::Initialize(argc, argv);
 #ifdef _DEBUG
 	g_LogManager.Initialize(log_file.c_str(), LogLevel::Debug);
 #else 
-	g_LogManager.Initialize(log_file.c_str(), LogLevel::Error);
+	g_LogManager.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Error);
 #endif
 
 	SceneConfig cfg{};
-	if (!ParseSceneConfig(config_file.c_str(), cfg))
+	if (!ParseSceneConfig(CommandLineOptions::GetConfigFile().c_str(), cfg))
 	{
 		AMBER_ERROR("Config parsing failed!");
 		return EXIT_FAILURE;
@@ -81,10 +64,13 @@ int main(Int argc, Char* argv[])
 	Uint32 windowHeight = cfg.height;
 	OptixPathTracer path_tracer(windowWidth, windowHeight, cfg.path_tracer_config, std::move(scene));
 	ProcessCVarIniFile("cvars.ini");
-	if(use_editor)
+	if(CommandLineOptions::GetUseEditor())
 	{
 		Window window(windowWidth, windowHeight, "amber");
-		if (maximize_window) window.Maximize();
+		if (CommandLineOptions::GetMaximizeWindow())
+		{
+			window.Maximize();
+		}
 		Editor editor(window, camera, path_tracer);
 		editor.SetEditorSink(g_LogManager.GetEditorSink());
 		while (window.Loop())
@@ -95,7 +81,7 @@ int main(Int argc, Char* argv[])
 	else
 	{
 		path_tracer.Render(camera);
-		path_tracer.WriteFramebuffer(output_file.c_str()); 
+		path_tracer.WriteFramebuffer(CommandLineOptions::GetOutputFile().c_str());
 	}
 	g_LogManager.Destroy();
 
