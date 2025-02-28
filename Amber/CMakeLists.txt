@@ -14,8 +14,8 @@ endif()
 set(CORE_FILES
     Core/Types.h
     Core/Macros.h
-    Core/Logger.h
-    Core/Logger.cpp
+    Core/Log.h
+    Core/Log.cpp
     Core/Window.h
     Core/Window.cpp
     Core/Input.h
@@ -25,6 +25,8 @@ set(CORE_FILES
     Core/IConsoleManager.h
     Core/ConsoleManager.h
     Core/ConsoleManager.cpp
+    Core/CommandLineOptions.h
+    Core/CommandLineOptions.cpp
 )
 
 set(UTILITY_FILES
@@ -165,7 +167,6 @@ target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/CLI11/inc
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/pbrtParser)
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/SDL2/include)
 target_include_directories(Amber PRIVATE ${OPTIX_INSTALL_DIR}/include)
-
 
 target_link_libraries(Amber PUBLIC  ${CUDA_LIBRARIES})
 target_link_libraries(Amber PUBLIC  ${NVRTC_LIB})

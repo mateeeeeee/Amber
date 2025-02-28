@@ -47,14 +47,14 @@ namespace amber
 		if (g_Input.GetKey(KeyCode::Q)) movement.y -= 1.0f;
 		if (g_Input.GetKey(KeyCode::E)) movement.y += 1.0f;
 		movement = Vector3::Transform(movement, orientation);
-		velocity = Vector3::SmoothStep(velocity, movement, 0.5f);
+		velocity = Vector3::SmoothStep(velocity, movement, 0.35f);
 
 		if (velocity.LengthSquared() > 1e-4)
 		{
 			Float speed_factor = 1.0f;
 			if (g_Input.GetKey(KeyCode::ShiftLeft)) speed_factor *= 5.0f;
 			if (g_Input.GetKey(KeyCode::CtrlLeft))  speed_factor *= 0.2f;
-			position += velocity * dt * speed_factor * 5.0f;
+			position += velocity * dt * speed_factor * 10.0f;
 			changed = true;
 		}
 	}

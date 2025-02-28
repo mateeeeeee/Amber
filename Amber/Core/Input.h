@@ -36,8 +36,8 @@ namespace amber
 	};
 
 	struct WindowEventData;
-	DECLARE_EVENT(WindowResizedEvent, Input, Int32, Int32);
-	DECLARE_EVENT(KeyPressedEvent, Input, KeyCode);
+	DECLARE_EVENT(WindowResizedEvent, Input, Int32, Int32)
+	DECLARE_EVENT(KeyPressedEvent, Input, KeyCode)
 
 	struct InputEvents
 	{
