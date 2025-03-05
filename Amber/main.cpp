@@ -32,7 +32,7 @@ int main(Int argc, Char* argv[])
 {
 	CommandLineOptions::Initialize(argc, argv);
 #ifdef _DEBUG
-	g_LogManager.Initialize(log_file.c_str(), LogLevel::Debug);
+	g_LogManager.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Debug);
 #else 
 	g_LogManager.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Error);
 #endif
