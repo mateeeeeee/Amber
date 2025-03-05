@@ -19,7 +19,6 @@ namespace amber::CommandLineOptions
 			cli_parser.AddArg(true, "--output-file");
 			cli_parser.AddArg(false, "--noeditor");
 			cli_parser.AddArg(false, "--max");
-
 		}
 	}
 
@@ -27,11 +26,8 @@ namespace amber::CommandLineOptions
 	{
 		CLIParser cli_parser{};
 		RegisterOptions(cli_parser);
-		CLIParseResult parse_result = cli_parser.Parse(argc, argv);
-
 		CLIParseResult cli_result = cli_parser.Parse(argc, argv);
-
-		config_file = cli_result["--config-file"].AsStringOr("sponza.json");
+		config_file = cli_result["--config-file"].AsStringOr("sanmiguel.json");
 		log_file = cli_result["--log-file"].AsStringOr("amber.log");
 		output_file = cli_result["--output-file"].AsStringOr("output");
 		use_editor = !cli_result["--noeditor"];
