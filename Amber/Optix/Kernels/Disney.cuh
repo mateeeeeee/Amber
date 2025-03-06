@@ -36,25 +36,13 @@ __device__ bool SameHemisphere(const float3& w_o, const float3& w_i, const float
 
 __device__ float3 CosSampleHemisphere(float2 u)
 {
-	float2 s = 2.f * u - make_float2(1.f);
-	float2 d;
-	float radius = 0.f;
-	float theta = 0.f;
-	if (s.x == 0.f && s.y == 0.f) {
-		d = s;
-	}
-	else {
-		if (fabs(s.x) > fabs(s.y)) {
-			radius = s.x;
-			theta = M_PI / 4.f * (s.y / s.x);
-		}
-		else {
-			radius = s.y;
-			theta = M_PI / 2.f - M_PI / 4.f * (s.x / s.y);
-		}
-	}
-	d = radius * make_float2(cos(theta), sin(theta));
-	return make_float3(d.x, d.y, sqrt(max(0.f, 1.f - d.x * d.x - d.y * d.y)));
+	float phi = 2.0f * M_PI * u.x;
+	float cosTheta = sqrt(u.y);
+	float sinTheta = sqrt(1.0f - u.y);
+	float x = cos(phi) * sinTheta;
+	float y = sin(phi) * sinTheta;
+	float z = cosTheta;
+	return make_float3(x, y, z);
 }
 
 __device__ float pow2(float x) {
@@ -146,7 +134,7 @@ __device__ float3 SampleLambertianDir(const float3& n,
     const float3& v_y,
     const float2& s)
 {
-    const float3 hemi_dir = normalize(CosSampleHemisphere(s));
+    const float3 hemi_dir = CosSampleHemisphere(s);
     return hemi_dir.x * v_x + hemi_dir.y * v_y + hemi_dir.z * n;
 }
 
