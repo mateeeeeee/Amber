@@ -323,11 +323,12 @@ namespace amber
 		pipeline = std::make_unique<Pipeline>(optix_context, comp_opts);
 		OptixProgramGroup rg_handle = pipeline->AddRaygenGroup(RG_NAME_STR(rg));
 		OptixProgramGroup miss_handle = pipeline->AddMissGroup(MISS_NAME_STR(ms));
-		OptixProgramGroup ch_handle = pipeline->AddHitGroup(AH_NAME_STR(ah), CH_NAME_STR(ch), nullptr);
+		OptixProgramGroup hg_handle = pipeline->AddHitGroup(AH_NAME_STR(ah), CH_NAME_STR(ch), nullptr);
+		OptixProgramGroup hg_shadow_handle = pipeline->AddHitGroup(AH_NAME_STR(ah_shadow), CH_NAME_STR(ch), nullptr);
 		pipeline->Create(MAX_DEPTH);
 
 		ShaderBindingTableBuilder sbt_builder{};
-		sbt_builder.AddHitGroup("ch", ch_handle)
+		sbt_builder.AddHitGroup("hg", hg_handle).AddHitGroup("hg_shadow", hg_shadow_handle)
 				   .AddMiss("ms", miss_handle)
 				   .SetRaygen("rg", rg_handle);
 		sbt = sbt_builder.Build();

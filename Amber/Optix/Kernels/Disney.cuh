@@ -215,7 +215,8 @@ __device__ float Gtr2Pdf(const float3& w_o, const float3& w_i, const float3& n, 
 __device__ float Gtr2TransmissionPdf(
     const float3& w_o, const float3& w_i, const float3& n, float alpha, float ior)
 {
-    if (SameHemisphere(w_o, w_i, n)) {
+    if (SameHemisphere(w_o, w_i, n)) 
+    {
         return 0.f;
     }
     bool entering = dot(w_o, n) > 0.f;
@@ -417,13 +418,15 @@ __device__ float DisneyPdf(const DisneyMaterial& mat,
     float n_comp = 3.f;
     float microfacet = 0.f;
     float microfacet_transmission = 0.f;
-    if (mat.anisotropy == 0.f) {
+    if (mat.anisotropy == 0.f) 
+    {
         microfacet = Gtr2Pdf(w_o, w_i, n, alpha);
     }
-    else {
+    else
+    {
         microfacet = Gtr2AnisoPdf(w_o, w_i, n, v_x, v_y, alpha_aniso);
     }
-    if (mat.specular_transmission > 0.f) 
+    if (mat.specular_transmission > 0.f && !SameHemisphere(w_o, w_i, n)) 
     {
         n_comp = 4.f;
         microfacet_transmission = Gtr2TransmissionPdf(w_o, w_i, n, alpha, mat.ior);
@@ -451,16 +454,8 @@ __device__ float3 SampleDisneyBrdf(const DisneyMaterial& mat,
     }
     else 
     {
-		float r = rnd(seed);
-		if (r < mat.specular_transmission)
-		{
-			component = 3; 
-		}
-		else 
-        {
-			component = rnd(seed) * 3.f;
-			component = clamp(component, 0, 2);
-		}
+		component = rnd(seed) * 4.f;
+		component = clamp(component, 0, 3);
     }
 
     float2 samples = make_float2(rnd(seed), rnd(seed));
@@ -524,8 +519,9 @@ __device__ float3 SampleDisneyBrdf(const DisneyMaterial& mat,
         // Invalid refraction, terminate ray
         if (length(w_i) < M_EPSILON) 
         {
-            pdf = 0.f;
-            return make_float3(0.f);
+			pdf = 0.f;
+			w_i = make_float3(0.f);
+			return make_float3(0.f);
         }
     }
     pdf = DisneyPdf(mat, n, w_o, w_i, v_x, v_y);
