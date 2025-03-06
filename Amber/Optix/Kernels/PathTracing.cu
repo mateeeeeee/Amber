@@ -288,6 +288,17 @@ __global__ void RG_NAME(rg)()
 				if (depth == 0)
 				{
 					WriteToDenoiserBuffers(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f));
+
+					if (params.output_type == PathTracerOutput_Albedo)
+					{
+						params.debug_buffer[idx] = make_float3(0.0f, 0.0f, 0.0f);
+						return;
+					}
+					if (params.output_type == PathTracerOutput_Normal)
+					{
+						params.debug_buffer[idx] = make_float3(0.0f, 0.0f, 0.0f);
+						return;
+					}
 				}
 				break;
 			}
@@ -321,6 +332,16 @@ __global__ void RG_NAME(rg)()
 			if (depth == 0)
 			{
 				WriteToDenoiserBuffers(idx, material.base_color, v_z);
+				if (params.output_type == PathTracerOutput_Albedo)
+				{
+					params.debug_buffer[idx] = material.base_color;
+					return;
+				}
+				if (params.output_type == PathTracerOutput_Normal)
+				{
+					params.debug_buffer[idx] = v_z;
+					return;
+				}
 			}
 
 			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, seed) * throughput;

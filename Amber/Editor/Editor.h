@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include "Utilities/SDLUtil.h"
 
 namespace amber
@@ -15,6 +16,7 @@ namespace amber
 	{
 		enum VisibilityFlag
 		{
+			Visibility_Scene,
 			Visibility_Log,
 			Visibility_Console,
 			Visibility_Options,
@@ -40,6 +42,7 @@ namespace amber
 		}
 
 	private:
+		std::string ini_file;
 		Window& window;
 		Camera& camera;
 		OptixPathTracer& path_tracer;
@@ -66,6 +69,7 @@ namespace amber
 		void GUI();
 		void EndGUI();
 
+		void SceneWindow();
 		void LogWindow();
 		void ConsoleWindow();
 		void StatsWindow();

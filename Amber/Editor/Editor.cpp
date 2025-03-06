@@ -33,6 +33,8 @@ namespace amber
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
+		//ini_file = paths::IniDir + "imgui.ini";
+		//io.IniFilename = ini_file.c_str();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
@@ -62,6 +64,7 @@ namespace amber
 						 window.Width(), window.Height()));
 		SDLCheck(gui_target.get());
 		SetStyle();
+		visibility_flags[Visibility_Scene] = true;
 	}
 
 	Editor::~Editor()
@@ -225,19 +228,7 @@ namespace amber
 
 		SDLCheck(SDL_SetRenderTarget(sdl_renderer.get(), gui_target.get()));
 		SDL_RenderClear(sdl_renderer.get());
-		
 		ImGuiID dockspace_id = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
-		ImGui::Begin(ICON_FA_GLOBE"Scene");
-		scene_focused = ImGui::IsWindowFocused();
-		ImVec2 v_min = ImGui::GetWindowContentRegionMin();
-		ImVec2 v_max = ImGui::GetWindowContentRegionMax();
-		v_min.x += ImGui::GetWindowPos().x;
-		v_min.y += ImGui::GetWindowPos().y;
-		v_max.x += ImGui::GetWindowPos().x;
-		v_max.y += ImGui::GetWindowPos().y;
-		ImVec2 size(v_max.x - v_min.x, v_max.y - v_min.y);
-		ImGui::Image(render_target.get(), size);
-		ImGui::End();
 	}
 
 	void Editor::GUI()
@@ -246,6 +237,8 @@ namespace amber
 		{
 			if (ImGui::BeginMenu(ICON_FA_WINDOW_MAXIMIZE" Windows"))
 			{
+				if (ImGui::MenuItem(ICON_FA_GLOBE" Scene", 0, visibility_flags[Visibility_Scene]))
+					visibility_flags[Visibility_Scene] = !visibility_flags[Visibility_Scene];
 				if (ImGui::MenuItem(ICON_FA_COMMENT" Log", 0, visibility_flags[Visibility_Log]))
 					visibility_flags[Visibility_Log] = !visibility_flags[Visibility_Log];
 				if (ImGui::MenuItem(ICON_FA_TERMINAL" Console", 0, visibility_flags[Visibility_Console]))
@@ -270,6 +263,8 @@ namespace amber
 			}
 			ImGui::EndMainMenuBar();
 		}
+
+		SceneWindow();
 		LogWindow();
 		ConsoleWindow();
 		StatsWindow();
@@ -285,6 +280,44 @@ namespace amber
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 		SDLCheck(SDL_SetRenderTarget(sdl_renderer.get(), nullptr));
 		SDLCheck(SDL_RenderCopy(sdl_renderer.get(), gui_target.get(), nullptr, nullptr));
+	}
+
+	void Editor::SceneWindow()
+	{
+		if (!visibility_flags[Visibility_Scene]) return;
+		ImGui::Begin(ICON_FA_GLOBE" Scene", nullptr, ImGuiWindowFlags_MenuBar);
+
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("Path Tracer Output"))
+			{
+				PathTracerOutput current_output = path_tracer.GetOutput();
+				auto AddMenuItem = [&](PathTracerOutput output, Char const* item_name)
+					{
+						if (ImGui::MenuItem(item_name, nullptr, output == current_output)) { path_tracer.SetOutput(output); }
+					};
+
+#define AddPathTracerOutputMenuItem(name) AddMenuItem(PathTracerOutput::##name, #name)
+				AddPathTracerOutputMenuItem(Final);
+				AddPathTracerOutputMenuItem(Albedo);
+				AddPathTracerOutputMenuItem(Normal);
+				AddPathTracerOutputMenuItem(Custom);
+#undef AddPathTracerOutputMenuItem
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
+		}
+
+		scene_focused = ImGui::IsWindowFocused();
+		ImVec2 v_min = ImGui::GetWindowContentRegionMin();
+		ImVec2 v_max = ImGui::GetWindowContentRegionMax();
+		v_min.x += ImGui::GetWindowPos().x;
+		v_min.y += ImGui::GetWindowPos().y;
+		v_max.x += ImGui::GetWindowPos().x;
+		v_max.y += ImGui::GetWindowPos().y;
+		ImVec2 size(v_max.x - v_min.x, v_max.y - v_min.y);
+		ImGui::Image(render_target.get(), size);
+		ImGui::End();
 	}
 
 	void Editor::LogWindow()
