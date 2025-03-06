@@ -70,12 +70,12 @@ __device__ __forceinline__ bool TraceOcclusion(
 		ray_origin,
 		ray_direction,
 		tmin,
-		tmax, 0.0f,                
+		tmax, 0.0f,
 		OptixVisibilityMask(255),
 		OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT,
-		0,                          
-		1,							
-		0                           
+		1,
+		1,
+		0
 	);
 	return optixHitObjectIsHit();
 }
@@ -359,13 +359,13 @@ __global__ void RG_NAME(rg)()
 			float pdf;
 			float3 bsdf = SampleDisneyBrdf(material, v_z, w_o, v_x, v_y, seed, w_i, pdf);
 
-			// Custom debug output for direction analysis
-			if (params.output_type == PathTracerOutput_Custom && depth == 0) // Only debug first hit
+			if (params.output_type == PathTracerOutput_Custom && depth == 0) 
 			{
 				bool entering = dot(w_o, v_z) > 0.f;
-				float dot_wo_n = dot(w_o, v_z); // Outgoing direction vs. normal
 				float dot_wi_n = dot(w_i, v_z); // Sampled direction vs. normal
-				params.debug_buffer[idx] = make_float3(dot_wo_n, dot_wi_n, entering ? 1.0f : 0.0f);
+				bool is_reflected = SameHemisphere(w_o, w_i, v_z); // 1.0 if reflected, 0.0 if refracted
+				params.debug_buffer[idx] = make_float3(dot_wi_n, is_reflected ? 1.0f : 0.0f, pdf);
+				return;
 			}
 
 			if (pdf == 0.0f || length(bsdf) < M_EPSILON)
@@ -374,7 +374,7 @@ __global__ void RG_NAME(rg)()
 			}
 			throughput *= bsdf * abs(dot(w_i, v_z)) / pdf;
 			
-			ray_origin = hit_record.P;
+			ray_origin = hit_record.P + w_i * 1e-3;
 			ray_direction = w_i;
 
 			if (depth >= 2)
@@ -503,6 +503,28 @@ __global__ void CH_NAME(ch)()
 	hit_record->N = TransformNormal(object_to_world_transform, vertex.N);
 	hit_record->uv = vertex.uv;
 	hit_record->material_idx = mesh.material_idx;
+}
+
+
+extern "C"
+__global__ void AH_NAME(ah_shadow)()
+{
+	Uint32 instance_idx = optixGetInstanceId();
+	Uint32 primitive_idx = optixGetPrimitiveIndex();
+
+	MeshGPU mesh = params.meshes[instance_idx];
+	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
+	MaterialGPU material = params.materials[mesh.material_idx];
+
+	if (material.diffuse_tex_id >= 0)
+	{
+		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
+		if (sampled.w < material.alpha_cutoff) optixIgnoreIntersection();
+	}
+	if (material.specular_transmission > 0)
+	{
+		optixIgnoreIntersection();
+	}
 }
 
 #endif
