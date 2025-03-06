@@ -6,23 +6,19 @@ struct OrthonormalBasis
 {
 	__forceinline__ __device__ OrthonormalBasis(float3 const& _normal)
 	{
-		normal = _normal;
+		normal = normalize(_normal); // Ensure the normal is normalized
 
-		if (fabs(normal.x) > fabs(normal.z))
+		// Handle degenerate cases better
+		if (fabs(normal.x) < 0.0001f && fabs(normal.y) < 0.0001f)
 		{
-			binormal.x = -normal.y;
-			binormal.y = normal.x;
-			binormal.z = 0;
+			binormal = make_float3(1.0f, 0.0f, 0.0f);
 		}
 		else
 		{
-			binormal.x = 0;
-			binormal.y = -normal.z;
-			binormal.z = normal.y;
+			binormal = make_float3(normal.y, -normal.x, 0.0f);
 		}
-
 		binormal = normalize(binormal);
-		tangent = cross(binormal, normal);
+		tangent = normalize(cross(binormal, normal));
 	}
 
 	__forceinline__ __device__ void InverseTransform(float3& p) const
