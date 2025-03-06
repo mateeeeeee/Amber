@@ -301,6 +301,7 @@ namespace amber
 				AddPathTracerOutputMenuItem(Final);
 				AddPathTracerOutputMenuItem(Albedo);
 				AddPathTracerOutputMenuItem(Normal);
+				AddPathTracerOutputMenuItem(UV);
 				AddPathTracerOutputMenuItem(Custom);
 #undef AddPathTracerOutputMenuItem
 				ImGui::EndMenu();
