@@ -17,6 +17,12 @@ namespace amber
 		Bool   accumulate;
 	};
 
+	enum PathTracerOutput : Int
+	{
+		PathTracerOutput_Final,
+		PathTracerOutput_Debug
+	};
+
 	class OptixInitializer
 	{
 	public:
@@ -54,6 +60,7 @@ namespace amber
 		Uint32 height;
 		std::unique_ptr<Scene>		scene;
 		optix::TBuffer<float3>		accum_buffer;
+		optix::TBuffer<float3>		debug_buffer;
 		optix::TBuffer<float3>		hdr_buffer;
 		optix::TBuffer<uchar4>		ldr_buffer;
 		CpuBuffer2D<uchar4>			framebuffer;
@@ -62,7 +69,7 @@ namespace amber
 		optix::ShaderBindingTable sbt;
 		std::vector<OptixTraversableHandle> blas_handles;
 		OptixTraversableHandle tlas_handle;
-		std::vector<std::unique_ptr<optix::Buffer>> as_outputs; //is it necessary to keep this alive?
+		std::vector<std::unique_ptr<optix::Buffer>> as_outputs;
 
 		std::unique_ptr<optix::Texture2D> sky_texture;
 		std::vector<std::unique_ptr<optix::Texture2D>> textures;
@@ -88,11 +95,13 @@ namespace amber
 		OptixImage2D input_albedo;
 		OptixImage2D input_normals;
 		OptixImage2D output_image;
+		OptixImage2D debug_image;
 
 		Bool   accumulate	= true;
 		Uint32 frame_index	= 0;
 		Int32 depth_count;
 		Int32 sample_count;
+		Bool debug_mode = false;
 
 	private:
 		void ManageDenoiserResources();

@@ -451,8 +451,16 @@ __device__ float3 SampleDisneyBrdf(const DisneyMaterial& mat,
     }
     else 
     {
-        component = rnd(seed) * 4.f;
-        component = clamp(component, 0, 3);
+		float r = rnd(seed);
+		if (r < mat.specular_transmission)
+		{
+			component = 3; 
+		}
+		else 
+        {
+			component = rnd(seed) * 3.f;
+			component = clamp(component, 0, 2);
+		}
     }
 
     float2 samples = make_float2(rnd(seed), rnd(seed));

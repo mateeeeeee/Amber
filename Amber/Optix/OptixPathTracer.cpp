@@ -92,7 +92,7 @@ namespace amber
 
 	OptixPathTracer::OptixPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& _scene)  : OptixInitializer(),
 		width(width), height(height), scene(std::move(_scene)), framebuffer(height, width), 
-		hdr_buffer(width * height), ldr_buffer(width * height), accum_buffer(width * height),
+		hdr_buffer(width * height), ldr_buffer(width * height), accum_buffer(width * height), debug_buffer(width * height),
 		accumulate(config.accumulate), denoise(config.use_denoiser), depth_count(config.max_depth), sample_count(config.samples_per_pixel)
 	{
 		OnResize(width, height);
@@ -362,6 +362,7 @@ namespace amber
 		params.cam_aspect_ratio = camera.GetAspectRatio();
 
 		params.accum_buffer = accum_buffer.As<float3>();
+		params.debug_buffer = debug_buffer.As<float3>();
 		params.traversable = tlas_handle;
 		params.sample_count = sample_count;
 		params.max_depth = depth_count;
@@ -384,6 +385,16 @@ namespace amber
 
 		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), sbt.Get(), width, height, 1));
 		CudaSyncCheck();
+
+		if (debug_mode)
+		{
+			LaunchTonemapKernel(ldr_buffer, debug_buffer, width, height);
+			CudaSyncCheck();
+			cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
+			CudaSyncCheck();
+			++frame_index;
+			return;
+		}
 
 		LaunchResolveAccumulationKernel(hdr_buffer, accum_buffer, width, height, frame_index);
 		CudaSyncCheck();
@@ -430,9 +441,11 @@ namespace amber
 		framebuffer.Resize(h, w);
 
 		accum_buffer.Realloc(w * h);
+		debug_buffer.Realloc(w * h);
 		hdr_buffer.Realloc(w * h);
 		ldr_buffer.Realloc(w * h);
 		cudaMemset(accum_buffer, 0, accum_buffer.GetSize());
+		cudaMemset(debug_buffer, 0, debug_buffer.GetSize());
 		cudaMemset(hdr_buffer, 0, hdr_buffer.GetSize());
 		cudaMemset(ldr_buffer, 0, hdr_buffer.GetSize());
 		ManageDenoiserResources();
@@ -463,7 +476,6 @@ namespace amber
 			cudaMemset(denoiser_output, 0, denoiser_output.GetSize());
 			cudaMemset(denoiser_albedo, 0, denoiser_albedo.GetSize());
 			cudaMemset(denoiser_normals, 0, denoiser_normals.GetSize());
-
 
 			auto FillDenoiserImageData = [this](OptixImage2D& image_data, TBuffer<float3> const& buffer)
 				{
@@ -506,6 +518,7 @@ namespace amber
 				if(accumulate) ImGui::SliderInt("Denoiser Accumulation Target", &denoise_accumulation_target, 1, 64);
 			}
 
+			ImGui::Checkbox("Debug Mode", &debug_mode);
 			ImGui::TreePop();
 		}
 	}

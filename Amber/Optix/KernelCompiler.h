@@ -5,10 +5,16 @@
 
 namespace amber
 {
+	struct KernelDefine
+	{
+		std::string name;
+		std::string value;
+	};
+
 	struct KernelCompilerInput
 	{
 		std::string_view kernel_file;
-		std::vector<std::string> defines;
+		std::vector<KernelDefine> defines;
 	};
 
 	enum class CompilerError

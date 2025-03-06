@@ -51,6 +51,16 @@ namespace amber
 		compile_options.push_back("--use_fast_math");
 		compile_options.push_back("--generate-line-info");
 
+		for (KernelDefine const& define : compiler_input.defines)
+		{
+			std::string define_option = "-D" + define.name;
+			if (!define.value.empty())
+			{
+				define_option += "=" + define.value;
+			}
+			compile_options.push_back(define_option.c_str());
+		}
+
 		nvrtcResult compile_result = nvrtcCompileProgram(prog, compile_options.size(), compile_options.data());
 		if (compile_result != NVRTC_SUCCESS) 
 		{

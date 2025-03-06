@@ -8,16 +8,16 @@
 #define AMBER_CONCAT(x, y) _AMBER_CONCAT_IMPL( x, y )
 
 #define AMBER_ASSERT(expr)			assert(expr)
-#define AMBER_ASSERT_MSG(expr, msg)   assert(expr && msg)
+#define AMBER_ASSERT_MSG(expr, msg) assert(expr && msg)
 #define AMBER_UNREACHABLE()			__assume(false)
-#define AMBER_FORCEINLINE			    __forceinline
+#define AMBER_FORCEINLINE			__forceinline
 #define AMBER_NODISCARD				[[nodiscard]]
 #define AMBER_NORETURN				[[noreturn]]
-#define AMBER_DEPRECATED			    [[deprecated]]
-#define AMBER_MAYBE_UNUSED            [[maybe_unused]]
-#define AMBER_DEPRECATED_MSG(msg)	    [[deprecated(#msg)]]
-#define AMBER_DEBUGZONE_BEGIN         __pragma(optimize("", off))
-#define AMBER_DEBUGZONE_END           __pragma(optimize("", on))
+#define AMBER_DEPRECATED			[[deprecated]]
+#define AMBER_MAYBE_UNUSED          [[maybe_unused]]
+#define AMBER_DEPRECATED_MSG(msg)	[[deprecated(#msg)]]
+#define AMBER_DEBUGZONE_BEGIN       __pragma(optimize("", off))
+#define AMBER_DEBUGZONE_END         __pragma(optimize("", on))
 
 #if defined(_MSC_VER)
 #define AMBER_UNREACHABLE()			__assume(false)
