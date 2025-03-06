@@ -70,6 +70,7 @@ namespace amber
 	{
 		OptixTraversableHandle	traversable;
 		float3*					accum_buffer;
+		float3*					debug_buffer;
 		Uint32			        sample_count;
 		Uint32			        frame_index;
 		Uint32			        max_depth;

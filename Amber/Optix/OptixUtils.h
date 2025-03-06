@@ -25,7 +25,9 @@ namespace amber::optix
 		Uint32 payload_values = 3;
 		Uint32 attribute_values = 3;
 		Char const* launch_params_name;
+
 		Char const* input_file_name;
+
 	};
 	class Pipeline
 	{
