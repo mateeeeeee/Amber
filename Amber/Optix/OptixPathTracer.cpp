@@ -367,6 +367,7 @@ namespace amber
 		params.sample_count = sample_count;
 		params.max_depth = depth_count;
 		params.frame_index = frame_index;
+		params.output_type = static_cast<Uint32>(output);
 		params.vertices = vertices_buffer->GetDevicePtr();
 		params.indices = indices_buffer->GetDevicePtr();
 		params.normals = normals_buffer->GetDevicePtr();
@@ -386,7 +387,7 @@ namespace amber
 		OptixCheck(optixLaunch(*pipeline, 0, gpu_params.GetDevicePtr(), gpu_params.GetSize(), sbt.Get(), width, height, 1));
 		CudaSyncCheck();
 
-		if (debug_mode)
+		if (output != PathTracerOutput::Final)
 		{
 			LaunchTonemapKernel(ldr_buffer, debug_buffer, width, height);
 			CudaSyncCheck();
@@ -517,8 +518,6 @@ namespace amber
 				ImGui::SliderFloat("Denoiser Blend Factor", &denoise_blend_factor, 0.0f, 1.0f);
 				if(accumulate) ImGui::SliderInt("Denoiser Accumulation Target", &denoise_accumulation_target, 1, 64);
 			}
-
-			ImGui::Checkbox("Debug Mode", &debug_mode);
 			ImGui::TreePop();
 		}
 	}

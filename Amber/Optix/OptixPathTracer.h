@@ -17,10 +17,12 @@ namespace amber
 		Bool   accumulate;
 	};
 
-	enum PathTracerOutput : Int
+	enum class PathTracerOutput : Uint8
 	{
-		PathTracerOutput_Final,
-		PathTracerOutput_Debug
+		Final,
+		Albedo,
+		Normal,
+		Custom
 	};
 
 	class OptixInitializer
@@ -50,6 +52,12 @@ namespace amber
 
 		auto const& GetFramebuffer() const { return framebuffer; }
 		Uint32 GetMaxDepth() const { return MAX_DEPTH; }
+
+		void SetOutput(PathTracerOutput pto)
+		{
+			output = pto;
+		}
+		PathTracerOutput GetOutput() const { return output; }
 
 		void OptionsGUI();
 		void LightsGUI();
@@ -101,7 +109,7 @@ namespace amber
 		Uint32 frame_index	= 0;
 		Int32 depth_count;
 		Int32 sample_count;
-		Bool debug_mode = false;
+		PathTracerOutput output = PathTracerOutput::Final;
 
 	private:
 		void ManageDenoiserResources();

@@ -58,6 +58,11 @@ namespace amber
 	#define LightType_Area 3
 	#define LightType_Environmental 4
 
+	#define PathTracerOutput_Final 0 
+	#define PathTracerOutput_Albedo 1 
+	#define PathTracerOutput_Normal 2 
+	#define PathTracerOutput_Custom 3 
+
 	struct LightGPU
 	{
 		Uint32		type;
@@ -74,6 +79,7 @@ namespace amber
 		Uint32			        sample_count;
 		Uint32			        frame_index;
 		Uint32			        max_depth;
+		Uint32					output_type;
 
 		float3					cam_eye;
 		float3					cam_u, cam_v, cam_w;
