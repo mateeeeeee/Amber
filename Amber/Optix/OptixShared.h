@@ -58,11 +58,12 @@ namespace amber
 	#define LightType_Area 3
 	#define LightType_Environmental 4
 
-	#define PathTracerOutput_Final  0 
-	#define PathTracerOutput_Albedo 1 
-	#define PathTracerOutput_Normal 2 
-	#define PathTracerOutput_UV 	3 
-	#define PathTracerOutput_Custom 4
+	#define PathTracerOutput_Final			0 
+	#define PathTracerOutput_Albedo			1 
+	#define PathTracerOutput_Normal			2 
+	#define PathTracerOutput_UV 			3 
+	#define PathTracerOutput_MaterialID		4 
+	#define PathTracerOutput_Custom			5
 
 	struct LightGPU
 	{

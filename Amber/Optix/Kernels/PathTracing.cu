@@ -244,7 +244,8 @@ __device__ void WriteToDenoiserBuffers(Uint32 idx, float3 const& albedo, float3 
 		params.denoiser_normals[idx] = view_normal;
 	}
 }
-__device__ void WriteToDebugBuffer(Uint32 idx, float3 const& albedo, float3 const& normal, float2 const& uv)
+
+__device__ void WriteToDebugBuffer(Uint32 idx, float3 const& albedo, float3 const& normal, float2 const& uv, Uint32 material_id)
 {
 	if (params.output_type == PathTracerOutput_Albedo)
 	{
@@ -259,6 +260,15 @@ __device__ void WriteToDebugBuffer(Uint32 idx, float3 const& albedo, float3 cons
 	if (params.output_type == PathTracerOutput_UV)
 	{
 		params.debug_buffer[idx] = make_float3(uv, 0.0f);
+		return;
+	}
+	if(params.output_type == PathTracerOutput_MaterialID)
+	{
+		float3 material_id_color = make_float3(
+			(material_id * 37) % 255 / 255.0, 
+			(material_id * 59) % 255 / 255.0,
+			(material_id * 97) % 255 / 255.0);
+		params.debug_buffer[idx] = material_id_color;
 		return;
 	}
 }
@@ -306,7 +316,7 @@ __global__ void RG_NAME(rg)()
 				if (depth == 0)
 				{
 					WriteToDenoiserBuffers(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f));
-					WriteToDebugBuffer(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f), make_float2(0.0f, 0.0f));
+					WriteToDebugBuffer(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f), make_float2(0.0f, 0.0f), 0);
 				}
 				break;
 			}
@@ -340,7 +350,7 @@ __global__ void RG_NAME(rg)()
 			if (depth == 0)
 			{
 				WriteToDenoiserBuffers(idx, material.base_color, v_z);
-				WriteToDebugBuffer(idx, material.base_color, v_z, hit_record.uv);
+				WriteToDebugBuffer(idx, material.base_color, v_z, hit_record.uv, hit_record.material_idx);
 			}
 
 			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, seed) * throughput;
@@ -348,6 +358,16 @@ __global__ void RG_NAME(rg)()
 			float3 w_i;
 			float pdf;
 			float3 bsdf = SampleDisneyBrdf(material, v_z, w_o, v_x, v_y, seed, w_i, pdf);
+
+			// Custom debug output for direction analysis
+			if (params.output_type == PathTracerOutput_Custom && depth == 0) // Only debug first hit
+			{
+				bool entering = dot(w_o, v_z) > 0.f;
+				float dot_wo_n = dot(w_o, v_z); // Outgoing direction vs. normal
+				float dot_wi_n = dot(w_i, v_z); // Sampled direction vs. normal
+				params.debug_buffer[idx] = make_float3(dot_wo_n, dot_wi_n, entering ? 1.0f : 0.0f);
+			}
+
 			if (pdf == 0.0f || length(bsdf) < M_EPSILON)
 			{
 				break;

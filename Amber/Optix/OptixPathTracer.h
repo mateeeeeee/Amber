@@ -23,6 +23,7 @@ namespace amber
 		Albedo,
 		Normal,
 		UV,
+		MaterialID,
 		Custom
 	};
 
