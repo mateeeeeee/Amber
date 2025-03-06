@@ -244,6 +244,24 @@ __device__ void WriteToDenoiserBuffers(Uint32 idx, float3 const& albedo, float3 
 		params.denoiser_normals[idx] = view_normal;
 	}
 }
+__device__ void WriteToDebugBuffer(Uint32 idx, float3 const& albedo, float3 const& normal, float2 const& uv)
+{
+	if (params.output_type == PathTracerOutput_Albedo)
+	{
+		params.debug_buffer[idx] = albedo;
+		return;
+	}
+	if (params.output_type == PathTracerOutput_Normal)
+	{
+		params.debug_buffer[idx] = normal;
+		return;
+	}
+	if (params.output_type == PathTracerOutput_UV)
+	{
+		params.debug_buffer[idx] = make_float3(uv, 0.0f);
+		return;
+	}
+}
 
 
 extern "C" 
@@ -288,17 +306,7 @@ __global__ void RG_NAME(rg)()
 				if (depth == 0)
 				{
 					WriteToDenoiserBuffers(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f));
-
-					if (params.output_type == PathTracerOutput_Albedo)
-					{
-						params.debug_buffer[idx] = make_float3(0.0f, 0.0f, 0.0f);
-						return;
-					}
-					if (params.output_type == PathTracerOutput_Normal)
-					{
-						params.debug_buffer[idx] = make_float3(0.0f, 0.0f, 0.0f);
-						return;
-					}
+					WriteToDebugBuffer(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f), make_float2(0.0f, 0.0f));
 				}
 				break;
 			}
@@ -332,16 +340,7 @@ __global__ void RG_NAME(rg)()
 			if (depth == 0)
 			{
 				WriteToDenoiserBuffers(idx, material.base_color, v_z);
-				if (params.output_type == PathTracerOutput_Albedo)
-				{
-					params.debug_buffer[idx] = material.base_color;
-					return;
-				}
-				if (params.output_type == PathTracerOutput_Normal)
-				{
-					params.debug_buffer[idx] = v_z;
-					return;
-				}
+				WriteToDebugBuffer(idx, material.base_color, v_z, hit_record.uv);
 			}
 
 			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, seed) * throughput;

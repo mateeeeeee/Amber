@@ -22,6 +22,7 @@ namespace amber
 		Final,
 		Albedo,
 		Normal,
+		UV,
 		Custom
 	};
 
