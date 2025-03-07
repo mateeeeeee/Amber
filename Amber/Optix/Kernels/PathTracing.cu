@@ -339,13 +339,13 @@ __global__ void RG_NAME(rg)()
 			v_x = ort.tangent;
 			v_y = ort.binormal;
 
-			if (length(material.normal - make_float3(0.0f, 0.0f, 1.0f)) > 1e-4f)
-			{
-				v_z = ApplyNormalMap(material.normal, v_x, v_y, v_z);
-				ort = OrthonormalBasis(v_z);
-				v_x = ort.tangent;
-				v_y = ort.binormal;
-			}
+			//if (length(material.normal - make_float3(0.0f, 0.0f, 1.0f)) > 1e-4f)
+			//{
+			//	v_z = ApplyNormalMap(material.normal, v_x, v_y, v_z);
+			//	ort = OrthonormalBasis(v_z);
+			//	v_x = ort.tangent;
+			//	v_y = ort.binormal;
+			//}
 
 			if (depth == 0)
 			{
