@@ -1,4 +1,6 @@
 #include "Color.cuh"
+#include "Device/KernelLauncher.h"
+#include <device_launch_parameters.h>
 
 __global__ void ResolveAccumulation(float3* hdr_output, float3* accum_input, int width, int height, int frame_index)
 {
@@ -36,12 +38,12 @@ extern "C" void LaunchResolveAccumulationKernel(float3* hdr_output, float3* accu
 {
 	dim3 blockDim(16, 16);
 	dim3 gridDim((width + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
-	ResolveAccumulation<<<gridDim, blockDim>>>(hdr_output, accum_input, width, height, frame_index);
+	LAUNCH_KERNEL(ResolveAccumulation, gridDim, blockDim, hdr_output, accum_input, width, height, frame_index);
 }
 
 extern "C" void LaunchTonemapKernel(uchar4* ldr_output, float3* hdr_input, int width, int height)
 {
 	dim3 blockDim(16, 16);
 	dim3 gridDim((width + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
-	Tonemap<<<gridDim, blockDim>>>(ldr_output, hdr_input, width, height);
+	LAUNCH_KERNEL(Tonemap, gridDim, blockDim, ldr_output, hdr_input, width, height);
 }

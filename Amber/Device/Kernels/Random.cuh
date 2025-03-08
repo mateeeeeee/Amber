@@ -1,5 +1,4 @@
 #pragma once
-#if defined(__CUDACC__)
 
 template<unsigned int N>
 static __forceinline__ __device__  unsigned int tea(unsigned int val0, unsigned int val1)
@@ -43,5 +42,3 @@ static __forceinline__ __device__  unsigned int rot_seed(unsigned int seed, unsi
 {
 	return seed ^ frame;
 }
-
-#endif

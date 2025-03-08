@@ -1,7 +1,5 @@
 #pragma once
-
-#if defined(__CUDACC__)
-
+#include <cuda_runtime.h>
 #include <optix.h>
 #include "Device/DeviceHostCommon.h"
 #include "Random.cuh"
@@ -526,5 +524,3 @@ __global__ void AH_NAME(ah_shadow)()
 		optixIgnoreIntersection();
 	}
 }
-
-#endif

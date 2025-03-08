@@ -1,11 +1,7 @@
 #pragma once
-
-#if defined(__CUDACC__)
-
 #include <vector_types.h>
 #include <vector_functions.h>
 #include "Math.cuh"
-
 
 __device__ __forceinline__ float3 ToSRGB(float3 const& color)
 {
@@ -32,6 +28,3 @@ __device__ float Luminance(float3 color)
 {
 	return dot(color, make_float3(0.2126729, 0.7151522, 0.0721750));
 }
-
-
-#endif
