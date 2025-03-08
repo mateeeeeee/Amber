@@ -112,16 +112,18 @@ set(DEVICE_BACKEND_FILES
     Device/DeviceHostCommon.h
     Device/KernelCompiler.h
     Device/KernelCompiler.cpp
-    Device/KernelLauncher.h
 )
 
 set(CUDA_KERNEL_FILES
-    Device/Kernels/Math.cuh
+    Device/Kernels/PostProcessing.cu
     Device/Kernels/Random.cuh
     Device/Kernels/Color.cuh
-    Device/Kernels/Sampling.cuh
+    Device/Kernels/ONB.cuh
     Device/Kernels/Disney.cuh
-    Device/Kernels/PostProcessing.cu
+    Device/Kernels/Math.cuh
+    Device/Kernels/DeviceCommon.cuh
+    Device/Kernels/Impl/MathImpl.cuh
+
 )
 
  set(OPTIX_KERNEL_FILES

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector_types.h>
 #include <optix_types.h>
+#include <texture_types.h>
 
 #define RG_NAME(name) __raygen__##name
 #define MISS_NAME(name) __miss__##name
