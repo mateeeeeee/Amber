@@ -104,27 +104,27 @@ set(EXTERNAL_FILES
     External/cgltf/cgltf.h
 )
 
-set(OPTIX_BACKEND_FILES
-    Optix/OptixUtils.h
-    Optix/OptixUtils.cpp
-    Optix/OptixPathTracer.h
-    Optix/OptixPathTracer.cpp
-    Optix/OptixShared.h
-    Optix/KernelCompiler.h
-    Optix/KernelCompiler.cpp
+set(DEVICE_BACKEND_FILES
+    Device/OptixUtils.h
+    Device/OptixUtils.cpp
+    Device/OptixPathTracer.h
+    Device/OptixPathTracer.cpp
+    Device/OptixShared.h
+    Device/KernelCompiler.h
+    Device/KernelCompiler.cpp
 )
 
 set(CUDA_KERNEL_FILES
-    Optix/Kernels/Math.cuh
-    Optix/Kernels/Random.cuh
-    Optix/Kernels/Color.cuh
-    Optix/Kernels/Sampling.cuh
-    Optix/Kernels/Disney.cuh
-    Optix/Kernels/PostProcessing.cu
+    Device/Kernels/Math.cuh
+    Device/Kernels/Random.cuh
+    Device/Kernels/Color.cuh
+    Device/Kernels/Sampling.cuh
+    Device/Kernels/Disney.cuh
+    Device/Kernels/PostProcessing.cu
 )
 
  set(OPTIX_KERNEL_FILES
-    Optix/Kernels/PathTracing.cu
+    Device/Kernels/PathTracing.cu
  )
 
 set(MATH_FILES
@@ -146,11 +146,11 @@ set(MISC_FILES
 )
 
 
-add_executable(Amber ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${MISC_FILES})
+add_executable(Amber ${MAIN_FILES} ${MATH_FILES} ${DEVICE_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${MISC_FILES})
 set_target_properties(Amber PROPERTIES OUTPUT_NAME Amber)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${OPTIX_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${MISC_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${DEVICE_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${MISC_FILES})
 
 # Exclude the .cu files from the build
 foreach(file ${OPTIX_KERNEL_FILES})

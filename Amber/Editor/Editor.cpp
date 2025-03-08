@@ -6,7 +6,7 @@
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Scene/Camera.h"
-#include "Optix/OptixPathTracer.h"
+#include "Device/OptixPathTracer.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_sdl.h"
 #include "ImGui/imgui_impl_sdlrenderer.h"
