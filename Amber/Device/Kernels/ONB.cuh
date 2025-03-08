@@ -29,12 +29,3 @@ struct OrthonormalBasis
 	float3 binormal;
 	float3 normal;
 };
-
-__forceinline__ __device__ void CosineSampleHemisphere(float u1, float u2, float3& p)
-{
-	const float r = sqrtf(u1);
-	const float phi = 2.0f * M_PI * u2;
-	p.x = r * cosf(phi);
-	p.y = r * sinf(phi);
-	p.z = sqrtf(fmaxf(0.0f, 1.0f - p.x * p.x - p.y * p.y));
-}

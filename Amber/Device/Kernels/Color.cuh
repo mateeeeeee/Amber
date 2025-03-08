@@ -1,6 +1,4 @@
 #pragma once
-#include <vector_types.h>
-#include <vector_functions.h>
 #include "Math.cuh"
 
 __device__ __forceinline__ float3 ToSRGB(float3 const& color)

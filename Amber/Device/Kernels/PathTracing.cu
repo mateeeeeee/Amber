@@ -1,10 +1,9 @@
 #pragma once
-#include <cuda_runtime.h>
-#include <optix.h>
+#include "DeviceCommon.cuh"
 #include "Device/DeviceHostCommon.h"
 #include "Random.cuh"
 #include "Color.cuh"
-#include "Sampling.cuh"
+#include "ONB.cuh"
 #include "Disney.cuh"
 
 using namespace amber;
@@ -14,68 +13,10 @@ extern "C"
 	__constant__ LaunchParams params;
 }
 
-__forceinline__ __device__ Uint32 PackPointer0(void* ptr)
-{
-	Uintptr uptr = reinterpret_cast<Uintptr>(ptr);
-	return static_cast<Uint32>(uptr >> 32);
-}
-__forceinline__ __device__ Uint32 PackPointer1(void* ptr)
-{
-	Uintptr uptr = reinterpret_cast<Uintptr>(ptr);
-	return static_cast<Uint32>(uptr);
-}
-
 template<typename T>
 __forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
 {
 	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
-}
-
-template <typename T>
-__device__ __forceinline__ T* GetPayload()
-{
-    Uint32 p0 = optixGetPayload_0(), p1 = optixGetPayload_1();
-    const Uintptr uptr = (Uintptr(p0) << 32) | p1;
-    return reinterpret_cast<T*>(uptr);
-}
-
-template <typename... Args>
-__device__ __forceinline__ void Trace(
-	OptixTraversableHandle traversable,
-	float3 ray_origin, 
-	float3 ray_direction,
-	float tmin,
-	float tmax, Args&&... payload)
-{
-	optixTrace(traversable, ray_origin, ray_direction, 
-		tmin, tmax, 0.0f,
-		OptixVisibilityMask(255), OPTIX_RAY_FLAG_NONE, 0,
-		0, 
-		0,
-		std::forward<Args>(payload)...);
-}
-
-__device__ __forceinline__ bool TraceOcclusion(
-	OptixTraversableHandle handle,
-	float3                 ray_origin,
-	float3                 ray_direction,
-	float                  tmin,
-	float                  tmax
-)
-{
-	optixTraverse(
-		handle,
-		ray_origin,
-		ray_direction,
-		tmin,
-		tmax, 0.0f,
-		OptixVisibilityMask(255),
-		OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT,
-		1,
-		1,
-		0
-	);
-	return optixHitObjectIsHit();
 }
 
 __device__ __forceinline__ void UnpackMaterial(DisneyMaterial& mat_params, Uint32 id, float2 uv)

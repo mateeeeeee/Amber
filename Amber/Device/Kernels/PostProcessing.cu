@@ -1,6 +1,5 @@
 #include "Color.cuh"
-#include "Device/KernelLauncher.h"
-#include <device_launch_parameters.h>
+#include "DeviceCommon.cuh"
 
 __global__ void ResolveAccumulation(float3* hdr_output, float3* accum_input, int width, int height, int frame_index)
 {
