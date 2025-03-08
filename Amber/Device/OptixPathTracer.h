@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include "OptixUtils.h"
-#include "OptixShared.h"
+#include "DeviceHostCommon.h"
 #include "Utilities/CpuBuffer2D.h"
 
 namespace amber

@@ -9,7 +9,7 @@
 #include "Editor/Editor.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
-#include "Optix/OptixPathTracer.h"
+#include "Device/OptixPathTracer.h"
 #include "Utilities/CpuBuffer2D.h"
 #include "Utilities/JsonUtil.h"
 

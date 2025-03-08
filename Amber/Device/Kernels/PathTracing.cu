@@ -3,7 +3,7 @@
 #if defined(__CUDACC__)
 
 #include <optix.h>
-#include "Optix/OptixShared.h"
+#include "Device/DeviceHostCommon.h"
 #include "Random.cuh"
 #include "Color.cuh"
 #include "Sampling.cuh"
