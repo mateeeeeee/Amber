@@ -9,8 +9,18 @@ static constexpr float M_INF = 3.402823466e+38F;
 static constexpr float M_PI = 3.14159265358979323846f;
 static constexpr float M_HALF_PI = 1.57079632679489661923f;
 static constexpr float M_INV_PI = 0.318309886183790671538f;
-static constexpr float M_TWO_PI = 2.0f * M_PI;          // 2π
+static constexpr float M_TWO_PI = 2.0f * M_PI;          
 
+template<typename T>
+__forceinline__ __device__ T min(T a, T b)
+{
+	return a < b ? a : b;
+}
+template<typename T>
+__forceinline__ __device__ T max(T a, T b)
+{
+	return a > b ? a : b;
+}
 
 __forceinline__ __device__ float lerp(const float a, const float b, const float t)
 {
