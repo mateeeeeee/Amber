@@ -6,7 +6,6 @@
 static_assert(false);
 #endif
 #endif
-
 #include <cuda_runtime.h>
 #include <optix.h>
 #include "Core/Types.h"
