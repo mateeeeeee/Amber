@@ -1,6 +1,4 @@
 ﻿#pragma once
-#if defined(__CUDACC__)
-
 #include <cmath>
 #include <cuda_runtime.h>
 #include <vector_functions.h>
@@ -2520,6 +2518,3 @@ __forceinline__ __device__ float4 make_float4(const float v0, const float3& v1) 
 __forceinline__ __device__ float4 make_float4(const float3& v0, const float v1) { return make_float4(v0.x, v0.y, v0.z, v1); }
 __forceinline__ __device__ float4 make_float4(const float2& v0, const float2& v1) { return make_float4(v0.x, v0.y, v1.x, v1.y); }
 /** @} */
-
-
-#endif

@@ -1,7 +1,5 @@
 #pragma once 
 
-#if defined(__CUDACC__)
-
 struct OrthonormalBasis
 {
 	__forceinline__ __device__ OrthonormalBasis(float3 const& _normal)
@@ -74,5 +72,3 @@ __device__ float3 OffsetRay(float3 p, float3 n)
 		(fabsf(p.z) < origin) ? (p.z + floatScale * n.z) : p_i.z
 	);
 }
-
-#endif

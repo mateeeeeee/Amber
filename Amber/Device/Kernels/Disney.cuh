@@ -1,6 +1,4 @@
 #pragma once
-#if defined(__CUDACC__)
-
 #include "Math.cuh"
 #include "Sampling.cuh"
 #include "Random.cuh"
@@ -63,7 +61,7 @@ __device__ float PowerHeuristic(float n_f, float pdf_f, float n_g, float pdf_g)
 
 __device__ float SchlickWeight(float cos_theta)
 {
-    return pow(__saturatef(1.f - cos_theta), 5.f);
+    return pow(clamp(1.f - cos_theta, 0.0f, 1.0f), 5.f);
 }
 
 // Complete Fresnel Dielectric computation, for transmission at ior near 1
@@ -515,5 +513,3 @@ __device__ float3 SampleDisneyBrdf(const DisneyMaterial& mat,
     pdf = DisneyPdf(mat, n, w_o, w_i, v_x, v_y);
     return DisneyBrdf(mat, n, w_o, w_i, v_x, v_y);
 }
-
-#endif

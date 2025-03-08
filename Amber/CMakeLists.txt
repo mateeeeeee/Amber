@@ -109,9 +109,10 @@ set(DEVICE_BACKEND_FILES
     Device/OptixUtils.cpp
     Device/OptixPathTracer.h
     Device/OptixPathTracer.cpp
-    Device/OptixShared.h
+    Device/DeviceHostCommon.h
     Device/KernelCompiler.h
     Device/KernelCompiler.cpp
+    Device/KernelLauncher.h
 )
 
 set(CUDA_KERNEL_FILES
