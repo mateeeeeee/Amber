@@ -119,6 +119,7 @@ set(CUDA_KERNEL_FILES
     Device/Kernels/PRNG.cuh
     Device/Kernels/Color.cuh
     Device/Kernels/ONB.cuh
+    Device/Kernels/Material.cuh
     Device/Kernels/Disney.cuh
     Device/Kernels/Math.cuh
     Device/Kernels/DeviceCommon.cuh

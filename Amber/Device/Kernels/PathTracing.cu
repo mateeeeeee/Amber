@@ -1,9 +1,6 @@
 #pragma once
 #include "DeviceCommon.cuh"
 #include "Device/DeviceHostCommon.h"
-#include "PRNG.cuh"
-#include "Color.cuh"
-#include "ONB.cuh"
 #include "Disney.cuh"
 
 using namespace amber;
@@ -13,7 +10,7 @@ extern "C"
 	__constant__ LaunchParams params;
 }
 
-__device__ __forceinline__ void EvaluateMaterial(DisneyMaterial& evaluatedMaterial, Uint32 id, Float2 uv)
+__device__ __forceinline__ void EvaluateMaterial(EvaluatedMaterial& evaluatedMaterial, Uint32 id, Float2 uv)
 {
 	MaterialGPU material = params.materials[id];
 	if (material.diffuse_tex_id >= 0)
@@ -89,8 +86,7 @@ __device__ __forceinline__ Float3 GetRayDirection(Uint2 pixel, Uint2 screen, PRN
 	Float3 ray_direction = normalize(d.x * aspectRatio * tanHalfFovy * U + d.y * tanHalfFovy * V + W);
 	return ray_direction;
 }
-
-__device__ __forceinline__ Float3 SampleDirectLight(DisneyMaterial const& evaluatedMaterial, Float3 const& hitPoint, Float3 const& wo, OrthonormalBasis const& ort, PRNG& prng)
+__device__ __forceinline__ Float3 SampleDirectLight(EvaluatedMaterial const& evaluatedMaterial, Float3 const& hitPoint, Float3 const& wo, OrthonormalBasis const& ort, PRNG& prng)
 {
 	Uint32 lightIndex = prng.RandomFloat() * params.light_count;
 	LightGPU light = params.lights[lightIndex];
@@ -172,7 +168,6 @@ __device__ void WriteToDenoiserBuffers(Uint32 idx, Float3 const& albedo, Float3 
 		params.denoiser_normals[idx] = view_normal;
 	}
 }
-
 __device__ void WriteToDebugBuffer(Uint32 idx, Float3 const& albedo, Float3 const& normal, Float2 const& uv, Uint32 material_id)
 {
 	if (params.output_type == PathTracerOutputGPU_Albedo)
@@ -247,7 +242,7 @@ extern "C" __global__ void RG_NAME(rg)()
 				break;
 			}
 
-			DisneyMaterial material{};
+			EvaluatedMaterial material{};
 			EvaluateMaterial(material, hit_record.material_idx, hit_record.uv);
 
 			Float3 emissive = material.emissive;
@@ -328,8 +323,7 @@ extern "C" __global__ void RG_NAME(rg)()
 	params.accum_buffer[idx] = radiance;
 }
 
-extern "C" 
-__global__ void MISS_NAME(ms)()
+extern "C" __global__ void MISS_NAME(ms)()
 {
 	GetPayload<HitRecord>()->hit = false;
 }
@@ -340,7 +334,6 @@ struct VertexData
 	Float3 N;
 	Float2 uv;
 };
-
 __device__ VertexData LoadVertexData(MeshGPU const& mesh, Uint32 primitive_idx, Float2 barycentrics)
 {
 	VertexData vertex{};
@@ -377,8 +370,7 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, Uint32 primitive_idx, 
 	return vertex;
 }
 
-extern "C" 
-__global__ void AH_NAME(ah)()
+extern "C"  __global__ void AH_NAME(ah)()
 {
 	Uint32 instance_idx = optixGetInstanceId();
 	Uint32 primitive_idx = optixGetPrimitiveIndex();
@@ -394,7 +386,6 @@ __global__ void AH_NAME(ah)()
 	}
 }
 
-
 __device__ Float3 TransformVertex(Float const matrix[12], Float3 const& position)
 {
 	Float3 transformed_position;
@@ -403,7 +394,6 @@ __device__ Float3 TransformVertex(Float const matrix[12], Float3 const& position
 	transformed_position.z = matrix[8] * position.x + matrix[9] * position.y + matrix[10] * position.z + matrix[11];
 	return transformed_position;
 }
-
 __device__ Float3 TransformNormal(Float const matrix[12], Float3 const& normal)
 {
 	Float3 transformed_normal;
@@ -413,8 +403,7 @@ __device__ Float3 TransformNormal(Float const matrix[12], Float3 const& normal)
 	return normalize(transformed_normal);
 }
 
-extern "C" 
-__global__ void CH_NAME(ch)()
+extern "C" __global__ void CH_NAME(ch)()
 {
 	MeshGPU mesh = params.meshes[optixGetInstanceId()];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
@@ -430,9 +419,7 @@ __global__ void CH_NAME(ch)()
 	hit_record->material_idx = mesh.material_idx;
 }
 
-
-extern "C"
-__global__ void AH_NAME(ah_shadow)()
+extern "C" __global__ void AH_NAME(ah_shadow)()
 {
 	Uint32 instance_idx = optixGetInstanceId();
 	Uint32 primitive_idx = optixGetPrimitiveIndex();
