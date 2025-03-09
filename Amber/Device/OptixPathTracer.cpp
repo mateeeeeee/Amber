@@ -309,7 +309,7 @@ namespace amber
 		if (directional_light_count == 0)
 		{
 			LightGPU& optix_light = lights.emplace_back();
-			optix_light.type = LightType_Directional;
+			optix_light.type = LightGPUType_Directional;
 			optix_light.color = make_float3(8.0f, 8.0f, 8.0f);
 			optix_light.direction = make_float3(0.0f, -1.0f, 0.1f);
 			optix_light.position = make_float3(-1000.0f * optix_light.direction.x, -1000.0f * optix_light.direction.y, -1000.0f * optix_light.direction.z);
@@ -528,7 +528,7 @@ namespace amber
 		if (ImGui::TreeNode("Lights"))
 		{
 			Bool changed = false;
-			int light_index = 0;
+			Int light_index = 0;
 			for (LightGPU& light : lights)
 			{
 				std::string light_label = "Light " + std::to_string(light_index++);
@@ -549,7 +549,7 @@ namespace amber
 				changed |= ImGui::ColorEdit3("##Color", &light.color.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
 				ImGui::NextColumn();
 
-				if (light.type == LightType_Directional)
+				if (light.type == LightGPUType_Directional)
 				{
 					ImGui::Text("Sun Elevation");
 					ImGui::NextColumn();
@@ -567,7 +567,7 @@ namespace amber
 					light.direction.y = -light_direction.y;
 					light.direction.z = -light_direction.z;
 				}
-				else if (light.type == LightType_Point)
+				else if (light.type == LightGPUType_Point)
 				{
 					ImGui::Text("Position");
 					ImGui::NextColumn();

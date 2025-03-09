@@ -116,13 +116,14 @@ set(DEVICE_BACKEND_FILES
 
 set(CUDA_KERNEL_FILES
     Device/Kernels/PostProcessing.cu
-    Device/Kernels/Random.cuh
+    Device/Kernels/PRNG.cuh
     Device/Kernels/Color.cuh
     Device/Kernels/ONB.cuh
     Device/Kernels/Disney.cuh
     Device/Kernels/Math.cuh
     Device/Kernels/DeviceCommon.cuh
     Device/Kernels/Impl/MathImpl.cuh
+    Device/Kernels/Impl/MathDefines.cuh
 
 )
 
