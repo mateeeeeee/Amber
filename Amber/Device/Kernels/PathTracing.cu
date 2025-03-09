@@ -1,7 +1,7 @@
 #pragma once
 #include "DeviceCommon.cuh"
 #include "Device/DeviceHostCommon.h"
-#include "Random.cuh"
+#include "PRNG.cuh"
 #include "Color.cuh"
 #include "ONB.cuh"
 #include "Disney.cuh"
@@ -13,153 +13,142 @@ extern "C"
 	__constant__ LaunchParams params;
 }
 
-template<typename T>
-__forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
-{
-	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
-}
-
-__device__ __forceinline__ void UnpackMaterial(DisneyMaterial& mat_params, Uint32 id, float2 uv)
+__device__ __forceinline__ void EvaluateMaterial(DisneyMaterial& evaluatedMaterial, Uint32 id, Float2 uv)
 {
 	MaterialGPU material = params.materials[id];
 	if (material.diffuse_tex_id >= 0)
 	{
-		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], uv.x, uv.y);
-		mat_params.base_color = material.base_color * make_float3(sampled.x, sampled.y, sampled.z);
+		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], uv.x, uv.y);
+		evaluatedMaterial.base_color = material.base_color * MakeFloat3(sampled.x, sampled.y, sampled.z);
 	}
 	else
 	{
-		mat_params.base_color = material.base_color;
+		evaluatedMaterial.base_color = material.base_color;
 	}
 
 	if (material.emissive_tex_id >= 0)
 	{
-		float4 sampled = tex2D<float4>(params.textures[material.emissive_tex_id], uv.x, uv.y);
-		mat_params.emissive = material.emissive_color * make_float3(sampled.x, sampled.y, sampled.z);
+		Float4 sampled = tex2D<Float4>(params.textures[material.emissive_tex_id], uv.x, uv.y);
+		evaluatedMaterial.emissive = material.emissive_color * MakeFloat3(sampled.x, sampled.y, sampled.z);
 	}
 	else
 	{
-		mat_params.emissive = material.emissive_color;
+		evaluatedMaterial.emissive = material.emissive_color;
 	}
 
 	if (material.metallic_roughness_tex_id >= 0)
 	{
-		float4 sampled = tex2D<float4>(params.textures[material.metallic_roughness_tex_id], uv.x, uv.y);
-		mat_params.ao = sampled.x;
-		mat_params.roughness = sampled.y * material.roughness;
-		mat_params.metallic = sampled.z * material.metallic;
+		Float4 sampled = tex2D<Float4>(params.textures[material.metallic_roughness_tex_id], uv.x, uv.y);
+		evaluatedMaterial.ao = sampled.x;
+		evaluatedMaterial.roughness = sampled.y * material.roughness;
+		evaluatedMaterial.metallic = sampled.z * material.metallic;
 	}
 	else
 	{
-		mat_params.ao = 1.0f;
-		mat_params.roughness = material.roughness;
-		mat_params.metallic = material.metallic;
+		evaluatedMaterial.ao = 1.0f;
+		evaluatedMaterial.roughness = material.roughness;
+		evaluatedMaterial.metallic = material.metallic;
 	}
 
 	if (material.normal_tex_id >= 0)
 	{
-		float4 sampled = tex2D<float4>(params.textures[material.normal_tex_id], uv.x, uv.y);
-		mat_params.normal = make_float3(sampled.x, sampled.y, sampled.z);
-		mat_params.normal = 2.0f * mat_params.normal - 1.0f;
+		Float4 sampled = tex2D<Float4>(params.textures[material.normal_tex_id], uv.x, uv.y);
+		evaluatedMaterial.normal = MakeFloat3(sampled.x, sampled.y, sampled.z);
+		evaluatedMaterial.normal = 2.0f * evaluatedMaterial.normal - 1.0f;
 	}
 	else
 	{
-		mat_params.normal = make_float3(0.0f, 0.0f, 1.0f);
+		evaluatedMaterial.normal = MakeFloat3(0.0f, 0.0f, 1.0f);
 	}
 
-	mat_params.specular_tint = material.specular_tint;
-	mat_params.anisotropy = material.anisotropy;
-	mat_params.sheen = material.sheen;
-	mat_params.sheen_tint = material.sheen_tint;
-	mat_params.clearcoat = material.clearcoat;
-	mat_params.clearcoat_gloss = material.clearcoat_gloss;
-	mat_params.ior = material.ior;
-	mat_params.specular_transmission = material.specular_transmission;
+	evaluatedMaterial.specular_tint = material.specular_tint;
+	evaluatedMaterial.anisotropy = material.anisotropy;
+	evaluatedMaterial.sheen = material.sheen;
+	evaluatedMaterial.sheen_tint = material.sheen_tint;
+	evaluatedMaterial.clearcoat = material.clearcoat;
+	evaluatedMaterial.clearcoat_gloss = material.clearcoat_gloss;
+	evaluatedMaterial.ior = material.ior;
+	evaluatedMaterial.specular_transmission = material.specular_transmission;
 }
-
-__device__ __forceinline__ float3 ApplyNormalMap(const float3& normal_map, const float3& v_x, const float3& v_y, const float3& v_z)
+__device__ __forceinline__ Float3 ApplyNormalMap(Float3 const& normalMap, Float3 const& T, Float3 const& B, Float3 const& N)
 {
-	return normalize(normal_map.x * v_x + normal_map.y * v_y + normal_map.z * v_z);
+	return normalize(normalMap.x * T + normalMap.y * B + normalMap.z * N);
 }
-
-__device__ __forceinline__ float3 GetRayDirection(uint2 pixel, uint2 screen, unsigned int seed)
+__device__ __forceinline__ Float3 GetRayDirection(Uint2 pixel, Uint2 screen, PRNG& prng)
 {
-	float3 const U = params.cam_u;
-	float3 const V = params.cam_v;
-	float3 const W = params.cam_w;
+	Float3 const U = params.cam_u;
+	Float3 const V = params.cam_v;
+	Float3 const W = params.cam_w;
 
-	float2 subpixel_jitter = make_float2(rnd(seed), rnd(seed));
-	float2 d = (make_float2(pixel) + subpixel_jitter) / make_float2(screen);
+	Float2 subpixelJitter = prng.RandomFloat2();
+	Float2 d = (MakeFloat2(pixel) + subpixelJitter) / MakeFloat2(screen);
 	d.y = 1.0f - d.y;
 	d = 2.0f * d - 1.0f;
-
-	float tan_half_fovy = tan(params.cam_fovy * 0.5f);
-	float aspect_ratio = params.cam_aspect_ratio;
-
-	float3 ray_direction = normalize(d.x * aspect_ratio * tan_half_fovy * U + d.y * tan_half_fovy * V + W);
+	Float tanHalfFovy = tan(params.cam_fovy * 0.5f);
+	Float aspectRatio = params.cam_aspect_ratio;
+	Float3 ray_direction = normalize(d.x * aspectRatio * tanHalfFovy * U + d.y * tanHalfFovy * V + W);
 	return ray_direction;
 }
 
-__device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_params, float3 const& hit_point, float3 const& w_o, OrthonormalBasis const& ort, Uint32& seed)
+__device__ __forceinline__ Float3 SampleDirectLight(DisneyMaterial const& evaluatedMaterial, Float3 const& hitPoint, Float3 const& wo, OrthonormalBasis const& ort, PRNG& prng)
 {
-	Uint32 light_index = rnd(seed) * params.light_count;
-	LightGPU light = params.lights[light_index];
+	Uint32 lightIndex = prng.RandomFloat() * params.light_count;
+	LightGPU light = params.lights[lightIndex];
 
-	float3 const& v_x = ort.tangent;
-	float3 const& v_y = ort.binormal;
-	float3 const& v_z = ort.normal;
-
-	float3 radiance = make_float3(0.0f);
-	if (light.type == LightType_Directional)
+	Float3 const& v_x = ort.tangent;
+	Float3 const& v_y = ort.binormal;
+	Float3 const& v_z = ort.normal;
+	Float3 radiance = MakeFloat3(0.0f);
+	if (light.type == LightGPUType_Directional)
 	{
-		float3 light_dir = normalize(light.direction);
-		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, -light_dir, M_EPSILON, M_INF))
+		Float3 lightDirection = normalize(light.direction);
+		if (!TraceOcclusion(params.traversable, hitPoint + M_EPSILON * v_z, -lightDirection, M_EPSILON, M_INF))
 		{
-			float3 bsdf = DisneyBrdf(mat_params, v_z, w_o, -light_dir, v_x, v_y);
-			radiance = bsdf * light.color * abs(dot(-light_dir, v_z));
+			Float3 bsdf = DisneyBrdf(evaluatedMaterial, v_z, wo, -lightDirection, v_x, v_y);
+			radiance = bsdf * light.color * abs(dot(-lightDirection, v_z));
 		}
 
-		float3 w_i;
-		float bsdf_pdf;
-		float3 bsdf = SampleDisneyBrdf(mat_params, v_z, w_o, v_x, v_y, seed, w_i, bsdf_pdf);
+		Float3 wi;
+		Float bsdfPdf;
+		Float3 bsdf = SampleDisneyBrdf(evaluatedMaterial, v_z, wo, v_x, v_y, prng, wi, bsdfPdf);
 
-		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
+		if (length(bsdf) > M_EPSILON && bsdfPdf >= M_EPSILON)
 		{
-			float light_pdf = 1.0f; 
-			float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
+			Float light_pdf = 1.0f; 
+			Float w = PowerHeuristic(1.f, bsdfPdf, 1.f, light_pdf);
 
-			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, w_i, M_EPSILON, M_INF))
+			if (!TraceOcclusion(params.traversable, hitPoint + M_EPSILON * v_z, wi, M_EPSILON, M_INF))
 			{
-				float3 bsdf = DisneyBrdf(mat_params, v_z, w_o, -light_dir, v_x, v_y);
-				radiance += bsdf * light.color * abs(dot(w_i, v_z)) * w / bsdf_pdf;
+				Float3 bsdf = DisneyBrdf(evaluatedMaterial, v_z, wo, -lightDirection, v_x, v_y);
+				radiance += bsdf * light.color * abs(dot(wi, v_z)) * w / bsdfPdf;
 			}
 		}
 	}
-	else if (light.type == LightType_Point)
+	else if (light.type == LightGPUType_Point)
 	{
-		float3 light_pos = light.position;
-		float3 light_dir = light_pos - hit_point; 
-		float dist = length(light_dir);
+		Float3 light_pos = light.position;
+		Float3 light_dir = light_pos - hitPoint; 
+		Float dist = length(light_dir);
 		light_dir = light_dir / dist;
 
-		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, light_dir, M_EPSILON, dist - M_EPSILON))
+		if (!TraceOcclusion(params.traversable, hitPoint + M_EPSILON * v_z, light_dir, M_EPSILON, dist - M_EPSILON))
 		{
-			float attenuation = 1.0f / (dist * dist);
-			float3 bsdf = DisneyBrdf(mat_params, v_z, w_o, light_dir, v_x, v_y);
+			Float attenuation = 1.0f / (dist * dist);
+			Float3 bsdf = DisneyBrdf(evaluatedMaterial, v_z, wo, light_dir, v_x, v_y);
 			radiance = bsdf * light.color * abs(dot(light_dir, v_z)) * attenuation;
 		}
 
-		float3 w_i;
-		float bsdf_pdf;
-		float3 bsdf = SampleDisneyBrdf(mat_params, v_z, w_o, v_x, v_y, seed, w_i, bsdf_pdf);
+		Float3 w_i;
+		Float bsdf_pdf;
+		Float3 bsdf = SampleDisneyBrdf(evaluatedMaterial, v_z, wo, v_x, v_y, prng, w_i, bsdf_pdf);
 		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
 		{
-			float light_pdf = (dist * dist) / (abs(dot(light_dir, v_z)) * 1.0f); // light.radius);
-			float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
+			Float light_pdf = (dist * dist) / (abs(dot(light_dir, v_z)) * 1.0f); // light.radius);
+			Float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
 
-			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * v_z, w_i, M_EPSILON, dist - M_EPSILON))
+			if (!TraceOcclusion(params.traversable, hitPoint + M_EPSILON * v_z, w_i, M_EPSILON, dist - M_EPSILON))
 			{
-				float attenuation = 1.0f / (dist * dist); 
+				Float attenuation = 1.0f / (dist * dist); 
 				radiance += bsdf * light.color * abs(dot(w_i, v_z)) * attenuation * w / bsdf_pdf;
 			}
 		}
@@ -167,7 +156,7 @@ __device__ __forceinline__ float3 SampleDirectLight(DisneyMaterial const& mat_pa
 	return radiance;
 }
 
-__device__ void WriteToDenoiserBuffers(Uint32 idx, float3 const& albedo, float3 const& normal)
+__device__ void WriteToDenoiserBuffers(Uint32 idx, Float3 const& albedo, Float3 const& normal)
 {
 	if (params.denoiser_albedo != NULL)
 	{
@@ -176,7 +165,7 @@ __device__ void WriteToDenoiserBuffers(Uint32 idx, float3 const& albedo, float3 
 
 	if (params.denoiser_normals != NULL)
 	{
-		float3 view_normal;
+		Float3 view_normal;
 		view_normal.x = dot(normal,  params.cam_u);
 		view_normal.y = dot(normal,  params.cam_v);
 		view_normal.z = dot(normal, -params.cam_w);
@@ -184,7 +173,7 @@ __device__ void WriteToDenoiserBuffers(Uint32 idx, float3 const& albedo, float3 
 	}
 }
 
-__device__ void WriteToDebugBuffer(Uint32 idx, float3 const& albedo, float3 const& normal, float2 const& uv, Uint32 material_id)
+__device__ void WriteToDebugBuffer(Uint32 idx, Float3 const& albedo, Float3 const& normal, Float2 const& uv, Uint32 material_id)
 {
 	if (params.output_type == PathTracerOutputGPU_Albedo)
 	{
@@ -198,12 +187,12 @@ __device__ void WriteToDebugBuffer(Uint32 idx, float3 const& albedo, float3 cons
 	}
 	if (params.output_type == PathTracerOutputGPU_UV)
 	{
-		params.debug_buffer[idx] = make_float3(uv, 0.0f);
+		params.debug_buffer[idx] = MakeFloat3(uv, 0.0f);
 		return;
 	}
 	if(params.output_type == PathTracerOutputGPU_MaterialID)
 	{
-		float3 material_id_color = make_float3(
+		Float3 material_id_color = MakeFloat3(
 			(material_id * 37) % 255 / 255.0, 
 			(material_id * 59) % 255 / 255.0,
 			(material_id * 97) % 255 / 255.0);
@@ -213,23 +202,22 @@ __device__ void WriteToDebugBuffer(Uint32 idx, float3 const& albedo, float3 cons
 }
 
 
-extern "C" 
-__global__ void RG_NAME(rg)()
+extern "C" __global__ void RG_NAME(rg)()
 {
 	OptixTraversableHandle scene = params.traversable;
-	float3 const  eye = params.cam_eye;
-	uint2  const  pixel  = make_uint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
-	uint2  const  screen = make_uint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
+	Float3 const  eye = params.cam_eye;
+	Uint2  const  pixel  = MakeUint2(optixGetLaunchIndex().x, optixGetLaunchIndex().y);
+	Uint2  const  screen = MakeUint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
 	Uint32 samples = params.sample_count;
 	Uint32 idx = pixel.x + pixel.y * screen.x;
 
-	float3 radiance = make_float3(0.0f);
-	float3 throughput = make_float3(1.0f);
+	Float3 radiance = MakeFloat3(0.0f);
+	Float3 throughput = MakeFloat3(1.0f);
 	do
 	{
-		Uint32 seed = tea<4>(idx, samples + params.frame_index);
-		float3 ray_origin = eye;
-		float3 ray_direction = GetRayDirection(pixel, screen, seed);
+		PRNG prng = PRNG::Create(idx, samples + params.frame_index);
+		Float3 ray_origin = eye;
+		Float3 ray_direction = GetRayDirection(pixel, screen, prng);
 
 		HitRecord hit_record{};
 		hit_record.depth = 0;
@@ -240,35 +228,34 @@ __global__ void RG_NAME(rg)()
 			Trace(scene, ray_origin, ray_direction, M_EPSILON, M_INF, p0, p1);
 			if (!hit_record.hit)
 			{
-				float3 const& dir = ray_direction;
-				float u = (1.f + atan2(dir.x, -dir.z) * M_INV_PI) * 0.5f;
-				float v = 1.0f - acos(dir.y) * M_INV_PI;
-				float3 env_map_color = make_float3(0.0f);
+				Float3 const& dir = ray_direction;
+				Float u = (1.f + atan2(dir.x, -dir.z) * M_INV_PI) * 0.5f;
+				Float v = 1.0f - acos(dir.y) * M_INV_PI;
+				Float3 env_map_color = MakeFloat3(0.0f);
 				if (params.sky)
 				{
-					float4 sampled = tex2D<float4>(params.sky, u, v);
-					env_map_color = make_float3(sampled.x, sampled.y, sampled.z);
+					Float4 sampled = tex2D<Float4>(params.sky, u, v);
+					env_map_color = MakeFloat3(sampled.x, sampled.y, sampled.z);
 				}
-
 				radiance += env_map_color * throughput;
 
 				if (depth == 0)
 				{
-					WriteToDenoiserBuffers(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f));
-					WriteToDebugBuffer(idx, make_float3(0.0f, 0.0f, 0.0f), make_float3(0.0f, 0.0f, 0.0f), make_float2(0.0f, 0.0f), 0);
+					WriteToDenoiserBuffers(idx, MakeFloat3(0.0f, 0.0f, 0.0f), MakeFloat3(0.0f, 0.0f, 0.0f));
+					WriteToDebugBuffer(idx, MakeFloat3(0.0f, 0.0f, 0.0f), MakeFloat3(0.0f, 0.0f, 0.0f), MakeFloat2(0.0f, 0.0f), 0);
 				}
 				break;
 			}
 
 			DisneyMaterial material{};
-			UnpackMaterial(material, hit_record.material_idx, hit_record.uv);
+			EvaluateMaterial(material, hit_record.material_idx, hit_record.uv);
 
-			float3 emissive = material.emissive;
+			Float3 emissive = material.emissive;
 			radiance += emissive * throughput;
 
-			float3 w_o = -ray_direction;
-			float3 v_x, v_y;
-			float3 v_z = hit_record.N;
+			Float3 w_o = -ray_direction;
+			Float3 v_x, v_y;
+			Float3 v_z = hit_record.N;
 			if (material.specular_transmission == 0.0f && dot(w_o, v_z) < 0.0f)
 			{
 				v_z = -v_z;
@@ -278,7 +265,7 @@ __global__ void RG_NAME(rg)()
 			v_x = ort.tangent;
 			v_y = ort.binormal;
 
-			//if (length(material.normal - make_float3(0.0f, 0.0f, 1.0f)) > 1e-4f)
+			//if (length(material.normal - MakeFloat3(0.0f, 0.0f, 1.0f)) > 1e-4f)
 			//{
 			//	v_z = ApplyNormalMap(material.normal, v_x, v_y, v_z);
 			//	ort = OrthonormalBasis(v_z);
@@ -292,18 +279,17 @@ __global__ void RG_NAME(rg)()
 				WriteToDebugBuffer(idx, material.base_color, v_z, hit_record.uv, hit_record.material_idx);
 			}
 
-			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, seed) * throughput;
+			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, prng) * throughput;
 
-			float3 w_i;
-			float pdf;
-			float3 bsdf = SampleDisneyBrdf(material, v_z, w_o, v_x, v_y, seed, w_i, pdf);
-
+			Float3 w_i;
+			Float pdf;
+			Float3 bsdf = SampleDisneyBrdf(material, v_z, w_o, v_x, v_y, prng, w_i, pdf);
 			if (params.output_type == PathTracerOutputGPU_Custom && depth == 0)
 			{
-				bool entering = dot(w_o, v_z) > 0.f;
-				float dot_wi_n = dot(w_i, v_z); // Sampled direction vs. normal
-				bool is_reflected = SameHemisphere(w_o, w_i, v_z); // 1.0 if reflected, 0.0 if refracted
-				params.debug_buffer[idx] = make_float3(dot_wi_n, is_reflected ? 1.0f : 0.0f, pdf);
+				Bool entering = dot(w_o, v_z) > 0.f;
+				Float dot_wi_n = dot(w_i, v_z); // Sampled direction vs. normal
+				Bool is_reflected = SameHemisphere(w_o, w_i, v_z); // 1.0 if reflected, 0.0 if refracted
+				params.debug_buffer[idx] = MakeFloat3(dot_wi_n, is_reflected ? 1.0f : 0.0f, pdf);
 				return;
 			}
 
@@ -318,8 +304,8 @@ __global__ void RG_NAME(rg)()
 
 			if (depth >= 2)
 			{
-				float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001f, 0.95f);
-				if (rnd(seed) > q) break;
+				Float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001f, 0.95f);
+				if (prng.RandomFloat() > q) break;
 				throughput /= q;
 			}
 		}
@@ -328,13 +314,13 @@ __global__ void RG_NAME(rg)()
 	radiance = radiance / params.sample_count;
 
 	//temporary to reduce fireflies
-	float lum = dot(radiance, make_float3(0.212671f, 0.715160f, 0.072169f));
+	Float lum = dot(radiance, MakeFloat3(0.212671f, 0.715160f, 0.072169f));
 	if (lum > 50.0f)
 	{
 		radiance *= 50.0f / lum;
 	}
 
-	float3 old_accum_color = params.accum_buffer[idx];
+	Float3 old_accum_color = params.accum_buffer[idx];
 	if (params.frame_index > 0)
 	{
 		radiance += old_accum_color;
@@ -350,42 +336,42 @@ __global__ void MISS_NAME(ms)()
 
 struct VertexData
 {
-	float3 P;
-	float3 N;
-	float2 uv;
+	Float3 P;
+	Float3 N;
+	Float2 uv;
 };
 
-__device__ VertexData LoadVertexData(MeshGPU const& mesh, unsigned int primitive_idx, float2 barycentrics)
+__device__ VertexData LoadVertexData(MeshGPU const& mesh, Uint32 primitive_idx, Float2 barycentrics)
 {
 	VertexData vertex{};
-	uint3* mesh_indices = params.indices + mesh.indices_offset;
+	Uint3* mesh_indices = params.indices + mesh.indices_offset;
 
-	uint3 primitive_indices = mesh_indices[primitive_idx];
+	Uint3 primitive_indices = mesh_indices[primitive_idx];
 	Uint32 i0 = primitive_indices.x;
 	Uint32 i1 = primitive_indices.y;
 	Uint32 i2 = primitive_indices.z;
 
-	float3* mesh_vertices = params.vertices + mesh.positions_offset;
-	float3 pos0 = mesh_vertices[i0];
-	float3 pos1 = mesh_vertices[i1];
-	float3 pos2 = mesh_vertices[i2];
+	Float3* mesh_vertices = params.vertices + mesh.positions_offset;
+	Float3 pos0 = mesh_vertices[i0];
+	Float3 pos1 = mesh_vertices[i1];
+	Float3 pos2 = mesh_vertices[i2];
 	vertex.P = Interpolate(pos0, pos1, pos2, barycentrics);
 
 	//geometric normal
-	//float3 edge1 = world_v1 - world_v0;
-	//float3 edge2 = world_v2 - world_v0;
-	//float3 geometric_normal = normalize(cross(edge1, edge2));
+	//Float3 edge1 = world_v1 - world_v0;
+	//Float3 edge2 = world_v2 - world_v0;
+	//Float3 geometric_normal = normalize(cross(edge1, edge2));
 
-	float3* mesh_normals = params.normals + mesh.normals_offset;
-	float3 nor0 = mesh_normals[i0];
-	float3 nor1 = mesh_normals[i1];
-	float3 nor2 = mesh_normals[i2];
+	Float3* mesh_normals = params.normals + mesh.normals_offset;
+	Float3 nor0 = mesh_normals[i0];
+	Float3 nor1 = mesh_normals[i1];
+	Float3 nor2 = mesh_normals[i2];
 	vertex.N = Interpolate(nor0, nor1, nor2, barycentrics);
 	
-	float2* mesh_uvs = params.uvs + mesh.uvs_offset;
-	float2 uv0 = mesh_uvs[i0];
-	float2 uv1 = mesh_uvs[i1];
-	float2 uv2 = mesh_uvs[i2];
+	Float2* mesh_uvs = params.uvs + mesh.uvs_offset;
+	Float2 uv0 = mesh_uvs[i0];
+	Float2 uv1 = mesh_uvs[i1];
+	Float2 uv2 = mesh_uvs[i2];
 	vertex.uv = Interpolate(uv0, uv1, uv2, barycentrics);
 	vertex.uv.y = 1.0f - vertex.uv.y;
 	return vertex;
@@ -403,24 +389,24 @@ __global__ void AH_NAME(ah)()
 
 	if (material.diffuse_tex_id >= 0)
 	{
-		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
+		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
 		if(sampled.w < material.alpha_cutoff) optixIgnoreIntersection();
 	}
 }
 
 
-__device__ float3 TransformVertex(float const matrix[12], float3 const& position)
+__device__ Float3 TransformVertex(Float const matrix[12], Float3 const& position)
 {
-	float3 transformed_position;
+	Float3 transformed_position;
 	transformed_position.x = matrix[0] * position.x + matrix[1] * position.y + matrix[2] * position.z + matrix[3];
 	transformed_position.y = matrix[4] * position.x + matrix[5] * position.y + matrix[6] * position.z + matrix[7];
 	transformed_position.z = matrix[8] * position.x + matrix[9] * position.y + matrix[10] * position.z + matrix[11];
 	return transformed_position;
 }
 
-__device__ float3 TransformNormal(float const matrix[12], float3 const& normal)
+__device__ Float3 TransformNormal(Float const matrix[12], Float3 const& normal)
 {
-	float3 transformed_normal;
+	Float3 transformed_normal;
 	transformed_normal.x = matrix[0] * normal.x + matrix[1] * normal.y + matrix[2] * normal.z;
 	transformed_normal.y = matrix[4] * normal.x + matrix[5] * normal.y + matrix[6] * normal.z;
 	transformed_normal.z = matrix[8] * normal.x + matrix[9] * normal.y + matrix[10] * normal.z;
@@ -433,7 +419,7 @@ __global__ void CH_NAME(ch)()
 	MeshGPU mesh = params.meshes[optixGetInstanceId()];
 	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 
-	float object_to_world_transform[12];
+	Float object_to_world_transform[12];
 	optixGetObjectToWorldTransformMatrix(object_to_world_transform);
 
 	HitRecord* hit_record = GetPayload<HitRecord>();
@@ -457,7 +443,7 @@ __global__ void AH_NAME(ah_shadow)()
 
 	if (material.diffuse_tex_id >= 0)
 	{
-		float4 sampled = tex2D<float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
+		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
 		if (sampled.w < material.alpha_cutoff) optixIgnoreIntersection();
 	}
 	if (material.specular_transmission > 0)

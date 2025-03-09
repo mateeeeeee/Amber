@@ -53,11 +53,11 @@ namespace amber
 
 	enum LightGPUType : Int
 	{
-		LightType_Directional,
-		LightType_Point,
-		LightType_Spot,
-		LightType_Area,
-		LightType_Environmental
+		LightGPUType_Directional,
+		LightGPUType_Point,
+		LightGPUType_Spot,
+		LightGPUType_Area,
+		LightGPUType_Environmental
 	};
 
 	enum PathTracerOutputGPU : Int

@@ -1,29 +1,29 @@
 #pragma once
 #include "Math.cuh"
 #include "ONB.cuh"
-#include "Random.cuh"
+#include "PRNG.cuh"
 #include "Color.cuh"
 
 //https://github.com/Twinklebear/ChameleonRT/blob/master/backends/optix/disney_bsdf.h
 struct DisneyMaterial
 {
-	float3 base_color;
-	float  metallic;
-	float3 emissive;
-	float  specular;
-	float3 normal;
-	float  roughness;
-	float  ao;
-	float  specular_tint;
-	float  anisotropy;
+	Float3 base_color;
+	Float  metallic;
+	Float3 emissive;
+	Float  specular;
+	Float3 normal;
+	Float  roughness;
+	Float  ao;
+	Float  specular_tint;
+	Float  anisotropy;
 
-	float  sheen;
-	float  sheen_tint;
-	float  clearcoat;
-	float  clearcoat_gloss;
+	Float  sheen;
+	Float  sheen_tint;
+	Float  clearcoat;
+	Float  clearcoat_gloss;
 
-	float  ior;
-	float  specular_transmission;
+	Float  ior;
+	Float  specular_transmission;
 };
 
 __device__ bool SameHemisphere(const float3& w_o, const float3& w_i, const float3& n)
@@ -427,26 +427,25 @@ __device__ float3 SampleDisneyBrdf(const DisneyMaterial& mat,
     const float3& w_o,
     const float3& v_x,
     const float3& v_y,
-    unsigned int& seed,
+    PRNG& prng,
     float3& w_i,
     float& pdf)
 {
     int component = 0;
     if (mat.specular_transmission == 0.f) 
     {
-        component = rnd(seed) * 3.f;
+        component = prng.RandomFloat() * 3.f;
         component = clamp(component, 0, 2);
     }
     else 
     {
-		component = rnd(seed) * 4.f;
+		component = prng.RandomFloat() * 4.f;
 		component = clamp(component, 0, 3);
     }
 
-    float2 samples = make_float2(rnd(seed), rnd(seed));
+    float2 samples = make_float2(prng.RandomFloat(), prng.RandomFloat());
     if (component == 0) 
     {
-        // Sample diffuse component
         w_i = SampleLambertianDir(n, v_x, v_y, samples);
     }
     else if (component == 1) 

@@ -20,6 +20,11 @@ __forceinline__ __device__ T max(T a, T b)
 {
 	return a > b ? a : b;
 }
+template<typename T>
+__forceinline__ __device__ T Interpolate(T const& t0, T const& t1, T const& t2, float2 bary)
+{
+	return t0 * (1.0f - bary.x - bary.y) + bary.x * t1 + bary.y * t2;
+}
 
 __forceinline__ __device__ float lerp(const float a, const float b, const float t)
 {
