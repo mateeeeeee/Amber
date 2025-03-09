@@ -75,7 +75,7 @@ namespace amber::optix
 	{
 		friend class ShaderBindingTableBuilder;
 	public:
-		ShaderBindingTable() = default;
+		ShaderBindingTable() : gpu_shader_table(nullptr) {}
 		AMBER_DEFAULT_MOVABLE(ShaderBindingTable)
 		~ShaderBindingTable() = default;
 

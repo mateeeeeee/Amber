@@ -32,9 +32,9 @@ int main(Int argc, Char* argv[])
 {
 	CommandLineOptions::Initialize(argc, argv);
 #ifdef _DEBUG
-	g_LogManager.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Debug);
+	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Debug);
 #else 
-	g_LogManager.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Error);
+	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Error);
 #endif
 
 	SceneConfig cfg{};
@@ -72,7 +72,7 @@ int main(Int argc, Char* argv[])
 			window.Maximize();
 		}
 		Editor editor(window, camera, path_tracer);
-		editor.SetEditorSink(g_LogManager.GetEditorSink());
+		editor.SetEditorSink(g_Log.GetEditorSink());
 		while (window.Loop())
 		{
 			editor.Run();
@@ -83,7 +83,7 @@ int main(Int argc, Char* argv[])
 		path_tracer.Render(camera);
 		path_tracer.WriteFramebuffer(CommandLineOptions::GetOutputFile().c_str());
 	}
-	g_LogManager.Destroy();
+	g_Log.Destroy();
 
 	return 0;
 }
@@ -118,8 +118,8 @@ Bool ParseSceneConfig(Char const* scene_config, SceneConfig& cfg)
 	cfg.scene_environment = paths::ModelDir + scene_environment;
 	cfg.width = scene_params.FindOr<Uint32>("width", 1080);
 	cfg.height = scene_params.FindOr<Uint32>("height", 720);
-	cfg.path_tracer_config.max_depth = scene_params.FindOr<Uint32>("max depth", 4);
-	cfg.path_tracer_config.samples_per_pixel = scene_params.FindOr<Uint32>("samples per pixel", 16);
+	cfg.path_tracer_config.max_depth = scene_params.FindOr<Uint>("max depth", 4);
+	cfg.path_tracer_config.samples_per_pixel = scene_params.FindOr<Uint>("samples per pixel", 16);
 	cfg.path_tracer_config.use_denoiser = scene_params.FindOr<Bool>("denoise", false);
 	cfg.path_tracer_config.accumulate = scene_params.FindOr<Bool>("accumulate", true);
 

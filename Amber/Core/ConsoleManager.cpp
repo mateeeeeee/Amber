@@ -42,7 +42,7 @@ namespace amber
 		{
 		public:
 			static Bool GetBool(T Value);
-			static Int32 GetInt(T Value);
+			static Int GetInt(T Value);
 			static Float GetFloat(T Value);
 			static std::string GetString(T Value);
 		};
@@ -50,7 +50,7 @@ namespace amber
 		{
 			return Value;
 		}
-		template<> Int32 ConsoleVariableConversionHelper<Bool>::GetInt(Bool Value)
+		template<> Int ConsoleVariableConversionHelper<Bool>::GetInt(Bool Value)
 		{
 			return Value ? 1 : 0;
 		}
@@ -62,19 +62,19 @@ namespace amber
 		{
 			return Value ? "true" : "false";
 		}
-		template<> Bool ConsoleVariableConversionHelper<Int32>::GetBool(Int32 Value)
+		template<> Bool ConsoleVariableConversionHelper<Int>::GetBool(Int Value)
 		{
 			return Value != 0;
 		}
-		template<> Int32 ConsoleVariableConversionHelper<Int32>::GetInt(Int32 Value)
+		template<> Int ConsoleVariableConversionHelper<Int>::GetInt(Int Value)
 		{
 			return Value;
 		}
-		template<> Float ConsoleVariableConversionHelper<Int32>::GetFloat(Int32 Value)
+		template<> Float ConsoleVariableConversionHelper<Int>::GetFloat(Int Value)
 		{
 			return (Float)Value;
 		}
-		template<> std::string ConsoleVariableConversionHelper<Int32>::GetString(Int32 Value)
+		template<> std::string ConsoleVariableConversionHelper<Int>::GetString(Int Value)
 		{
 			return std::to_string(Value);
 		}
@@ -82,9 +82,9 @@ namespace amber
 		{
 			return Value != 0.0f;
 		}
-		template<> Int32 ConsoleVariableConversionHelper<Float>::GetInt(Float Value)
+		template<> Int ConsoleVariableConversionHelper<Float>::GetInt(Float Value)
 		{
-			return (Int32)Value;
+			return (Int)Value;
 		}
 		template<> Float ConsoleVariableConversionHelper<Float>::GetFloat(Float Value)
 		{
@@ -100,9 +100,9 @@ namespace amber
 			FromCString(Value.c_str(), out);
 			return out;
 		}
-		template<> Int32 ConsoleVariableConversionHelper<std::string>::GetInt(std::string Value)
+		template<> Int ConsoleVariableConversionHelper<std::string>::GetInt(std::string Value)
 		{
-			Int32 out = false;
+			Int out = false;
 			FromCString(Value.c_str(), out);
 			return out;
 		}
@@ -170,7 +170,7 @@ namespace amber
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
-			else if constexpr (std::is_same_v<T, int>)
+			else if constexpr (std::is_same_v<T, Int>)
 			{
 				value = detail::ConsoleVariableConversionHelper<Bool>::GetInt(bool_value);
 				OnChangedDelegate().Broadcast(this);
@@ -190,9 +190,9 @@ namespace amber
 			}
 			return false;
 		}
-		virtual Bool Set(int int_value) override
+		virtual Bool Set(Int int_value) override
 		{
-			if constexpr (std::is_same_v<T, int>)
+			if constexpr (std::is_same_v<T, Int>)
 			{
 				value = int_value;
 				OnChangedDelegate().Broadcast(this);
@@ -200,19 +200,19 @@ namespace amber
 			}
 			else if constexpr (std::is_same_v<T, Bool>)
 			{
-				value = detail::ConsoleVariableConversionHelper<int>::GetInt(int_value);
+				value = detail::ConsoleVariableConversionHelper<Int>::GetInt(int_value);
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
 			else if constexpr (std::is_same_v<T, Float>)
 			{
-				value = detail::ConsoleVariableConversionHelper<int>::GetFloat(int_value);
+				value = detail::ConsoleVariableConversionHelper<Int>::GetFloat(int_value);
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
 			else if constexpr (std::is_same_v<T, std::string>)
 			{
-				value = detail::ConsoleVariableConversionHelper<int>::GetString(int_value);
+				value = detail::ConsoleVariableConversionHelper<Int>::GetString(int_value);
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
@@ -226,7 +226,7 @@ namespace amber
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
-			else if constexpr (std::is_same_v<T, int>)
+			else if constexpr (std::is_same_v<T, Int>)
 			{
 				value = detail::ConsoleVariableConversionHelper<Float>::GetInt(float_value);
 				OnChangedDelegate().Broadcast(this);
@@ -248,7 +248,7 @@ namespace amber
 		}
 
 		virtual Bool GetBool() const override { return detail::ConsoleVariableConversionHelper<T>::GetBool(value); }
-		virtual Int32 GetInt() const override { return detail::ConsoleVariableConversionHelper<T>::GetInt(value); }
+		virtual Int GetInt() const override { return detail::ConsoleVariableConversionHelper<T>::GetInt(value); }
 		virtual Float GetFloat() const override { return detail::ConsoleVariableConversionHelper<T>::GetFloat(value); }
 		virtual std::string GetString() const override { return detail::ConsoleVariableConversionHelper<T>::GetString(value); }
 
@@ -258,7 +258,7 @@ namespace amber
 		virtual Bool IsString() const override { return false; }
 
 		virtual Bool* GetBoolPtr() override { return nullptr; }
-		virtual Int32* GetIntPtr() override { return nullptr; }
+		virtual Int* GetIntPtr() override { return nullptr; }
 		virtual Float* GetFloatPtr() override { return nullptr; }
 		virtual std::string* GetStringPtr() override { return nullptr; }
 
@@ -270,7 +270,7 @@ namespace amber
 	{
 		return true;
 	}
-	template<> Bool ConsoleVariable<Int32>::IsInt() const
+	template<> Bool ConsoleVariable<Int>::IsInt() const
 	{
 		return true;
 	}
@@ -286,7 +286,7 @@ namespace amber
 	{
 		return &value;
 	}
-	template<> Int32* ConsoleVariable<Int32>::GetIntPtr()
+	template<> Int* ConsoleVariable<Int>::GetIntPtr()
 	{
 		return &value;
 	}
@@ -324,7 +324,7 @@ namespace amber
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
-			else if constexpr (std::is_same_v<T, int>)
+			else if constexpr (std::is_same_v<T, Int>)
 			{
 				value = detail::ConsoleVariableConversionHelper<Bool>::GetInt(bool_value);
 				OnChangedDelegate().Broadcast(this);
@@ -344,9 +344,9 @@ namespace amber
 			}
 			return false;
 		}
-		virtual Bool Set(int int_value) override
+		virtual Bool Set(Int int_value) override
 		{
-			if constexpr (std::is_same_v<T, int>)
+			if constexpr (std::is_same_v<T, Int>)
 			{
 				value = int_value;
 				OnChangedDelegate().Broadcast(this);
@@ -354,19 +354,19 @@ namespace amber
 			}
 			else if constexpr (std::is_same_v<T, Bool>)
 			{
-				value = detail::ConsoleVariableConversionHelper<int>::GetInt(int_value);
+				value = detail::ConsoleVariableConversionHelper<Int>::GetInt(int_value);
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
 			else if constexpr (std::is_same_v<T, Float>)
 			{
-				value = detail::ConsoleVariableConversionHelper<int>::GetFloat(int_value);
+				value = detail::ConsoleVariableConversionHelper<Int>::GetFloat(int_value);
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
 			else if constexpr (std::is_same_v<T, std::string>)
 			{
-				value = detail::ConsoleVariableConversionHelper<int>::GetString(int_value);
+				value = detail::ConsoleVariableConversionHelper<Int>::GetString(int_value);
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
@@ -380,7 +380,7 @@ namespace amber
 				OnChangedDelegate().Broadcast(this);
 				return true;
 			}
-			else if constexpr (std::is_same_v<T, int>)
+			else if constexpr (std::is_same_v<T, Int>)
 			{
 				value = detail::ConsoleVariableConversionHelper<Float>::GetInt(float_value);
 				OnChangedDelegate().Broadcast(this);
@@ -403,7 +403,7 @@ namespace amber
 
 
 		virtual Bool GetBool() const override { return detail::ConsoleVariableConversionHelper<T>::GetBool(value); }
-		virtual Int32 GetInt() const override { return detail::ConsoleVariableConversionHelper<T>::GetInt(value); }
+		virtual Int GetInt() const override { return detail::ConsoleVariableConversionHelper<T>::GetInt(value); }
 		virtual Float GetFloat() const override { return detail::ConsoleVariableConversionHelper<T>::GetFloat(value); }
 		virtual std::string GetString() const override { return detail::ConsoleVariableConversionHelper<T>::GetString(value); }
 
@@ -420,7 +420,7 @@ namespace amber
 	{
 		return true;
 	}
-	template<> Bool ConsoleVariableRef<Int32>::IsInt() const
+	template<> Bool ConsoleVariableRef<Int>::IsInt() const
 	{
 		return true;
 	}
@@ -480,9 +480,9 @@ namespace amber
 		return AddObject(name, new ConsoleVariable<Bool>(default_value, name, help))->AsVariable();
 	}
 
-	IConsoleVariable* ConsoleManager::RegisterConsoleVariable(Char const* name, int default_value, Char const* help)
+	IConsoleVariable* ConsoleManager::RegisterConsoleVariable(Char const* name, Int default_value, Char const* help)
 	{
-		return AddObject(name, new ConsoleVariable<int>(default_value, name, help))->AsVariable();
+		return AddObject(name, new ConsoleVariable<Int>(default_value, name, help))->AsVariable();
 	}
 
 	IConsoleVariable* ConsoleManager::RegisterConsoleVariable(Char const* name, Float default_value, Char const* help)
@@ -505,9 +505,9 @@ namespace amber
 		return AddObject(name, new ConsoleVariableRef<Bool>(value, name, help))->AsVariable();
 	}
 
-	IConsoleVariable* ConsoleManager::RegisterConsoleVariableRef(Char const* name, int& value, Char const* help)
+	IConsoleVariable* ConsoleManager::RegisterConsoleVariableRef(Char const* name, Int& value, Char const* help)
 	{
-		return AddObject(name, new ConsoleVariableRef<int>(value, name, help))->AsVariable();
+		return AddObject(name, new ConsoleVariableRef<Int>(value, name, help))->AsVariable();
 	}
 
 	IConsoleVariable* ConsoleManager::RegisterConsoleVariableRef(Char const* name, Float& value, Char const* help)

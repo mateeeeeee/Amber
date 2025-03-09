@@ -1,14 +1,15 @@
 #pragma once
 #ifdef __INTELLISENSE__
-#ifndef __CUDACC__
-#define __CUDACC__
-#else
-static_assert(false);
-#endif
+	#ifndef __CUDACC__
+		#define __CUDACC__
+	#else
+		static_assert(false);
+	#endif
 #endif
 #include <cuda_runtime.h>
 #include <optix.h>
 #include "Core/Types.h"
+#include "impl/MathDefines.cuh"
 
 using namespace amber;
 
@@ -35,8 +36,8 @@ __device__ __forceinline__ T* GetPayload()
 template <typename... Args>
 __device__ __forceinline__ void Trace(
 	OptixTraversableHandle traversable,
-	float3 ray_origin,
-	float3 ray_direction,
+	Float3 ray_origin,
+	Float3 ray_direction,
 	Float tmin,
 	Float tmax, Args&&... payload)
 {
@@ -50,8 +51,8 @@ __device__ __forceinline__ void Trace(
 
 __device__ __forceinline__ Bool TraceOcclusion(
 	OptixTraversableHandle handle,
-	float3                 ray_origin,
-	float3                 ray_direction,
+	Float3                 ray_origin,
+	Float3                 ray_direction,
 	Float                  tmin,
 	Float                  tmax
 )
@@ -74,12 +75,12 @@ __device__ __forceinline__ Bool TraceOcclusion(
 template<typename KernelType, typename... Args>
 __device__ __host__ __forceinline__ void LaunchKernel(KernelType&& kernel, dim3 grid, dim3 block, Args&&... args)
 {
-	kernel<<<grid, block >>>(std::forward<Args>(args)...);
+	kernel<<<grid, block>>>(std::forward<Args>(args)...);
 }
 template<typename KernelType, typename... Args>
 __device__ __host__ __forceinline__ void LaunchKernel(KernelType&& kernel, dim3 grid, dim3 block, size_t shared_memory_size, Args&&... args)
 {
-	kernel<<<grid, block, shared_memory_size >>>(std::forward<Args>(args)...);
+	kernel<<<grid, block, shared_memory_size>>>(std::forward<Args>(args)...);
 }
 #define LAUNCH_KERNEL(kernel, grid, block, ...) LaunchKernel(kernel, grid, block, __VA_ARGS__)
 #define LAUNCH_KERNEL_WITH_SHARED(kernel, grid, block, shared, ...) LaunchKernel(kernel, grid, block, shared, __VA_ARGS__)

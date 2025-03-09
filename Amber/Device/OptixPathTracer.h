@@ -11,8 +11,8 @@ namespace amber
 
 	struct PathTracerConfig
 	{
-		Uint32 max_depth;
-		Uint32 samples_per_pixel;
+		Uint   max_depth;
+		Uint   samples_per_pixel;
 		Bool   use_denoiser;
 		Bool   accumulate;
 	};
@@ -69,11 +69,11 @@ namespace amber
 		Uint32 width;
 		Uint32 height;
 		std::unique_ptr<Scene>		scene;
-		optix::TBuffer<float3>		accum_buffer;
-		optix::TBuffer<float3>		debug_buffer;
-		optix::TBuffer<float3>		hdr_buffer;
-		optix::TBuffer<uchar4>		ldr_buffer;
-		CpuBuffer2D<uchar4>			framebuffer;
+		optix::TBuffer<Float3>		accum_buffer;
+		optix::TBuffer<Float3>		debug_buffer;
+		optix::TBuffer<Float3>		hdr_buffer;
+		optix::TBuffer<Uchar4>		ldr_buffer;
+		CpuBuffer2D<Uchar4>			framebuffer;
 
 		std::unique_ptr<optix::Pipeline> pipeline;
 		optix::ShaderBindingTable sbt;
@@ -94,7 +94,7 @@ namespace amber
 		std::vector<LightGPU> lights;
 
 		Bool	denoise = false;
-		Int32	denoise_accumulation_target = 12;
+		Int	    denoise_accumulation_target = 12;
 		Float	denoise_blend_factor = 0.0f;
 		std::unique_ptr<optix::Buffer> denoiser_state_buffer;
 		std::unique_ptr<optix::Buffer> denoiser_scratch_buffer;
@@ -108,9 +108,9 @@ namespace amber
 		OptixImage2D debug_image;
 
 		Bool   accumulate	= true;
-		Uint32 frame_index	= 0;
-		Int32 depth_count;
-		Int32 sample_count;
+		Uint   frame_index	= 0;
+		Int depth_count;
+		Int sample_count;
 		PathTracerOutput output = PathTracerOutput::Final;
 
 	private:

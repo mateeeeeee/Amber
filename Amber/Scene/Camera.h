@@ -5,10 +5,10 @@ namespace amber
 	class Camera
 	{
 	public:
-		void Initialize(Vector3 const& position, Vector3 const& lookat);
+		void Initialize(Vector3 const& position, Vector3 const& look_at);
 
 		void Update(Float dt);
-		void Enable(Bool _enabled) { enabled = _enabled; }
+		void Enable(Bool value) { enabled = value; }
 		Bool IsChanged() const { return changed; }
 
 		Vector3 const& GetPosition() const { return position; }

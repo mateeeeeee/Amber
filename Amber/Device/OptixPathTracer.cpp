@@ -14,11 +14,11 @@
 #include "Utilities/Random.h"
 #include "Utilities/ImageUtil.h"
 
-extern "C" void LaunchResolveAccumulationKernel(float3* hdr_output, float3* accum_input, int width, int height, int frame_index);
-extern "C" void LaunchTonemapKernel(uchar4* ldr_output, float3* hdr_input, int width, int height);
-
 namespace amber
 {
+	extern "C" void LaunchResolveAccumulationKernel(Float3* hdr_output, Float3* accum_input, Int width, Int height, Int frame_index);
+	extern "C" void LaunchTonemapKernel(Uchar4* ldr_output, Float3* hdr_input, Int width, Int height);
+
 	using namespace optix;
 
 	static void OptixLogCallback(Uint level, const Char* tag, const Char* message, void* cbdata)
@@ -354,7 +354,7 @@ namespace amber
 
 		Vector3 u, v, w;
 		camera.GetFrame(u, v, w);
-		auto ToFloat3 = [](Vector3 const& v) { return make_float3(v.x, v.y, v.z); };
+		auto ToFloat3 = [](Vector3 const& v) { return MakeFloat3(v.x, v.y, v.z); };
 		params.cam_eye = ToFloat3(camera.GetPosition());
 		params.cam_u = ToFloat3(u);
 		params.cam_v = ToFloat3(v);
@@ -362,13 +362,13 @@ namespace amber
 		params.cam_fovy = camera.GetFovY();
 		params.cam_aspect_ratio = camera.GetAspectRatio();
 
-		params.accum_buffer = accum_buffer.As<float3>();
-		params.debug_buffer = debug_buffer.As<float3>();
+		params.accum_buffer = accum_buffer.As<Float3>();
+		params.debug_buffer = debug_buffer.As<Float3>();
 		params.traversable = tlas_handle;
 		params.sample_count = sample_count;
 		params.max_depth = depth_count;
 		params.frame_index = frame_index;
-		params.output_type = static_cast<Uint32>(output);
+		params.output_type = static_cast<Int>(output);
 		params.vertices = vertices_buffer->GetDevicePtr();
 		params.indices = indices_buffer->GetDevicePtr();
 		params.normals = normals_buffer->GetDevicePtr();
@@ -431,7 +431,7 @@ namespace amber
 			CudaSyncCheck();
 		}
 
-		cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
+		cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(Uchar4), cudaMemcpyDeviceToHost);
 		CudaSyncCheck();
 
 		++frame_index;
@@ -479,13 +479,13 @@ namespace amber
 			cudaMemset(denoiser_albedo, 0, denoiser_albedo.GetSize());
 			cudaMemset(denoiser_normals, 0, denoiser_normals.GetSize());
 
-			auto FillDenoiserImageData = [this](OptixImage2D& image_data, TBuffer<float3> const& buffer)
+			auto FillDenoiserImageData = [this](OptixImage2D& image_data, TBuffer<Float3> const& buffer)
 				{
 					image_data.width = width;
 					image_data.height = height;
 					image_data.format = OPTIX_PIXEL_FORMAT_FLOAT3;
-					image_data.pixelStrideInBytes = sizeof(float3);
-					image_data.rowStrideInBytes = width * sizeof(float3);
+					image_data.pixelStrideInBytes = sizeof(Float3);
+					image_data.rowStrideInBytes = width * sizeof(Float3);
 					image_data.data = buffer.GetDevicePtr();
 				};
 			FillDenoiserImageData(input_image, hdr_buffer);
