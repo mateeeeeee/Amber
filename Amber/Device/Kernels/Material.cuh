@@ -1,6 +1,5 @@
 #pragma once
 #include "Math.cuh"
-#include "ONB.cuh"
 #include "PRNG.cuh"
 #include "Color.cuh"
 
@@ -138,7 +137,7 @@ __device__ Float3 SampleGtr2AnisoH(Float3 const& n,
     return normalize(w_h);
 }
 
-__device__ Float LamberitanPdf(Float3 const& w_i, Float3 const& n)
+__device__ Float LambertianPdf(Float3 const& w_i, Float3 const& n)
 {
     Float d = dot(w_i, n);
     if (d > 0.0f) 
@@ -204,9 +203,9 @@ __device__ Float Gtr2AnisoPdf(Float3 const& w_o,
 
 struct EvaluatedMaterial
 {
-	Float3 base_color;
+    ColorRGB32F base_color;
 	Float  metallic;
-	Float3 emissive;
+    ColorRGB32F emissive;
 	Float  specular;
 	Float3 normal;
 	Float  roughness;

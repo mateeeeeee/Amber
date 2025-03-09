@@ -1,7 +1,7 @@
 #include "Material.cuh"
 
 
-__device__ Float3 DisneyDiffuse(EvaluatedMaterial const& material,
+__device__ ColorRGB32F DisneyDiffuse(EvaluatedMaterial const& material,
 	Float3 const& n,
 	Float3 const& w_o,
 	Float3 const& w_i)
@@ -16,26 +16,26 @@ __device__ Float3 DisneyDiffuse(EvaluatedMaterial const& material,
 	return material.base_color * M_INV_PI * lerp(1.0f, fd90, fi) * lerp(1.0f, fd90, fo);
 }
 
-__device__ Float3 DisneyMicrofacetIsotropic(EvaluatedMaterial const& material,
+__device__ ColorRGB32F DisneyMicrofacetIsotropic(EvaluatedMaterial const& material,
 	Float3 const& n,
 	Float3 const& w_o,
 	Float3 const& w_i)
 {
 	Float3 w_h = normalize(w_i + w_o);
-	Float lum = Luminance(material.base_color);
-	Float3 tint = lum > 0.0f ? material.base_color / lum : MakeFloat3(1.0f);
-	Float3 spec = lerp(material.specular * 0.08f * lerp(MakeFloat3(1.0f), tint, material.specular_tint),
+	Float lum = material.base_color.Luminance();
+	ColorRGB32F tint = lum > 0.0f ? material.base_color / lum : MakeFloat3(1.0f);
+	ColorRGB32F spec = lerp(material.specular * 0.08f * lerp(ColorRGB32F_White, tint, material.specular_tint),
 		material.base_color,
 		material.metallic);
 
 	Float alpha = max(0.001f, material.roughness * material.roughness);
 	Float d = Gtr2(dot(n, w_h), alpha);
-	Float3 f = lerp(spec, MakeFloat3(1.0f), SchlickWeight(dot(w_i, w_h)));
+	ColorRGB32F f = lerp(spec, ColorRGB32F_White, SchlickWeight(dot(w_i, w_h)));
 	Float g = SmithShadowingGGX(dot(n, w_i), alpha) * SmithShadowingGGX(dot(n, w_o), alpha);
 	return d * f * g;
 }
 
-__device__ Float3 DisneyMicrofacetTransmissionIsotropic(EvaluatedMaterial const& material,
+__device__ ColorRGB32F DisneyMicrofacetTransmissionIsotropic(EvaluatedMaterial const& material,
 	Float3 const& n,
 	Float3 const& w_o,
 	Float3 const& w_i)
@@ -44,7 +44,7 @@ __device__ Float3 DisneyMicrofacetTransmissionIsotropic(EvaluatedMaterial const&
 	Float i_dot_n = dot(w_i, n);
 	if (o_dot_n == 0.0f || i_dot_n == 0.0f)
 	{
-		return MakeFloat3(0.0f);
+		return ColorRGB32F_Black;
 	}
 	Bool entering = o_dot_n > 0.0f;
 	Float eta_o = entering ? 1.0f : material.ior;
@@ -67,7 +67,7 @@ __device__ Float3 DisneyMicrofacetTransmissionIsotropic(EvaluatedMaterial const&
 	return material.base_color * c * (1.0f - f) * g * d;
 }
 
-__device__ Float3 DisneyMicrofacetAnisotropic(EvaluatedMaterial const& material,
+__device__ ColorRGB32F DisneyMicrofacetAnisotropic(EvaluatedMaterial const& material,
 	Float3 const& n,
 	Float3 const& w_o,
 	Float3 const& w_i,
@@ -75,9 +75,9 @@ __device__ Float3 DisneyMicrofacetAnisotropic(EvaluatedMaterial const& material,
 	Float3 const& v_y)
 {
 	Float3 w_h = normalize(w_i + w_o);
-	Float lum = Luminance(material.base_color);
-	Float3 tint = lum > 0.0f ? material.base_color / lum : MakeFloat3(1.0f);
-	Float3 spec = lerp(material.specular * 0.08f * lerp(MakeFloat3(1.0f), tint, material.specular_tint),
+	Float lum = material.base_color.Luminance();
+	ColorRGB32F tint = lum > 0.0f ? material.base_color / lum : MakeFloat3(1.0f);
+	ColorRGB32F spec = lerp(material.specular * 0.08f * lerp(ColorRGB32F_White, tint, material.specular_tint),
 		material.base_color,
 		material.metallic);
 
@@ -85,7 +85,7 @@ __device__ Float3 DisneyMicrofacetAnisotropic(EvaluatedMaterial const& material,
 	Float a = material.roughness * material.roughness;
 	Float2 alpha = make_float2(max(0.001f, a / aspect), max(0.001f, a * aspect));
 	Float d = Gtr2Aniso(dot(n, w_h), fabs(dot(w_h, v_x)), fabs(dot(w_h, v_y)), alpha);
-	Float3 f = lerp(spec, MakeFloat3(1.0f), SchlickWeight(dot(w_i, w_h)));
+	ColorRGB32F f = lerp(spec, ColorRGB32F_White, SchlickWeight(dot(w_i, w_h)));
 	Float g = SmithShadowingGGXAniso(
 		dot(n, w_i), fabs(dot(w_i, v_x)), fabs(dot(w_i, v_y)), alpha) *
 		SmithShadowingGGXAniso(dot(n, w_o), fabs(dot(w_o, v_x)), fabs(dot(w_o, v_y)), alpha);
@@ -105,20 +105,20 @@ __device__ Float DisneyClearCoat(EvaluatedMaterial const& material,
 	return 0.25f * material.clearcoat * d * f * g;
 }
 
-__device__ Float3 DisneySheen(EvaluatedMaterial const& material,
+__device__ ColorRGB32F DisneySheen(EvaluatedMaterial const& material,
 	Float3 const& n,
 	Float3 const& w_o,
 	Float3 const& w_i)
 {
 	Float3 w_h = normalize(w_i + w_o);
-	Float lum = Luminance(material.base_color);
-	Float3 tint = lum > 0.0f ? material.base_color / lum : MakeFloat3(1.0f);
-	Float3 sheen_color = lerp(MakeFloat3(1.0f), tint, material.sheen_tint);
+	Float lum = material.base_color.Luminance();
+	ColorRGB32F tint = lum > 0.0f ? material.base_color / lum : MakeFloat3(1.0f);
+	ColorRGB32F sheen_color = lerp(ColorRGB32F(1.0f), tint, material.sheen_tint);
 	Float f = SchlickWeight(dot(w_i, n));
 	return f * material.sheen * sheen_color;
 }
 
-__device__ Float3 DisneyBrdf(EvaluatedMaterial const& material,
+__device__ ColorRGB32F DisneyBrdf(EvaluatedMaterial const& material,
 	Float3 const& n,
 	Float3 const& w_o,
 	Float3 const& w_i,
@@ -129,16 +129,16 @@ __device__ Float3 DisneyBrdf(EvaluatedMaterial const& material,
 	{
 		if (material.specular_transmission > 0.0f)
 		{
-			Float3 spec_trans = DisneyMicrofacetTransmissionIsotropic(material, n, w_o, w_i);
+			ColorRGB32F spec_trans = DisneyMicrofacetTransmissionIsotropic(material, n, w_o, w_i);
 			return spec_trans * (1.0f - material.metallic) * material.specular_transmission;
 		}
-		return MakeFloat3(0.0f);
+		return ColorRGB32F(0.0f);
 	}
 
 	Float coat = DisneyClearCoat(material, n, w_o, w_i);
-	Float3 sheen = DisneySheen(material, n, w_o, w_i);
-	Float3 diffuse = DisneyDiffuse(material, n, w_o, w_i);
-	Float3 gloss;
+	ColorRGB32F sheen = DisneySheen(material, n, w_o, w_i);
+	ColorRGB32F diffuse = DisneyDiffuse(material, n, w_o, w_i);
+	ColorRGB32F gloss;
 	if (material.anisotropy == 0.0f)
 	{
 		gloss = DisneyMicrofacetIsotropic(material, n, w_o, w_i);
@@ -147,7 +147,7 @@ __device__ Float3 DisneyBrdf(EvaluatedMaterial const& material,
 	{
 		gloss = DisneyMicrofacetAnisotropic(material, n, w_o, w_i, v_x, v_y);
 	}
-	return (diffuse + sheen) * (1.0f - material.metallic) * (1.0f - material.specular_transmission) + gloss + coat;
+	return (diffuse + sheen) * (1.0f - material.metallic) * (1.0f - material.specular_transmission) + gloss + ColorRGB32F(coat);
 }
 
 __device__ Float DisneyPdf(EvaluatedMaterial const& material,
@@ -162,7 +162,7 @@ __device__ Float DisneyPdf(EvaluatedMaterial const& material,
 	Float2 alpha_aniso = make_float2(max(0.001f, alpha / aspect), max(0.001f, alpha * aspect));
 	Float clearcoat_alpha = lerp(0.1f, 0.001f, material.clearcoat_gloss);
 
-	Float diffuse = LamberitanPdf(w_i, n);
+	Float diffuse = LambertianPdf(w_i, n);
 	Float clear_coat = Gtr1Pdf(w_o, w_i, n, clearcoat_alpha);
 
 	Int component_count = 3;
@@ -184,7 +184,7 @@ __device__ Float DisneyPdf(EvaluatedMaterial const& material,
 	return (diffuse + microfacet + microfacet_transmission + clear_coat) / component_count;
 }
 
-__device__ Float3 SampleDisneyBrdf(EvaluatedMaterial const& material,
+__device__ ColorRGB32F SampleDisneyBrdf(EvaluatedMaterial const& material,
 	Float3 const& n,
 	Float3 const& w_o,
 	Float3 const& v_x,
@@ -193,16 +193,7 @@ __device__ Float3 SampleDisneyBrdf(EvaluatedMaterial const& material,
 	Float3& w_i,
 	Float& pdf)
 {
-	Int component = 0;
-	if (material.specular_transmission == 0.0f)
-	{
-		component = prng.RandomInt() % 3;
-	}
-	else
-	{
-		component = prng.RandomInt() % 4;
-	}
-
+	Int component = material.specular_transmission == 0.0f ? prng.RandomInt() % 3 : prng.RandomInt() % 4;
 	Float2 samples = make_float2(prng.RandomFloat(), prng.RandomFloat());
 	if (component == 0)
 	{
@@ -219,8 +210,7 @@ __device__ Float3 SampleDisneyBrdf(EvaluatedMaterial const& material,
 		else
 		{
 			Float aspect = sqrt(1.0f - material.anisotropy * 0.9f);
-			Float2 alpha_aniso =
-				make_float2(max(0.001f, alpha / aspect), max(0.001f, alpha * aspect));
+			Float2 alpha_aniso = make_float2(max(0.001f, alpha / aspect), max(0.001f, alpha * aspect));
 			w_h = SampleGtr2AnisoH(n, v_x, v_y, alpha_aniso, samples);
 		}
 		w_i = reflect(-w_o, w_h);
@@ -229,7 +219,7 @@ __device__ Float3 SampleDisneyBrdf(EvaluatedMaterial const& material,
 		{
 			pdf = 0.0f;
 			w_i = MakeFloat3(0.0f);
-			return MakeFloat3(0.0f);
+			return ColorRGB32F_Black;
 		}
 	}
 	else if (component == 2)
@@ -243,7 +233,7 @@ __device__ Float3 SampleDisneyBrdf(EvaluatedMaterial const& material,
 		{
 			pdf = 0.0f;
 			w_i = MakeFloat3(0.0f);
-			return MakeFloat3(0.0f);
+			return ColorRGB32F_Black;
 		}
 	}
 	else
@@ -262,7 +252,7 @@ __device__ Float3 SampleDisneyBrdf(EvaluatedMaterial const& material,
 		{
 			pdf = 0.0f;
 			w_i = MakeFloat3(0.0f);
-			return MakeFloat3(0.0f);
+			return ColorRGB32F_Black;
 		}
 	}
 	pdf = DisneyPdf(material, n, w_o, w_i, v_x, v_y);

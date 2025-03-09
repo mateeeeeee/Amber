@@ -2,6 +2,7 @@
 #include "DeviceCommon.cuh"
 #include "Device/DeviceHostCommon.h"
 #include "Disney.cuh"
+#include "ONB.cuh"
 
 using namespace amber;
 
@@ -83,34 +84,34 @@ __device__ __forceinline__ Float3 GetRayDirection(Uint2 pixel, Uint2 screen, PRN
 	Float3 ray_direction = normalize(d.x * aspectRatio * tanHalfFovy * U + d.y * tanHalfFovy * V + W);
 	return ray_direction;
 }
-__device__ __forceinline__ Float3 SampleDirectLight(EvaluatedMaterial const& evaluated_material, Float3 const& hit_point, Float3 const& wo, 
+
+__device__ __forceinline__ ColorRGB32F SampleDirectLight(EvaluatedMaterial const& evaluated_material, Float3 const& hit_point, Float3 const& wo, 
 	Float3 const& T, Float3 const& B, Float3 const& N, PRNG& prng)
 {
 	Uint32 light_index = prng.RandomFloat() * params.light_count;
 	LightGPU light = params.lights[light_index];
 
-	Float3 radiance = MakeFloat3(0.0f);
+	ColorRGB32F radiance(0.0f);
 	if (light.type == LightGPUType_Directional)
 	{
 		Float3 light_direction = normalize(light.direction);
 		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * N, -light_direction, M_EPSILON, M_INF))
 		{
-			Float3 bsdf = DisneyBrdf(evaluated_material, N, wo, -light_direction, T, B);
+			ColorRGB32F bsdf = DisneyBrdf(evaluated_material, N, wo, -light_direction, T, B);
 			radiance = bsdf * light.color * abs(dot(-light_direction, N));
 		}
 
 		Float3 wi;
 		Float bsdf_pdf;
-		Float3 bsdf = SampleDisneyBrdf(evaluated_material, N, wo, T, B, prng, wi, bsdf_pdf);
-
-		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
+		ColorRGB32F bsdf = SampleDisneyBrdf(evaluated_material, N, wo, T, B, prng, wi, bsdf_pdf);
+		if (bsdf.Length() > M_EPSILON && bsdf_pdf >= M_EPSILON)
 		{
 			Float light_pdf = 1.0f; 
 			Float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
 
 			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * N, wi, M_EPSILON, M_INF))
 			{
-				Float3 bsdf = DisneyBrdf(evaluated_material, N, wo, -light_direction, T, B);
+				ColorRGB32F bsdf = DisneyBrdf(evaluated_material, N, wo, -light_direction, T, B);
 				radiance += bsdf * light.color * abs(dot(wi, N)) * w / bsdf_pdf;
 			}
 		}
@@ -125,14 +126,14 @@ __device__ __forceinline__ Float3 SampleDirectLight(EvaluatedMaterial const& eva
 		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * N, light_dir, M_EPSILON, dist - M_EPSILON))
 		{
 			Float attenuation = 1.0f / (dist * dist);
-			Float3 bsdf = DisneyBrdf(evaluated_material, N, wo, light_dir, T, B);
+			ColorRGB32F bsdf = DisneyBrdf(evaluated_material, N, wo, light_dir, T, B);
 			radiance = bsdf * light.color * abs(dot(light_dir, N)) * attenuation;
 		}
 
 		Float3 w_i;
 		Float bsdf_pdf;
-		Float3 bsdf = SampleDisneyBrdf(evaluated_material, N, wo, T, B, prng, w_i, bsdf_pdf);
-		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
+		ColorRGB32F bsdf = SampleDisneyBrdf(evaluated_material, N, wo, T, B, prng, w_i, bsdf_pdf);
+		if (bsdf.Length() > M_EPSILON && bsdf_pdf >= M_EPSILON)
 		{
 			Float light_pdf = (dist * dist) / (abs(dot(light_dir, N)) * 1.0f); // light.radius);
 			Float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
@@ -201,8 +202,8 @@ extern "C" __global__ void RG_NAME(rg)()
 	Uint32 samples = params.sample_count;
 	Uint32 idx = pixel.x + pixel.y * screen.x;
 
-	Float3 radiance = MakeFloat3(0.0f);
-	Float3 throughput = MakeFloat3(1.0f);
+	ColorRGB32F radiance(0.0f);
+	ColorRGB32F throughput(1.0f);
 	do
 	{
 		PRNG prng = PRNG::Create(idx, samples + params.frame_index);
@@ -240,7 +241,7 @@ extern "C" __global__ void RG_NAME(rg)()
 			EvaluatedMaterial material{};
 			EvaluateMaterial(material, hit_record.material_idx, hit_record.uv);
 
-			Float3 emissive = material.emissive;
+			ColorRGB32F emissive = material.emissive;
 			radiance += emissive * throughput;
 
 			Float3 w_o = -ray_direction;
@@ -262,15 +263,15 @@ extern "C" __global__ void RG_NAME(rg)()
 
 			if (depth == 0)
 			{
-				WriteToDenoiserBuffers(idx, material.base_color, N);
-				WriteToDebugBuffer(idx, material.base_color, N, hit_record.uv, hit_record.material_idx);
+				WriteToDenoiserBuffers(idx, (Float3)material.base_color, N);
+				WriteToDebugBuffer(idx, (Float3)material.base_color, N, hit_record.uv, hit_record.material_idx);
 			}
 
 			radiance += SampleDirectLight(material, hit_record.P, w_o, T, B, N, prng) * throughput;
 
 			Float3 w_i;
 			Float pdf;
-			Float3 bsdf = SampleDisneyBrdf(material, N, w_o, T, B, prng, w_i, pdf);
+			ColorRGB32F bsdf = SampleDisneyBrdf(material, N, w_o, T, B, prng, w_i, pdf);
 			if (params.output_type == PathTracerOutputGPU_Custom && depth == 0)
 			{
 				Bool entering = dot(w_o, N) > 0.0f;
@@ -280,7 +281,7 @@ extern "C" __global__ void RG_NAME(rg)()
 				return;
 			}
 
-			if (pdf == 0.0f || length(bsdf) < M_EPSILON)
+			if (pdf == 0.0f || bsdf.Length() < M_EPSILON)
 			{
 				break;
 			}
@@ -291,7 +292,7 @@ extern "C" __global__ void RG_NAME(rg)()
 
 			if (depth >= 2)
 			{
-				Float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001f, 0.95f);
+				Float q = min(max(throughput.r, max(throughput.g, throughput.b)) + 0.001f, 0.95f);
 				if (prng.RandomFloat() > q) break;
 				throughput /= q;
 			}
@@ -300,19 +301,17 @@ extern "C" __global__ void RG_NAME(rg)()
 
 	radiance = radiance / params.sample_count;
 
-	//temporary to reduce fireflies
-	Float lum = dot(radiance, MakeFloat3(0.212671f, 0.715160f, 0.072169f));
-	if (lum > 50.0f)
+	Float luminance = radiance.Luminance(); 
+	if (luminance > 50.0f)
 	{
-		radiance *= 50.0f / lum;
+		radiance *= 50.0f / luminance;
 	}
-
 	Float3 old_accum_color = params.accum_buffer[idx];
 	if (params.frame_index > 0)
 	{
 		radiance += old_accum_color;
 	}
-	params.accum_buffer[idx] = radiance;
+	params.accum_buffer[idx] = static_cast<Float3>(radiance);
 }
 
 extern "C" __global__ void MISS_NAME(ms)()
