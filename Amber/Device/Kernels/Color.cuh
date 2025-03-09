@@ -33,6 +33,10 @@ struct ColorRGBA32F
 
 	__device__ Float& operator[](Uint index) { return *(&r + index); }
 	__device__ Float operator[](Uint index) const { return *(&r + index); }
+	__device__ explicit operator Float4() const
+	{
+		return MakeFloat4(r, g, b, a);
+	}
 
 	Float r, g, b, a;
 };
@@ -54,10 +58,10 @@ __device__ __forceinline__ ColorRGBA32F pow(ColorRGBA32F const& col, Float k) { 
 
 struct ColorRGB32F
 {
-	__device__ ColorRGB32F() : r(0.0f), g(0.0f), b(0.0f) {}
-	__device__ explicit ColorRGB32F(Float value) : r(value), g(value), b(value) {}
-	__device__ ColorRGB32F(Float r, Float g, Float b) : r(r), g(g), b(b) {}
-	__device__ ColorRGB32F(Float3 color) : r(color.x), g(color.y), b(color.z) {}
+	__device__ constexpr ColorRGB32F() : r(0.0f), g(0.0f), b(0.0f) {}
+	__device__ constexpr explicit ColorRGB32F(Float value) : r(value), g(value), b(value) {}
+	__device__ constexpr ColorRGB32F(Float r, Float g, Float b) : r(r), g(g), b(b) {}
+	__device__ constexpr ColorRGB32F(Float3 color) : r(color.x), g(color.y), b(color.z) {}
 
 	__device__ void operator+=(ColorRGB32F const& other) { r += other.r; g += other.g; b += other.b; }
 	__device__ void operator-=(ColorRGB32F const& other) { r -= other.r; g -= other.g; b -= other.b; }
@@ -80,12 +84,17 @@ struct ColorRGB32F
 
 	__device__ static ColorRGB32F Max(ColorRGB32F const& a, ColorRGB32F const& b) { return ColorRGB32F(max(a.r, b.r), max(a.g, b.g), max(a.b, b.b)); }
 	__device__ static ColorRGB32F Min(ColorRGB32F const& a, ColorRGB32F const& b) { return ColorRGB32F(min(a.r, b.r), min(a.g, b.g), min(a.b, b.b)); }
-
 	__device__ Float& operator[](Uint index) { return *(&r + index); }
 	__device__ Float operator[](Uint index) const { return *(&r + index); }
+	__device__ explicit operator Float3() const
+	{
+		return MakeFloat3(r, g, b);
+	}
 
 	Float r, g, b;
 };
+static constexpr ColorRGB32F ColorRGB32F_Black(0.0f);
+static constexpr ColorRGB32F ColorRGB32F_White(1.0f);
 
 __device__ __forceinline__ ColorRGB32F operator+ (ColorRGB32F const& a, ColorRGB32F const& b) { return ColorRGB32F(a.r + b.r, a.g + b.g, a.b + b.b); }
 __device__ __forceinline__ ColorRGB32F operator- (ColorRGB32F const& c) { return ColorRGB32F(-c.r, -c.g, -c.b); }
@@ -100,7 +109,7 @@ __device__ __forceinline__ ColorRGB32F sqrt(ColorRGB32F const& col) { return Col
 __device__ __forceinline__ ColorRGB32F exp(ColorRGB32F const& col) { return ColorRGB32F(expf(col.r), expf(col.g), expf(col.b)); }
 __device__ __forceinline__ ColorRGB32F log(ColorRGB32F const& col) { return ColorRGB32F(logf(col.r), logf(col.g), logf(col.b)); }
 __device__ __forceinline__ ColorRGB32F pow(ColorRGB32F const& col, Float k) { return ColorRGB32F(powf(col.r, k), powf(col.g, k), powf(col.b, k)); }
-
+__device__ __forceinline__ ColorRGB32F lerp(ColorRGB32F const& a, ColorRGB32F const& b, Float t) { return a * (1.0f - t) + b * t; }
 
 struct ColorRGBA8
 {
@@ -136,12 +145,14 @@ struct ColorRGBA8
 
 	__device__ Uchar& operator[](Uint index) { return *(&r + index); }
 	__device__ Uchar operator[](Uint index) const { return *(&r + index); }
+	__device__ explicit operator Uchar4() const
+	{
+		return MakeUchar4(r, g, b, a);
+	}
 
 	Uchar r, g, b, a;
 };
-
-
-__device__ __forceinline__ ColorRGBA8 SRGB(ColorRGBA32F const& color)
+__device__ __forceinline__ ColorRGBA8 SRGB(ColorRGB32F const& color)
 {
 	static constexpr Float INV_GAMMA = 1.0f / 2.2f;
 	return MakeFloat3(
@@ -149,30 +160,21 @@ __device__ __forceinline__ ColorRGBA8 SRGB(ColorRGBA32F const& color)
 		color.g < 0.0031308f ? 12.92f * color.g : 1.055f * powf(color.g, INV_GAMMA) - 0.055f,
 		color.b < 0.0031308f ? 12.92f * color.b : 1.055f * powf(color.b, INV_GAMMA) - 0.055f);
 }
-
-
-__device__ __forceinline__ Float3 ToSRGB(Float3 const& color)
+__device__ __forceinline__ ColorRGBA8 SRGB(ColorRGBA32F const& color)
 {
-	static constexpr Float INV_GAMMA = 1.0f / 2.2f;
-	float3 gamma_corrected_color = MakeFloat3(powf(color.x, INV_GAMMA), powf(color.y, INV_GAMMA), powf(color.z, INV_GAMMA));
-	return MakeFloat3(
-		color.x < 0.0031308f ? 12.92f * color.x : 1.055f * powf(color.x, INV_GAMMA) - 0.055f,
-		color.y < 0.0031308f ? 12.92f * color.y : 1.055f * powf(color.y, INV_GAMMA) - 0.055f,
-		color.z < 0.0031308f ? 12.92f * color.z : 1.055f * powf(color.z, INV_GAMMA) - 0.055f);
-}
-__device__ __forceinline__ unsigned char QuantizeUnsigned8Bits(float x)
-{
-	x = clamp(x, 0.0f, 1.0f);
-	static constexpr unsigned int N = (1 << 8) - 1;
-	static constexpr unsigned int Np1 = (1 << 8);
-	return (unsigned char)min((unsigned int)(x * (float)Np1), (unsigned int)N);
-}
-__device__ __forceinline__ uchar4 MakeUChar4(float3 const& srgb)
-{
-	return make_uchar4(QuantizeUnsigned8Bits(srgb.x), QuantizeUnsigned8Bits(srgb.y), QuantizeUnsigned8Bits(srgb.z), 255u);
+	return SRGB(ColorRGB32F(color.r, color.g, color.b));
 }
 
-__device__ float Luminance(float3 color)
-{
-	return dot(color, make_float3(0.2126729, 0.7151522, 0.0721750));
-}
+__device__ __forceinline__ ColorRGBA8 operator+ (ColorRGBA8 const& a, ColorRGBA8 const& b) { return ColorRGBA8(a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a); }
+__device__ __forceinline__ ColorRGBA8 operator- (ColorRGBA8 const& c) { return ColorRGBA8(-c.r, -c.g, -c.b, c.a); }
+__device__ __forceinline__ ColorRGBA8 operator- (ColorRGBA8 const& a, ColorRGBA8 const& b) { return ColorRGBA8(a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a); }
+__device__ __forceinline__ ColorRGBA8 operator* (ColorRGBA8 const& a, ColorRGBA8 const& b) { return ColorRGBA8(a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a); }
+__device__ __forceinline__ ColorRGBA8 operator* (Float k, ColorRGBA8 const& c) { return ColorRGBA8(c.r * k, c.g * k, c.b * k, c.a * k); }
+__device__ __forceinline__ ColorRGBA8 operator* (ColorRGBA8 const& c, Float k) { return ColorRGBA8(c.r * k, c.g * k, c.b * k, c.a * k); }
+__device__ __forceinline__ ColorRGBA8 operator/ (ColorRGBA8 const& a, ColorRGBA8 const& b) { return ColorRGBA8(a.r / b.r, a.g / b.g, a.b / b.b, a.a / b.a); }
+__device__ __forceinline__ ColorRGBA8 operator/ (Float k, ColorRGBA8 const& c) { return ColorRGBA8(k / c.r, k / c.g, k / c.b, k / c.a); }
+__device__ __forceinline__ ColorRGBA8 operator/ (ColorRGBA8 const& c, Float k) { return ColorRGBA8(c.r / k, c.g / k, c.b / k, c.a / k); }
+__device__ __forceinline__ ColorRGBA8 sqrt(ColorRGBA8 const& col) { return ColorRGBA8(sqrtf(col.r), sqrtf(col.g), sqrtf(col.b), sqrtf(col.a)); }
+__device__ __forceinline__ ColorRGBA8 exp(ColorRGBA8 const& col) { return ColorRGBA8(expf(col.r), expf(col.g), expf(col.b), expf(col.a)); }
+__device__ __forceinline__ ColorRGBA8 log(ColorRGBA8 const& col) { return ColorRGBA8(logf(col.r), logf(col.g), logf(col.b), logf(col.a)); }
+__device__ __forceinline__ ColorRGBA8 pow(ColorRGBA8 const& col, Float k) { return ColorRGBA8(powf(col.r, k), powf(col.g, k), powf(col.b, k), powf(col.a, k)); }
