@@ -8,62 +8,62 @@ using namespace amber;
 
 extern "C" __constant__ LaunchParams params;
 
-__device__ __forceinline__ void EvaluateMaterial(EvaluatedMaterial& evaluatedMaterial, Uint32 id, Float2 uv)
+__device__ __forceinline__ void EvaluateMaterial(EvaluatedMaterial& evaluated_material, Uint32 id, Float2 uv)
 {
 	MaterialGPU material = params.materials[id];
 	if (material.diffuse_tex_id >= 0)
 	{
 		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], uv.x, uv.y);
-		evaluatedMaterial.base_color = material.base_color * MakeFloat3(sampled.x, sampled.y, sampled.z);
+		evaluated_material.base_color = material.base_color * MakeFloat3(sampled.x, sampled.y, sampled.z);
 	}
 	else
 	{
-		evaluatedMaterial.base_color = material.base_color;
+		evaluated_material.base_color = material.base_color;
 	}
 
 	if (material.emissive_tex_id >= 0)
 	{
 		Float4 sampled = tex2D<Float4>(params.textures[material.emissive_tex_id], uv.x, uv.y);
-		evaluatedMaterial.emissive = material.emissive_color * MakeFloat3(sampled.x, sampled.y, sampled.z);
+		evaluated_material.emissive = material.emissive_color * MakeFloat3(sampled.x, sampled.y, sampled.z);
 	}
 	else
 	{
-		evaluatedMaterial.emissive = material.emissive_color;
+		evaluated_material.emissive = material.emissive_color;
 	}
 
 	if (material.metallic_roughness_tex_id >= 0)
 	{
 		Float4 sampled = tex2D<Float4>(params.textures[material.metallic_roughness_tex_id], uv.x, uv.y);
-		evaluatedMaterial.ao = sampled.x;
-		evaluatedMaterial.roughness = sampled.y * material.roughness;
-		evaluatedMaterial.metallic = sampled.z * material.metallic;
+		evaluated_material.ao = sampled.x;
+		evaluated_material.roughness = sampled.y * material.roughness;
+		evaluated_material.metallic = sampled.z * material.metallic;
 	}
 	else
 	{
-		evaluatedMaterial.ao = 1.0f;
-		evaluatedMaterial.roughness = material.roughness;
-		evaluatedMaterial.metallic = material.metallic;
+		evaluated_material.ao = 1.0f;
+		evaluated_material.roughness = material.roughness;
+		evaluated_material.metallic = material.metallic;
 	}
 
 	if (material.normal_tex_id >= 0)
 	{
 		Float4 sampled = tex2D<Float4>(params.textures[material.normal_tex_id], uv.x, uv.y);
-		evaluatedMaterial.normal = MakeFloat3(sampled.x, sampled.y, sampled.z);
-		evaluatedMaterial.normal = 2.0f * evaluatedMaterial.normal - 1.0f;
+		evaluated_material.normal = MakeFloat3(sampled.x, sampled.y, sampled.z);
+		evaluated_material.normal = 2.0f * evaluated_material.normal - 1.0f;
 	}
 	else
 	{
-		evaluatedMaterial.normal = MakeFloat3(0.0f, 0.0f, 1.0f);
+		evaluated_material.normal = MakeFloat3(0.0f, 0.0f, 1.0f);
 	}
 
-	evaluatedMaterial.specular_tint = material.specular_tint;
-	evaluatedMaterial.anisotropy = material.anisotropy;
-	evaluatedMaterial.sheen = material.sheen;
-	evaluatedMaterial.sheen_tint = material.sheen_tint;
-	evaluatedMaterial.clearcoat = material.clearcoat;
-	evaluatedMaterial.clearcoat_gloss = material.clearcoat_gloss;
-	evaluatedMaterial.ior = material.ior;
-	evaluatedMaterial.specular_transmission = material.specular_transmission;
+	evaluated_material.specular_tint = material.specular_tint;
+	evaluated_material.anisotropy = material.anisotropy;
+	evaluated_material.sheen = material.sheen;
+	evaluated_material.sheen_tint = material.sheen_tint;
+	evaluated_material.clearcoat = material.clearcoat;
+	evaluated_material.clearcoat_gloss = material.clearcoat_gloss;
+	evaluated_material.ior = material.ior;
+	evaluated_material.specular_transmission = material.specular_transmission;
 }
 __device__ __forceinline__ Float3 ApplyNormalMap(Float3 const& normalMap, Float3 const& T, Float3 const& B, Float3 const& N)
 {
@@ -255,10 +255,8 @@ extern "C" __global__ void RG_NAME(rg)()
 
 			//if (length(material.normal - MakeFloat3(0.0f, 0.0f, 1.0f)) > 1e-4f)
 			//{
-			//	v_z = ApplyNormalMap(material.normal, v_x, v_y, v_z);
-			//	ort = OrthonormalBasis(v_z);
-			//	v_x = ort.tangent;
-			//	v_y = ort.binormal;
+			//	N = ApplyNormalMap(material.normal, T, B, N);
+			//	BuildONB(N, T, B);
 			//}
 
 			if (depth == 0)
