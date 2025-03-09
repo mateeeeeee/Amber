@@ -93,8 +93,7 @@ __device__ Float SmithShadowingGGXAniso(Float n_dot_o,
     Float o_dot_y,
     Float2 alpha)
 {
-    return 1.0f /
-        (n_dot_o + sqrt(Pow2(o_dot_x * alpha.x) + Pow2(o_dot_y * alpha.y) + Pow2(n_dot_o)));
+    return 1.0f / (n_dot_o + sqrt(Pow2(o_dot_x * alpha.x) + Pow2(o_dot_y * alpha.y) + Pow2(n_dot_o)));
 }
 
 __device__ Float3 SampleLambertianDir(Float3 const& n,
@@ -107,8 +106,7 @@ __device__ Float3 SampleLambertianDir(Float3 const& n,
 }
 
 // Sample the microfacet normal vectors for the various microfacet distributions
-__device__ Float3 SampleGtr1H(
-    Float3 const& n, Float3 const& v_x, Float3 const& v_y, Float alpha, Float2 const& s)
+__device__ Float3 SampleGtr1H(Float3 const& n, Float3 const& v_x, Float3 const& v_y, Float alpha, Float2 const& s)
 {
     Float phi_h = 2.0f * M_PI * s.x;
     Float alpha_sqr = alpha * alpha;
@@ -119,8 +117,7 @@ __device__ Float3 SampleGtr1H(
     return hemi_dir.x * v_x + hemi_dir.y * v_y + hemi_dir.z * n;
 }
 
-__device__ Float3 SampleGtr2H(
-    Float3 const& n, Float3 const& v_x, Float3 const& v_y, Float alpha, Float2 const& s)
+__device__ Float3 SampleGtr2H(Float3 const& n, Float3 const& v_x, Float3 const& v_y, Float alpha, Float2 const& s)
 {
     Float phi_h = 2.0f * M_PI * s.x;
     Float cos_theta_h_sqr = (1.0f - s.y) / (1.0f + (alpha * alpha - 1.0f) * s.y);
@@ -195,7 +192,8 @@ __device__ Float Gtr2AnisoPdf(Float3 const& w_o,
     Float3 const& v_y,
     Float2 alpha)
 {
-    if (!SameHemisphere(w_o, w_i, n)) {
+    if (!SameHemisphere(w_o, w_i, n))
+    {
         return 0.0f;
     }
     Float3 w_h = normalize(w_i + w_o);

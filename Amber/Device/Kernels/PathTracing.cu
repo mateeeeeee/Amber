@@ -5,10 +5,7 @@
 
 using namespace amber;
 
-extern "C" 
-{
-	__constant__ LaunchParams params;
-}
+extern "C" __constant__ LaunchParams params;
 
 __device__ __forceinline__ void EvaluateMaterial(EvaluatedMaterial& evaluatedMaterial, Uint32 id, Float2 uv)
 {
@@ -86,73 +83,71 @@ __device__ __forceinline__ Float3 GetRayDirection(Uint2 pixel, Uint2 screen, PRN
 	Float3 ray_direction = normalize(d.x * aspectRatio * tanHalfFovy * U + d.y * tanHalfFovy * V + W);
 	return ray_direction;
 }
-__device__ __forceinline__ Float3 SampleDirectLight(EvaluatedMaterial const& evaluatedMaterial, Float3 const& hitPoint, Float3 const& wo, OrthonormalBasis const& ort, PRNG& prng)
+__device__ __forceinline__ Float3 SampleDirectLight(EvaluatedMaterial const& evaluated_material, Float3 const& hit_point, Float3 const& wo, 
+	Float3 const& T, Float3 const& B, Float3 const& N, PRNG& prng)
 {
-	Uint32 lightIndex = prng.RandomFloat() * params.light_count;
-	LightGPU light = params.lights[lightIndex];
+	Uint32 light_index = prng.RandomFloat() * params.light_count;
+	LightGPU light = params.lights[light_index];
 
-	Float3 const& v_x = ort.tangent;
-	Float3 const& v_y = ort.binormal;
-	Float3 const& v_z = ort.normal;
 	Float3 radiance = MakeFloat3(0.0f);
 	if (light.type == LightGPUType_Directional)
 	{
-		Float3 lightDirection = normalize(light.direction);
-		if (!TraceOcclusion(params.traversable, hitPoint + M_EPSILON * v_z, -lightDirection, M_EPSILON, M_INF))
+		Float3 light_direction = normalize(light.direction);
+		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * N, -light_direction, M_EPSILON, M_INF))
 		{
-			Float3 bsdf = DisneyBrdf(evaluatedMaterial, v_z, wo, -lightDirection, v_x, v_y);
-			radiance = bsdf * light.color * abs(dot(-lightDirection, v_z));
+			Float3 bsdf = DisneyBrdf(evaluated_material, N, wo, -light_direction, T, B);
+			radiance = bsdf * light.color * abs(dot(-light_direction, N));
 		}
 
 		Float3 wi;
-		Float bsdfPdf;
-		Float3 bsdf = SampleDisneyBrdf(evaluatedMaterial, v_z, wo, v_x, v_y, prng, wi, bsdfPdf);
+		Float bsdf_pdf;
+		Float3 bsdf = SampleDisneyBrdf(evaluated_material, N, wo, T, B, prng, wi, bsdf_pdf);
 
-		if (length(bsdf) > M_EPSILON && bsdfPdf >= M_EPSILON)
+		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
 		{
 			Float light_pdf = 1.0f; 
-			Float w = PowerHeuristic(1.f, bsdfPdf, 1.f, light_pdf);
+			Float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
 
-			if (!TraceOcclusion(params.traversable, hitPoint + M_EPSILON * v_z, wi, M_EPSILON, M_INF))
+			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * N, wi, M_EPSILON, M_INF))
 			{
-				Float3 bsdf = DisneyBrdf(evaluatedMaterial, v_z, wo, -lightDirection, v_x, v_y);
-				radiance += bsdf * light.color * abs(dot(wi, v_z)) * w / bsdfPdf;
+				Float3 bsdf = DisneyBrdf(evaluated_material, N, wo, -light_direction, T, B);
+				radiance += bsdf * light.color * abs(dot(wi, N)) * w / bsdf_pdf;
 			}
 		}
 	}
 	else if (light.type == LightGPUType_Point)
 	{
 		Float3 light_pos = light.position;
-		Float3 light_dir = light_pos - hitPoint; 
+		Float3 light_dir = light_pos - hit_point; 
 		Float dist = length(light_dir);
 		light_dir = light_dir / dist;
 
-		if (!TraceOcclusion(params.traversable, hitPoint + M_EPSILON * v_z, light_dir, M_EPSILON, dist - M_EPSILON))
+		if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * N, light_dir, M_EPSILON, dist - M_EPSILON))
 		{
 			Float attenuation = 1.0f / (dist * dist);
-			Float3 bsdf = DisneyBrdf(evaluatedMaterial, v_z, wo, light_dir, v_x, v_y);
-			radiance = bsdf * light.color * abs(dot(light_dir, v_z)) * attenuation;
+			Float3 bsdf = DisneyBrdf(evaluated_material, N, wo, light_dir, T, B);
+			radiance = bsdf * light.color * abs(dot(light_dir, N)) * attenuation;
 		}
 
 		Float3 w_i;
 		Float bsdf_pdf;
-		Float3 bsdf = SampleDisneyBrdf(evaluatedMaterial, v_z, wo, v_x, v_y, prng, w_i, bsdf_pdf);
+		Float3 bsdf = SampleDisneyBrdf(evaluated_material, N, wo, T, B, prng, w_i, bsdf_pdf);
 		if (length(bsdf) > M_EPSILON && bsdf_pdf >= M_EPSILON)
 		{
-			Float light_pdf = (dist * dist) / (abs(dot(light_dir, v_z)) * 1.0f); // light.radius);
+			Float light_pdf = (dist * dist) / (abs(dot(light_dir, N)) * 1.0f); // light.radius);
 			Float w = PowerHeuristic(1.f, bsdf_pdf, 1.f, light_pdf);
 
-			if (!TraceOcclusion(params.traversable, hitPoint + M_EPSILON * v_z, w_i, M_EPSILON, dist - M_EPSILON))
+			if (!TraceOcclusion(params.traversable, hit_point + M_EPSILON * N, w_i, M_EPSILON, dist - M_EPSILON))
 			{
 				Float attenuation = 1.0f / (dist * dist); 
-				radiance += bsdf * light.color * abs(dot(w_i, v_z)) * attenuation * w / bsdf_pdf;
+				radiance += bsdf * light.color * abs(dot(w_i, N)) * attenuation * w / bsdf_pdf;
 			}
 		}
 	}
 	return radiance;
 }
 
-__device__ void WriteToDenoiserBuffers(Uint32 idx, Float3 const& albedo, Float3 const& normal)
+__device__ __forceinline__ void WriteToDenoiserBuffers(Uint32 idx, Float3 const& albedo, Float3 const& normal)
 {
 	if (params.denoiser_albedo != NULL)
 	{
@@ -168,7 +163,7 @@ __device__ void WriteToDenoiserBuffers(Uint32 idx, Float3 const& albedo, Float3 
 		params.denoiser_normals[idx] = view_normal;
 	}
 }
-__device__ void WriteToDebugBuffer(Uint32 idx, Float3 const& albedo, Float3 const& normal, Float2 const& uv, Uint32 material_id)
+__device__ __forceinline__ void WriteToDebugBuffer(Uint32 idx, Float3 const& albedo, Float3 const& normal, Float2 const& uv, Uint32 material_id)
 {
 	if (params.output_type == PathTracerOutputGPU_Albedo)
 	{
@@ -249,16 +244,13 @@ extern "C" __global__ void RG_NAME(rg)()
 			radiance += emissive * throughput;
 
 			Float3 w_o = -ray_direction;
-			Float3 v_x, v_y;
-			Float3 v_z = hit_record.N;
-			if (material.specular_transmission == 0.0f && dot(w_o, v_z) < 0.0f)
+			Float3 T, B;
+			Float3 N = hit_record.N;
+			if (material.specular_transmission == 0.0f && dot(w_o, N) < 0.0f)
 			{
-				v_z = -v_z;
+				N = -N;
 			}
-
-			OrthonormalBasis ort(v_z);
-			v_x = ort.tangent;
-			v_y = ort.binormal;
+			BuildONB(N, T, B);
 
 			//if (length(material.normal - MakeFloat3(0.0f, 0.0f, 1.0f)) > 1e-4f)
 			//{
@@ -270,20 +262,20 @@ extern "C" __global__ void RG_NAME(rg)()
 
 			if (depth == 0)
 			{
-				WriteToDenoiserBuffers(idx, material.base_color, v_z);
-				WriteToDebugBuffer(idx, material.base_color, v_z, hit_record.uv, hit_record.material_idx);
+				WriteToDenoiserBuffers(idx, material.base_color, N);
+				WriteToDebugBuffer(idx, material.base_color, N, hit_record.uv, hit_record.material_idx);
 			}
 
-			radiance += SampleDirectLight(material, hit_record.P, w_o, ort, prng) * throughput;
+			radiance += SampleDirectLight(material, hit_record.P, w_o, T, B, N, prng) * throughput;
 
 			Float3 w_i;
 			Float pdf;
-			Float3 bsdf = SampleDisneyBrdf(material, v_z, w_o, v_x, v_y, prng, w_i, pdf);
+			Float3 bsdf = SampleDisneyBrdf(material, N, w_o, T, B, prng, w_i, pdf);
 			if (params.output_type == PathTracerOutputGPU_Custom && depth == 0)
 			{
-				Bool entering = dot(w_o, v_z) > 0.f;
-				Float dot_wi_n = dot(w_i, v_z); // Sampled direction vs. normal
-				Bool is_reflected = SameHemisphere(w_o, w_i, v_z); // 1.0 if reflected, 0.0 if refracted
+				Bool entering = dot(w_o, N) > 0.0f;
+				Float dot_wi_n = dot(w_i, N); // Sampled direction vs. normal
+				Bool is_reflected = SameHemisphere(w_o, w_i, N); // 1.0 if reflected, 0.0 if refracted
 				params.debug_buffer[idx] = MakeFloat3(dot_wi_n, is_reflected ? 1.0f : 0.0f, pdf);
 				return;
 			}
@@ -292,7 +284,7 @@ extern "C" __global__ void RG_NAME(rg)()
 			{
 				break;
 			}
-			throughput *= bsdf * abs(dot(w_i, v_z)) / pdf;
+			throughput *= bsdf * abs(dot(w_i, N)) / pdf;
 			
 			ray_origin = hit_record.P + w_i * 1e-3;
 			ray_direction = w_i;

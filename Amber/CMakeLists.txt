@@ -123,6 +123,7 @@ set(CUDA_KERNEL_FILES
     Device/Kernels/Disney.cuh
     Device/Kernels/Math.cuh
     Device/Kernels/DeviceCommon.cuh
+    Device/Kernels/DeviceTypes.cuh
     Device/Kernels/Impl/MathImpl.cuh
     Device/Kernels/Impl/MathDefines.cuh
 
