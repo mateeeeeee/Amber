@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 
 namespace amber
 {
@@ -22,9 +21,9 @@ namespace amber
 		Float ior = 1.5f;
 		Float specular_transmission = 0.0f;
 
-		Int32 diffuse_tex_id = -1;
-		Int32 metallic_roughness_tex_id = -1;
-		Int32 normal_tex_id = -1;
-		Int32 emissive_tex_id = -1;
+		Int   diffuse_tex_id = -1;
+		Int   metallic_roughness_tex_id = -1;
+		Int   normal_tex_id = -1;
+		Int   emissive_tex_id = -1;
 	};
 }

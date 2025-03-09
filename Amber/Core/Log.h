@@ -1,6 +1,6 @@
 #pragma once
+#include <string>
 #include <string_view>
-#include <format>
 #include "Utilities/Singleton.h"
 
 namespace amber
@@ -29,20 +29,20 @@ namespace amber
 		EditorSink* GetEditorSink();
 
 	private:
-		LogCallbackType callbacks[(Uint32)LogLevel::Count] = {};
+		LogCallbackType callbacks[(Uint)LogLevel::Count] = {};
 
 	private:
 		LogManager() = default;
 
 		void SetLogCallback(LogLevel level, LogCallbackType&& callback)
 		{
-			callbacks[(Uint32)level] = callback;
+			callbacks[(Uint)level] = callback;
 		}
 	};
-#define g_LogManager amber::LogManager::Get() 
+	#define g_Log amber::LogManager::Get() 
 
-#define AMBER_DEBUG(fmt, ...)  g_LogManager.CLog(amber::LogLevel::Debug, fmt,  __VA_ARGS__)
-#define AMBER_INFO(fmt, ...)   g_LogManager.CLog(amber::LogLevel::Info, fmt,  __VA_ARGS__)
-#define AMBER_WARN(fmt, ...)   g_LogManager.CLog(amber::LogLevel::Warning, fmt,  __VA_ARGS__)
-#define AMBER_ERROR(fmt, ...)  g_LogManager.CLog(amber::LogLevel::Error, fmt,  __VA_ARGS__)
+#define AMBER_DEBUG(fmt, ...)  g_Log.CLog(amber::LogLevel::Debug, fmt,  __VA_ARGS__)
+#define AMBER_INFO(fmt, ...)   g_Log.CLog(amber::LogLevel::Info, fmt,  __VA_ARGS__)
+#define AMBER_WARN(fmt, ...)   g_Log.CLog(amber::LogLevel::Warning, fmt,  __VA_ARGS__)
+#define AMBER_ERROR(fmt, ...)  g_Log.CLog(amber::LogLevel::Error, fmt,  __VA_ARGS__)
 }

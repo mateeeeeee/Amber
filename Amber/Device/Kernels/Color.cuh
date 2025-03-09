@@ -25,15 +25,14 @@ struct ColorRGBA32F
 	__device__ Bool  IsBlack() const { return !(r > 0.0f || g > 0.0f || b > 0.0f); }
 	__device__ Bool  IsWhite() const { return r == 1.0f && g == 1.0f && b == 1.0f; }
 
-
 	__device__ Float MaxComponent() const { return max(r, max(g, b)); }
 	__device__ ColorRGBA32F Normalized() const { Float length = sqrtf(r * r + g * g + b * b); return ColorRGBA32F(r / length, g / length, b / length, a /length); }
 
 	__device__ static ColorRGBA32F Max(ColorRGBA32F const& a, ColorRGBA32F const& b) { return ColorRGBA32F(max(a.r, b.r), max(a.g, b.g), max(a.b, b.b), max(a.a, b.a)); }
 	__device__ static ColorRGBA32F Min(ColorRGBA32F const& a, ColorRGBA32F const& b) { return ColorRGBA32F(min(a.r, b.r), min(a.g, b.g), min(a.b, b.b), min(a.a, b.a)); }
 
-	__device__ Float& operator[](Uint32 index) { return *(&r + index); }
-	__device__ Float operator[](Uint32 index) const { return *(&r + index); }
+	__device__ Float& operator[](Uint index) { return *(&r + index); }
+	__device__ Float operator[](Uint index) const { return *(&r + index); }
 
 	Float r, g, b, a;
 };
@@ -76,15 +75,14 @@ struct ColorRGB32F
 	__device__ Bool  IsBlack() const { return !(r > 0.0f || g > 0.0f || b > 0.0f); }
 	__device__ Bool  IsWhite() const { return r == 1.0f && g == 1.0f && b == 1.0f; }
 
-
 	__device__ Float MaxComponent() const { return max(r, max(g, b)); }
 	__device__ ColorRGB32F Normalized() const { float length = sqrtf(r * r + g * g + b * b); return ColorRGB32F(r / length, g / length, b / length); }
 
 	__device__ static ColorRGB32F Max(ColorRGB32F const& a, ColorRGB32F const& b) { return ColorRGB32F(max(a.r, b.r), max(a.g, b.g), max(a.b, b.b)); }
 	__device__ static ColorRGB32F Min(ColorRGB32F const& a, ColorRGB32F const& b) { return ColorRGB32F(min(a.r, b.r), min(a.g, b.g), min(a.b, b.b)); }
 
-	__device__ Float& operator[](Uint32 index) { return *(&r + index); }
-	__device__ Float operator[](Uint32 index) const { return *(&r + index); }
+	__device__ Float& operator[](Uint index) { return *(&r + index); }
+	__device__ Float operator[](Uint index) const { return *(&r + index); }
 
 	Float r, g, b;
 };
@@ -136,8 +134,8 @@ struct ColorRGBA8
 		return (Uchar)min((Uint)(x * (Float)Np1), (Uint)N);
 	}
 
-	__device__ Uchar& operator[](Uint32 index) { return *(&r + index); }
-	__device__ Uchar operator[](Uint32 index) const { return *(&r + index); }
+	__device__ Uchar& operator[](Uint index) { return *(&r + index); }
+	__device__ Uchar operator[](Uint index) const { return *(&r + index); }
 
 	Uchar r, g, b, a;
 };
@@ -145,7 +143,7 @@ struct ColorRGBA8
 
 __device__ __forceinline__ ColorRGBA8 SRGB(ColorRGBA32F const& color)
 {
-	static constexpr float INV_GAMMA = 1.0f / 2.2f;
+	static constexpr Float INV_GAMMA = 1.0f / 2.2f;
 	return MakeFloat3(
 		color.r < 0.0031308f ? 12.92f * color.r : 1.055f * powf(color.r, INV_GAMMA) - 0.055f,
 		color.g < 0.0031308f ? 12.92f * color.g : 1.055f * powf(color.g, INV_GAMMA) - 0.055f,
@@ -153,14 +151,14 @@ __device__ __forceinline__ ColorRGBA8 SRGB(ColorRGBA32F const& color)
 }
 
 
-__device__ __forceinline__ float3 ToSRGB(float3 const& color)
+__device__ __forceinline__ Float3 ToSRGB(Float3 const& color)
 {
-	static constexpr float INV_GAMMA = 1.0f / 2.2f;
-	float3 gamma_corrected_color = make_float3(powf(color.x, INV_GAMMA), powf(color.y, INV_GAMMA), powf(color.z, INV_GAMMA));
-	return make_float3(
-		color.x < 0.0031308f ? 12.92f * color.x : 1.055f * gamma_corrected_color.x - 0.055f,
-		color.y < 0.0031308f ? 12.92f * color.y : 1.055f * gamma_corrected_color.y - 0.055f,
-		color.z < 0.0031308f ? 12.92f * color.z : 1.055f * gamma_corrected_color.z - 0.055f);
+	static constexpr Float INV_GAMMA = 1.0f / 2.2f;
+	float3 gamma_corrected_color = MakeFloat3(powf(color.x, INV_GAMMA), powf(color.y, INV_GAMMA), powf(color.z, INV_GAMMA));
+	return MakeFloat3(
+		color.x < 0.0031308f ? 12.92f * color.x : 1.055f * powf(color.x, INV_GAMMA) - 0.055f,
+		color.y < 0.0031308f ? 12.92f * color.y : 1.055f * powf(color.y, INV_GAMMA) - 0.055f,
+		color.z < 0.0031308f ? 12.92f * color.z : 1.055f * powf(color.z, INV_GAMMA) - 0.055f);
 }
 __device__ __forceinline__ unsigned char QuantizeUnsigned8Bits(float x)
 {

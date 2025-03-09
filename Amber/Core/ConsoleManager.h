@@ -10,13 +10,13 @@ namespace amber
 	public:
 
 		virtual IConsoleVariable* RegisterConsoleVariable(Char const* name, Bool default_value, Char const* help) override;
-		virtual IConsoleVariable* RegisterConsoleVariable(Char const* name, int default_value, Char const* help) override;
+		virtual IConsoleVariable* RegisterConsoleVariable(Char const* name, Int default_value, Char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariable(Char const* name, Float default_value, Char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariable(Char const* name, Char const* default_value, Char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariable(Char const* name, std::string const& default_value, Char const* help) override;
 
 		virtual IConsoleVariable* RegisterConsoleVariableRef(Char const* name, Bool& value, Char const* help) override;
-		virtual IConsoleVariable* RegisterConsoleVariableRef(Char const* name, int& value, Char const* help) override;
+		virtual IConsoleVariable* RegisterConsoleVariableRef(Char const* name, Int& value, Char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariableRef(Char const* name, Float& value, Char const* help) override;
 		virtual IConsoleVariable* RegisterConsoleVariableRef(Char const* name, std::string& value, Char const* help) override;
 
@@ -79,7 +79,7 @@ namespace amber
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 		}
-		AutoConsoleVariable(Char const* name, Int32 default_value, Char const* help)
+		AutoConsoleVariable(Char const* name, Int default_value, Char const* help)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 		}
@@ -97,7 +97,7 @@ namespace amber
 		{
 			AsVariable()->AddOnChanged(callback);
 		}
-		AutoConsoleVariable(Char const* name, Int32 default_value, Char const* help, ConsoleVariableDelegate const& callback)
+		AutoConsoleVariable(Char const* name, Int default_value, Char const* help, ConsoleVariableDelegate const& callback)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariable(name, default_value, help))
 		{
 			AsVariable()->AddOnChanged(callback);
@@ -142,14 +142,14 @@ namespace amber
 		T Get() const
 		{
 			if constexpr (std::is_same_v<T, Bool>) return AsVariable()->GetBool();
-			if constexpr (std::is_same_v<T, int>) return  AsVariable()->GetInt();
+			if constexpr (std::is_same_v<T, Int>) return  AsVariable()->GetInt();
 			if constexpr (std::is_same_v<T, Float>) return AsVariable()->GetFloat();
 			if constexpr (std::is_same_v<T, std::string>) return AsVariable()->GetString();
 		}
 		T* GetPtr()
 		{
 			if constexpr (std::is_same_v<T, Bool>) return AsVariable()->GetBoolPtr();
-			if constexpr (std::is_same_v<T, int>) return  AsVariable()->GetIntPtr();
+			if constexpr (std::is_same_v<T, Int>) return  AsVariable()->GetIntPtr();
 			if constexpr (std::is_same_v<T, Float>) return AsVariable()->GetFloatPtr();
 			if constexpr (std::is_same_v<T, std::string>) return AsVariable()->GetStringPtr();
 		}
@@ -157,15 +157,15 @@ namespace amber
 	private:
 	};
 
-	template <Uint32 N>
+	template <Uint N>
 	TAutoConsoleVariable(Char const* name, const Char(&)[N], Char const* help) -> TAutoConsoleVariable<std::string>;
-	template <Uint32 N>
+	template <Uint N>
 	TAutoConsoleVariable(Char const* name, const Char(&)[N], Char const* help, ConsoleVariableDelegate const& callback) -> TAutoConsoleVariable<std::string>;
 
 	class AutoConsoleVariableRef : private AutoConsoleObject
 	{
 	public:
-		AutoConsoleVariableRef(Char const* name, Int32& ref_value, Char const* help)
+		AutoConsoleVariableRef(Char const* name, Int& ref_value, Char const* help)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariableRef(name, ref_value, help))
 		{
 		}
@@ -182,7 +182,7 @@ namespace amber
 		{
 		}
 
-		AutoConsoleVariableRef(Char const* name, Int32& ref_value, Char const* help, ConsoleVariableDelegate const& callback)
+		AutoConsoleVariableRef(Char const* name, Int& ref_value, Char const* help, ConsoleVariableDelegate const& callback)
 			: AutoConsoleObject(g_ConsoleManager.RegisterConsoleVariableRef(name, ref_value, help))
 		{
 			AsVariable()->AddOnChanged(callback);
@@ -232,14 +232,14 @@ namespace amber
 		T Get() const
 		{
 			if constexpr (std::is_same_v<T, Bool>) return AsVariable()->GetBool();
-			if constexpr (std::is_same_v<T, int>) return  AsVariable()->GetInt();
+			if constexpr (std::is_same_v<T, Int>) return  AsVariable()->GetInt();
 			if constexpr (std::is_same_v<T, Float>) return AsVariable()->GetFloat();
 			if constexpr (std::is_same_v<T, std::string>) return AsVariable()->GetString();
 		}
 		T* GetPtr() const
 		{
 			if constexpr (std::is_same_v<T, Bool>) return AsVariable()->GetBoolPtr();
-			if constexpr (std::is_same_v<T, int>) return  AsVariable()->GetIntPtr();
+			if constexpr (std::is_same_v<T, Int>) return  AsVariable()->GetIntPtr();
 			if constexpr (std::is_same_v<T, Float>) return AsVariable()->GetFloatPtr();
 			if constexpr (std::is_same_v<T, std::string>) return AsVariable()->GetStringPtr();
 		}

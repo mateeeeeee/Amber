@@ -166,7 +166,7 @@ namespace amber
 		style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
 		style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
 		
-		for (int i = 0; i <= ImGuiCol_COUNT; i++)
+		for (Int i = 0; i <= ImGuiCol_COUNT; i++)
 		{
 			ImVec4& col = style.Colors[i];
 			Float H, S, V;
@@ -208,7 +208,7 @@ namespace amber
 		path_tracer.Render(camera);
 		auto const& fb = path_tracer.GetFramebuffer();
 
-		int width, height, pitch = -1; void* data = nullptr;
+		Int width, height, pitch = -1; void* data = nullptr;
 		SDL_QueryTexture(render_target.get(), nullptr, nullptr, &width, &height);
 		SDLCheck(SDL_LockTexture(render_target.get(), nullptr, (void**)&data, &pitch));
 		memcpy(data, fb, pitch * height);
@@ -325,27 +325,23 @@ namespace amber
 	void Editor::LogWindow()
 	{
 		if (!visibility_flags[Visibility_Log]) return;
-
 		if(editor_sink) editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Log]);
 	}
 
 	void Editor::ConsoleWindow()
 	{
 		if (!visibility_flags[Visibility_Console]) return;
-
 		editor_console->Draw(ICON_FA_TERMINAL" Console ", &visibility_flags[Visibility_Console]);
 	}
 
 	void Editor::StatsWindow()
 	{
 		if (!visibility_flags[Visibility_Stats]) return;
-
 		if(ImGui::Begin(ICON_FA_CLOCK" Stats", &visibility_flags[Visibility_Stats]))
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			ImGui::Text("FPS: %.1f ms", io.Framerate);
 			ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
-
 			path_tracer.MemoryUsageGUI();
 		}
 		ImGui::End();
@@ -354,7 +350,6 @@ namespace amber
 	void Editor::OptionsWindow()
 	{
 		if (!visibility_flags[Visibility_Options]) return;
-
 		if(ImGui::Begin(ICON_FA_GEAR" Options", &visibility_flags[Visibility_Options]))
 		{
 			path_tracer.OptionsGUI();
@@ -365,7 +360,6 @@ namespace amber
 	void Editor::DebugWindow()
 	{
 		if (!visibility_flags[Visibility_Debug]) return;
-
 		if(ImGui::Begin(ICON_FA_BUG" Debug", &visibility_flags[Visibility_Debug]))
 		{
 			if (ImGui::TreeNode("Debug Options"))
@@ -385,7 +379,6 @@ namespace amber
 	void Editor::CameraWindow()
 	{
 		if (!visibility_flags[Visibility_Camera]) return;
-
 		if(ImGui::Begin(ICON_FA_CAMERA" Camera", &visibility_flags[Visibility_Camera]))
 		{
 			Vector3 camera_eye = camera.GetPosition();
@@ -401,7 +394,6 @@ namespace amber
 	void Editor::LightsWindow()
 	{
 		if (!visibility_flags[Visibility_Lights]) return;
-
 		if (ImGui::Begin(ICON_FA_LIGHTBULB " Lights", &visibility_flags[Visibility_Lights]))
 		{
 			path_tracer.LightsGUI();

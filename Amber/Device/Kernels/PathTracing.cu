@@ -186,22 +186,22 @@ __device__ void WriteToDenoiserBuffers(Uint32 idx, float3 const& albedo, float3 
 
 __device__ void WriteToDebugBuffer(Uint32 idx, float3 const& albedo, float3 const& normal, float2 const& uv, Uint32 material_id)
 {
-	if (params.output_type == PathTracerOutput_Albedo)
+	if (params.output_type == PathTracerOutputGPU_Albedo)
 	{
 		params.debug_buffer[idx] = albedo;
 		return;
 	}
-	if (params.output_type == PathTracerOutput_Normal)
+	if (params.output_type == PathTracerOutputGPU_Normal)
 	{
 		params.debug_buffer[idx] = normal;
 		return;
 	}
-	if (params.output_type == PathTracerOutput_UV)
+	if (params.output_type == PathTracerOutputGPU_UV)
 	{
 		params.debug_buffer[idx] = make_float3(uv, 0.0f);
 		return;
 	}
-	if(params.output_type == PathTracerOutput_MaterialID)
+	if(params.output_type == PathTracerOutputGPU_MaterialID)
 	{
 		float3 material_id_color = make_float3(
 			(material_id * 37) % 255 / 255.0, 
@@ -298,7 +298,7 @@ __global__ void RG_NAME(rg)()
 			float pdf;
 			float3 bsdf = SampleDisneyBrdf(material, v_z, w_o, v_x, v_y, seed, w_i, pdf);
 
-			if (params.output_type == PathTracerOutput_Custom && depth == 0) 
+			if (params.output_type == PathTracerOutputGPU_Custom && depth == 0)
 			{
 				bool entering = dot(w_o, v_z) > 0.f;
 				float dot_wi_n = dot(w_i, v_z); // Sampled direction vs. normal
