@@ -118,7 +118,7 @@ struct ColorRGBA8
 
 	__device__ ColorRGBA8(Uchar r, Uchar g, Uchar b, Uchar a) : r(r), g(g), b(b), a(a) {}
 	__device__ ColorRGBA8(Uchar4 color) : r(color.x), g(color.y), b(color.z), a(color.w) {}
-	__device__ ColorRGBA8(Float3 color) : r(QuantizeUnsigned8Bits(color.x)), g(QuantizeUnsigned8Bits(color.y)), b(QuantizeUnsigned8Bits(color.y)), a(255) {}
+	__device__ ColorRGBA8(Float3 color) : r(QuantizeUnsigned8Bits(color.x)), g(QuantizeUnsigned8Bits(color.y)), b(QuantizeUnsigned8Bits(color.z)), a(255) {}
 
 	__device__ void operator+=(ColorRGBA8 const& other) { r += other.r; g += other.g; b += other.b; a += other.a; }
 	__device__ void operator-=(ColorRGBA8 const& other) { r -= other.r; g -= other.g; b -= other.b; a -= other.a; }
