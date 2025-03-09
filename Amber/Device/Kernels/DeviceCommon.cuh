@@ -8,10 +8,7 @@
 #endif
 #include <cuda_runtime.h>
 #include <optix.h>
-#include "Core/Types.h"
-#include "impl/MathDefines.cuh"
-
-using namespace amber;
+#include "DeviceTypes.cuh"
 
 __forceinline__ __device__ Uint32 PackPointer0(void* ptr)
 {
