@@ -42,7 +42,6 @@ namespace amber
 		}
 
 	private:
-		std::string ini_file;
 		Window& window;
 		Camera& camera;
 		OptixPathTracer& path_tracer;
@@ -55,6 +54,7 @@ namespace amber
 		Bool visibility_flags[Visibility_Count] = {false};
 		std::unique_ptr<EditorConsole> editor_console;
 		EditorSink* editor_sink;
+		std::string ini_file;
 
 	private:
 		void SetStyle();
