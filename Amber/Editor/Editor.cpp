@@ -14,7 +14,6 @@
 
 namespace amber
 {
-
 	Editor::Editor(Window& window, Camera& camera, OptixPathTracer& path_tracer)
 		: window(window), camera(camera), path_tracer(path_tracer)
 	{
@@ -33,8 +32,8 @@ namespace amber
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
-		//ini_file = paths::IniDir + "imgui.ini";
-		//io.IniFilename = ini_file.c_str();
+		ini_file = paths::IniDir + "imgui.ini";
+		io.IniFilename = ini_file.c_str();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
