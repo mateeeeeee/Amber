@@ -8,9 +8,12 @@ using namespace amber;
 
 extern "C" __constant__ LaunchParams params;
 
-__device__ __forceinline__ void EvaluateMaterial(EvaluatedMaterial& evaluated_material, Uint32 id, Float2 uv)
+__device__ __forceinline__ Float3 ApplyNormalMapping(Float3 tangent_space_normal, Float3 N, Float3 T, Float3 B)
 {
-	MaterialGPU material = params.materials[id];
+	return normalize(tangent_space_normal.x * T + tangent_space_normal.y * B + tangent_space_normal.z * N);
+}
+__device__ __forceinline__ void EvaluateMaterial(MaterialGPU const& material, EvaluatedMaterial& evaluated_material, Float2 uv)
+{
 	if (material.diffuse_tex_id >= 0)
 	{
 		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], uv.x, uv.y);
@@ -48,12 +51,12 @@ __device__ __forceinline__ void EvaluateMaterial(EvaluatedMaterial& evaluated_ma
 	if (material.normal_tex_id >= 0)
 	{
 		Float4 sampled = tex2D<Float4>(params.textures[material.normal_tex_id], uv.x, uv.y);
-		evaluated_material.normal = MakeFloat3(sampled.x, sampled.y, sampled.z);
-		evaluated_material.normal = 2.0f * evaluated_material.normal - 1.0f;
+		evaluated_material.tangent_space_normal = MakeFloat3(sampled.x, sampled.y, sampled.z);
+		evaluated_material.tangent_space_normal = 2.0f * evaluated_material.tangent_space_normal - 1.0f;
 	}
 	else
 	{
-		evaluated_material.normal = MakeFloat3(0.0f, 0.0f, 1.0f);
+		evaluated_material.tangent_space_normal = MakeFloat3(0.0f, 0.0f, 1.0f);
 	}
 
 	evaluated_material.specular_tint = material.specular_tint;
@@ -64,10 +67,6 @@ __device__ __forceinline__ void EvaluateMaterial(EvaluatedMaterial& evaluated_ma
 	evaluated_material.clearcoat_gloss = material.clearcoat_gloss;
 	evaluated_material.ior = material.ior;
 	evaluated_material.specular_transmission = material.specular_transmission;
-}
-__device__ __forceinline__ Float3 ApplyNormalMap(Float3 const& normalMap, Float3 const& T, Float3 const& B, Float3 const& N)
-{
-	return normalize(normalMap.x * T + normalMap.y * B + normalMap.z * N);
 }
 __device__ __forceinline__ Float3 GetRayDirection(Uint2 pixel, Uint2 screen, PRNG& prng)
 {
@@ -211,7 +210,6 @@ extern "C" __global__ void RG_NAME(rg)()
 		Float3 ray_direction = GetRayDirection(pixel, screen, prng);
 
 		HitRecord hit_record{};
-		hit_record.depth = 0;
 		Uint32 p0 = PackPointer0(&hit_record), p1 = PackPointer1(&hit_record);
 
 		for (Uint32 depth = 0; depth < params.max_depth; ++depth)
@@ -238,44 +236,44 @@ extern "C" __global__ void RG_NAME(rg)()
 				break;
 			}
 
+			MeshGPU mesh = params.meshes[hit_record.instance_idx];
+			MaterialGPU material_gpu = params.materials[mesh.material_idx];
+
 			EvaluatedMaterial material{};
-			EvaluateMaterial(material, hit_record.material_idx, hit_record.uv);
+			EvaluateMaterial(material_gpu, material, hit_record.uv);
 
 			ColorRGB32F emissive = material.emissive;
 			radiance += emissive * throughput;
 
 			Float3 w_o = -ray_direction;
 			Float3 T, B;
-			Float3 N = hit_record.N;
-			if (material.specular_transmission == 0.0f && dot(w_o, N) < 0.0f)
+			Float3 Ns = hit_record.Ns;
+			Float3 Ng = hit_record.Ng;
+			if (material.specular_transmission == 0.0f && dot(w_o, Ns) < 0.0f)
 			{
-				N = -N;
+				Ns = -Ns;
+				Ng = -Ng;
 			}
-			BuildONB(N, T, B);
-
-			//if (length(material.normal - MakeFloat3(0.0f, 0.0f, 1.0f)) > 1e-4f)
-			//{
-			//	N = ApplyNormalMap(material.normal, T, B, N);
-			//	BuildONB(N, T, B);
-			//}
+			BuildONB(Ns, T, B);
+			Ns = ApplyNormalMapping(material.tangent_space_normal, Ns, T, B);
 
 			if (depth == 0)
 			{
-				WriteToDenoiserBuffers(idx, (Float3)material.base_color, N);
-				WriteToDebugBuffer(idx, (Float3)material.base_color, N, hit_record.uv, hit_record.material_idx);
+				WriteToDenoiserBuffers(idx, (Float3)material.base_color, Ns);
+				WriteToDebugBuffer(idx, (Float3)material.base_color, Ng, hit_record.uv, mesh.material_idx);
 			}
 
-			radiance += SampleDirectLight(material, hit_record.P, w_o, T, B, N, prng) * throughput;
+			radiance += SampleDirectLight(material, hit_record.P, w_o, T, B, Ns, prng) * throughput;
 
 			Float3 w_i;
 			Float pdf;
-			ColorRGB32F bsdf = SampleDisneyBrdf(material, N, w_o, T, B, prng, w_i, pdf);
+			ColorRGB32F bsdf = SampleDisneyBrdf(material, Ns, w_o, T, B, prng, w_i, pdf);
 			if (params.output_type == PathTracerOutputGPU_Custom && depth == 0)
 			{
-				Bool entering = dot(w_o, N) > 0.0f;
-				Float dot_wi_n = dot(w_i, N); // Sampled direction vs. normal
-				Bool is_reflected = SameHemisphere(w_o, w_i, N); // 1.0 if reflected, 0.0 if refracted
-				params.debug_buffer[idx] = MakeFloat3(dot_wi_n, is_reflected ? 1.0f : 0.0f, pdf);
+				Bool entering = dot(w_o, Ns) > 0.0f;
+				Float dot_wi_n = dot(w_i, Ns); 
+				Bool is_reflected = SameHemisphere(w_o, w_i, Ns); 
+				params.debug_buffer[idx] = MakeFloat3(is_reflected, is_reflected, is_reflected);
 				return;
 			}
 
@@ -283,7 +281,7 @@ extern "C" __global__ void RG_NAME(rg)()
 			{
 				break;
 			}
-			throughput *= bsdf * abs(dot(w_i, N)) / pdf;
+			throughput *= bsdf * abs(dot(w_i, Ns)) / pdf;
 			
 			ray_origin = hit_record.P + w_i * 1e-3;
 			ray_direction = w_i;
@@ -320,7 +318,8 @@ extern "C" __global__ void MISS_NAME(ms)()
 struct VertexData
 {
 	Float3 P;
-	Float3 N;
+	Float3 Ng;
+	Float3 Ns;
 	Float2 uv;
 };
 __device__ VertexData LoadVertexData(MeshGPU const& mesh, Uint32 primitive_idx, Float2 barycentrics)
@@ -339,16 +338,15 @@ __device__ VertexData LoadVertexData(MeshGPU const& mesh, Uint32 primitive_idx, 
 	Float3 pos2 = mesh_vertices[i2];
 	vertex.P = Interpolate(pos0, pos1, pos2, barycentrics);
 
-	//geometric normal
-	//Float3 edge1 = world_v1 - world_v0;
-	//Float3 edge2 = world_v2 - world_v0;
-	//Float3 geometric_normal = normalize(cross(edge1, edge2));
+	Float3 edge1 = pos1 - pos0;
+	Float3 edge2 = pos2 - pos0;
+	vertex.Ng = normalize(cross(edge1, edge2));
 
 	Float3* mesh_normals = params.normals + mesh.normals_offset;
 	Float3 nor0 = mesh_normals[i0];
 	Float3 nor1 = mesh_normals[i1];
 	Float3 nor2 = mesh_normals[i2];
-	vertex.N = Interpolate(nor0, nor1, nor2, barycentrics);
+	vertex.Ns = Interpolate(nor0, nor1, nor2, barycentrics);
 	
 	Float2* mesh_uvs = params.uvs + mesh.uvs_offset;
 	Float2 uv0 = mesh_uvs[i0];
@@ -365,13 +363,15 @@ extern "C"  __global__ void AH_NAME(ah)()
 	Uint32 primitive_idx = optixGetPrimitiveIndex();
 
 	MeshGPU mesh = params.meshes[instance_idx];
-	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 	MaterialGPU material = params.materials[mesh.material_idx];
-
 	if (material.diffuse_tex_id >= 0)
 	{
+		VertexData vertex = LoadVertexData(mesh, primitive_idx, optixGetTriangleBarycentrics());
 		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-		if(sampled.w < material.alpha_cutoff) optixIgnoreIntersection();
+		if (sampled.w < material.alpha_cutoff)
+		{
+			optixIgnoreIntersection();
+		}
 	}
 }
 
@@ -394,36 +394,96 @@ __device__ Float3 TransformNormal(Float const matrix[12], Float3 const& normal)
 
 extern "C" __global__ void CH_NAME(ch)()
 {
-	MeshGPU mesh = params.meshes[optixGetInstanceId()];
-	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
+	Uint32 instance_idx = optixGetInstanceId();
+	Uint32 primitive_idx = optixGetPrimitiveIndex();
+	Float2 barycentrics = optixGetTriangleBarycentrics();
+
+	MeshGPU mesh = params.meshes[instance_idx];
+	MaterialGPU material = params.materials[mesh.material_idx];
+	VertexData vertex = LoadVertexData(mesh, primitive_idx, barycentrics);
 
 	Float object_to_world_transform[12];
 	optixGetObjectToWorldTransformMatrix(object_to_world_transform);
 
 	HitRecord* hit_record = GetPayload<HitRecord>();
-	hit_record->hit = true;
 	hit_record->P = TransformVertex(object_to_world_transform, vertex.P);
-	hit_record->N = TransformNormal(object_to_world_transform, vertex.N);
+	hit_record->Ng = TransformNormal(object_to_world_transform, vertex.Ng);
 	hit_record->uv = vertex.uv;
-	hit_record->material_idx = mesh.material_idx;
+	hit_record->barycentrics = barycentrics;
+	hit_record->primitive_idx = primitive_idx;
+	hit_record->instance_idx = instance_idx;
+	hit_record->hit = true;
+	hit_record->t = optixGetRayTmax();
+	hit_record->Ns = TransformNormal(object_to_world_transform, vertex.Ns);
 }
 
 extern "C" __global__ void AH_NAME(ah_shadow)()
 {
 	Uint32 instance_idx = optixGetInstanceId();
 	Uint32 primitive_idx = optixGetPrimitiveIndex();
+	Float2 barycentrics = optixGetTriangleBarycentrics();
 
 	MeshGPU mesh = params.meshes[instance_idx];
-	VertexData vertex = LoadVertexData(mesh, optixGetPrimitiveIndex(), optixGetTriangleBarycentrics());
 	MaterialGPU material = params.materials[mesh.material_idx];
-
 	if (material.diffuse_tex_id >= 0)
 	{
+		VertexData vertex = LoadVertexData(mesh, primitive_idx, barycentrics);
 		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], vertex.uv.x, vertex.uv.y);
-		if (sampled.w < material.alpha_cutoff) optixIgnoreIntersection();
+		if (sampled.w < material.alpha_cutoff)
+		{
+			optixIgnoreIntersection();
+		}
 	}
 	if (material.specular_transmission > 0)
 	{
 		optixIgnoreIntersection();
 	}
 }
+
+
+/*
+__device__ __forceinline__ Float3 ApplyNormalMapping(HitRecord const& hit_record)
+{
+	MeshGPU const& mesh = params.meshes[hit_record.instance_idx];
+	Uint32 primitive_idx = hit_record.primitive_idx;
+	Float2 barycentrics = hit_record.barycentrics;
+	Float2 uv = hit_record.uv;
+	Float3 N = hit_record.Ns;
+	MaterialGPU material_gpu = params.materials[mesh.material_idx];
+	if (material_gpu.normal_tex_id < 0)
+	{
+		return N;
+	}
+	Float4 sampled = tex2D<Float4>(params.textures[material_gpu.normal_tex_id], uv.x, uv.y);
+	Float3 normal_tangent_space = MakeFloat3(sampled.x, sampled.y, sampled.z);
+	normal_tangent_space = 2.0f * normal_tangent_space - 1.0f;
+
+	MaterialGPU material = params.materials[mesh.material_idx];
+	Uint3* mesh_indices = params.indices + mesh.indices_offset;
+
+	Uint3 primitive_indices = mesh_indices[primitive_idx];
+	Uint32 i0 = primitive_indices.x;
+	Uint32 i1 = primitive_indices.y;
+	Uint32 i2 = primitive_indices.z;
+
+	Float2* mesh_uvs = params.uvs + mesh.uvs_offset;
+	Float2 uv0 = mesh_uvs[i0];
+	Float2 uv1 = mesh_uvs[i1];
+	Float2 uv2 = mesh_uvs[i2];
+
+	Float2 deltaUV_10 = uv1 - uv0;
+	Float2 deltaUV_20 = uv2 - uv0;
+
+	Float3* mesh_vertices = params.vertices + mesh.positions_offset;
+	Float3 P0 = mesh_vertices[i0];
+	Float3 P1 = mesh_vertices[i1];
+	Float3 P2 = mesh_vertices[i2];
+
+	Float3 edge_P0P1 = P1 - P0;
+	Float3 edge_P0P2 = P2 - P0;
+
+	float det_inverse = 1.0f / (deltaUV_10.x * deltaUV_20.y - deltaUV_10.y * deltaUV_20.x);
+	float3 T = (edge_P0P1 * deltaUV_20.y - edge_P0P2 * deltaUV_10.y) * det_inverse;
+	float3 B = (edge_P0P2 * deltaUV_10.x - edge_P0P1 * deltaUV_20.x) * det_inverse;
+	return LocalToWorldFrame(T, B, N, normal_tangent_space);
+}*/

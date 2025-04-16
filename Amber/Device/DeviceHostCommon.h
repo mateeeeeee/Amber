@@ -123,11 +123,14 @@ namespace amber
 	struct HitRecord
 	{
 		Float3		 P;
-		Float3		 N;
+		Float3		 Ns;
+		Float3		 Ng;
 		Float2       uv;
-		Bool32		 hit;
-		Uint32		 depth;
-		Uint32       material_idx;
+		Float2       barycentrics;
+		Float		 t;
+		Int			 primitive_idx = -1;
+		Int			 instance_idx = -1;
+		Bool32		 hit = false;
 	};
 }
 

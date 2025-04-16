@@ -207,7 +207,7 @@ struct EvaluatedMaterial
 	Float  metallic;
     ColorRGB32F emissive;
 	Float  specular;
-	Float3 normal;
+	Float3 tangent_space_normal;
 	Float  roughness;
 	Float  ao;
 	Float  specular_tint;
