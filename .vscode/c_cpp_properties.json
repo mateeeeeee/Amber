@@ -1,0 +1,83 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Amber",
+                "${env:CUDA_PATH}/include",
+                "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/*/include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__CUDACC__",
+                "__NVCC__"
+            ],
+            "windowsSdkVersion": "10.0.22621.0",
+            "compilerPath": "cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "windows-msvc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "forcedInclude": [
+                "${workspaceFolder}/Amber/Core/Types.h",
+                "${workspaceFolder}/Amber/Core/Macros.h",
+                "${workspaceFolder}/Amber/Math/MathTypes.h"
+            ],
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+        },
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Amber",
+                "${workspaceFolder}/Libraries/DirectXMath/include"
+            ],
+            "defines": [
+                "_DEBUG"
+            ],
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang++",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "macos-clang-arm64",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "${workspaceFolder}"
+                ]
+            }
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Amber",
+                "/usr/local/cuda/include"
+            ],
+            "defines": [
+                "__CUDACC__",
+                "__NVCC__"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "forcedInclude": [
+                "${workspaceFolder}/Amber/Core/Types.h",
+                "${workspaceFolder}/Amber/Core/Macros.h",
+                "${workspaceFolder}/Amber/Math/MathTypes.h"
+            ],
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+        }
+    ],
+    "version": 4
+}
