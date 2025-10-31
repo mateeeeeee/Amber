@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/Amber",
                 "${env:CUDA_PATH}/include",
-                "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v*/include"
+                "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v*/include",
+                "C:/ProgramData/NVIDIA Corporation/OptiX SDK*/include"
             ],
             "defines": [
                 "_DEBUG",
