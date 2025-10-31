@@ -27,7 +27,7 @@ struct SceneConfig
 };
 Bool ParseSceneConfig(Char const* config_file, SceneConfig& cfg);
 void ProcessCVarIniFile(Char const* cvar_file);
-
+P
 int main(Int argc, Char* argv[])
 {
 	CommandLineOptions::Initialize(argc, argv);
