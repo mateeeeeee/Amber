@@ -2,7 +2,52 @@
 find_package(CUDA REQUIRED)
 find_package(CUDAToolkit REQUIRED)
 
-set(OPTIX_INSTALL_DIR "C:/ProgramData/NVIDIA Corporation/OptiX SDK 8.0.0")
+# OptiX SDK location
+# Can be set via: cmake -DOptiX_INSTALL_DIR=/path/to/optix ..
+if(NOT DEFINED OptiX_INSTALL_DIR)
+    # Search standard locations
+    if(WIN32)
+        file(GLOB OPTIX_PATHS "C:/ProgramData/NVIDIA Corporation/OptiX SDK*")
+    else()
+        file(GLOB OPTIX_PATHS
+            "/opt/optix*"
+            "/usr/local/optix*"
+            "$ENV{HOME}/optix*"
+            "$ENV{HOME}/Downloads/NVIDIA-OptiX-SDK*")
+    endif()
+
+    if(OPTIX_PATHS)
+        list(SORT OPTIX_PATHS)
+        list(REVERSE OPTIX_PATHS) # Get the newest version
+        list(GET OPTIX_PATHS 0 OptiX_INSTALL_DIR)
+        message(STATUS "Found OptiX SDK at: ${OptiX_INSTALL_DIR}")
+    else()
+        message(FATAL_ERROR "OptiX SDK not found. Please set OptiX_INSTALL_DIR via cmake -DOptiX_INSTALL_DIR=/path/to/optix")
+    endif()
+endif()
+
+# Verify the OptiX installation
+if(NOT EXISTS "${OptiX_INSTALL_DIR}/include/optix.h")
+    message(FATAL_ERROR "OptiX not found at ${OptiX_INSTALL_DIR}. Please set OptiX_INSTALL_DIR to the correct path.")
+endif()
+
+# Check OptiX version (requires 8.0 or newer)
+file(STRINGS "${OptiX_INSTALL_DIR}/include/optix.h" OPTIX_VERSION_LINE REGEX "^#define OPTIX_VERSION")
+if(OPTIX_VERSION_LINE)
+    string(REGEX MATCH "[0-9]+" OPTIX_VERSION "${OPTIX_VERSION_LINE}")
+    math(EXPR OPTIX_VERSION_MAJOR "${OPTIX_VERSION} / 10000")
+    math(EXPR OPTIX_VERSION_MINOR "(${OPTIX_VERSION} % 10000) / 100")
+    math(EXPR OPTIX_VERSION_PATCH "${OPTIX_VERSION} % 100")
+    message(STATUS "OptiX version: ${OPTIX_VERSION_MAJOR}.${OPTIX_VERSION_MINOR}.${OPTIX_VERSION_PATCH}")
+
+    if(OPTIX_VERSION_MAJOR LESS 8)
+        message(FATAL_ERROR "OptiX 8.0 or newer required. Found version ${OPTIX_VERSION_MAJOR}.${OPTIX_VERSION_MINOR}.${OPTIX_VERSION_PATCH}")
+    endif()
+else()
+    message(WARNING "Could not determine OptiX version")
+endif()
+
+set(OPTIX_INSTALL_DIR "${OptiX_INSTALL_DIR}")
 
 find_library(NVRTC_LIB nvrtc PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64)
 

@@ -19,11 +19,13 @@ Some of the current features include:
 
 ## Building
 ### Prerequisites
-* CUDA
-* Optix 8.0
-* CMake
+* CUDA Toolkit
+* OptiX SDK 8.0 or newer
+* CMake 3.20 or newer
 
-With the prerequisites installed, you just have to run the CMake:
+### Build Instructions
+
+With the prerequisites installed, run CMake:
 
 ``` sh
 git clone https://github.com/mateeeeeee/Amber
@@ -32,6 +34,14 @@ mkdir build
 cd build
 cmake ..
 ```
-Make sure the correct Optix installation directory is set in CMakeLists.txt. By default it's set to "C:/ProgramData/NVIDIA Corporation/OptiX SDK 8.0.0".
+
+CMake will automatically search for the OptiX SDK in standard installation directories:
+- **Windows**: `C:/ProgramData/NVIDIA Corporation/OptiX SDK*`
+- **Linux**: `/opt`, `/usr/local`, `$HOME`, `$HOME/Downloads`
+
+If OptiX is installed in a custom location, you can specify it manually:
+``` sh
+cmake -DOptiX_INSTALL_DIR=/path/to/optix ..
+```
 
 
