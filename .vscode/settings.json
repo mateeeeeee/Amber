@@ -13,6 +13,20 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "${env:CUDA_PATH}/include",
+        "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v*/include"
+    ],
+    "C_Cpp.default.forcedInclude": [
+        "${workspaceFolder}/Amber/Core/Types.h",
+        "${workspaceFolder}/Amber/Core/Macros.h",
+        "${workspaceFolder}/Amber/Math/MathTypes.h"
+    ],
+    "C_Cpp.default.defines": [
+        "__CUDACC__",
+        "__NVCC__"
+    ],
     "files.associations": {
         "*.cu": "cuda-cpp",
         "*.cuh": "cuda-cpp"
