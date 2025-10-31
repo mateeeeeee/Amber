@@ -15,6 +15,7 @@
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/**",
+        "${workspaceFolder}/Amber",
         "${env:CUDA_PATH}/include",
         "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v*/include"
     ],
@@ -27,6 +28,8 @@
         "__CUDACC__",
         "__NVCC__"
     ],
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.intelliSenseEngine": "default",
     "files.associations": {
         "*.cu": "cuda-cpp",
         "*.cuh": "cuda-cpp"
