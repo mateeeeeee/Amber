@@ -2,10 +2,46 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(Windows) Launch Amber",
+            "name": "(Windows) Debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${command:cmake.launchTargetPath}",
+            "program": "${workspaceFolder}/build/bin/Debug/Amber.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "cmake: build"
+        },
+        {
+            "name": "(Windows) Release",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Release/Amber.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "cmake: build"
+        },
+        {
+            "name": "(Windows) RelWithDebInfo",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/RelWithDebInfo/Amber.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "cmake: build"
+        },
+        {
+            "name": "(Windows) MinSizeRel",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/MinSizeRel/Amber.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -20,10 +56,10 @@
             "processId": "${command:pickProcess}"
         },
         {
-            "name": "(Linux) Launch Amber",
+            "name": "(Linux) Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${command:cmake.launchTargetPath}",
+            "program": "${workspaceFolder}/build/bin/Amber",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -37,6 +73,19 @@
                     "ignoreFailures": true
                 }
             ],
+            "preLaunchTask": "cmake: build"
+        },
+        {
+            "name": "(Linux) Release",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Amber",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
             "preLaunchTask": "cmake: build"
         }
     ]
