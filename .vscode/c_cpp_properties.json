@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/Amber",
                 "${env:CUDA_PATH}/include",
-                "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/*/include"
+                "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v*/include"
             ],
             "defines": [
                 "_DEBUG",
@@ -20,13 +20,11 @@
             "cStandard": "c17",
             "cppStandard": "c++23",
             "intelliSenseMode": "windows-msvc-x64",
-            "configurationProvider": "ms-vscode.cmake-tools",
             "forcedInclude": [
                 "${workspaceFolder}/Amber/Core/Types.h",
                 "${workspaceFolder}/Amber/Core/Macros.h",
                 "${workspaceFolder}/Amber/Math/MathTypes.h"
-            ],
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+            ]
         },
         {
             "name": "Mac",
@@ -46,13 +44,8 @@
             "cStandard": "c17",
             "cppStandard": "c++23",
             "intelliSenseMode": "macos-clang-arm64",
-            "configurationProvider": "ms-vscode.cmake-tools",
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
             "browse": {
-                "limitSymbolsToIncludedHeaders": true,
-                "path": [
-                    "${workspaceFolder}"
-                ]
+                "limitSymbolsToIncludedHeaders": false
             }
         },
         {
@@ -70,13 +63,11 @@
             "cStandard": "c17",
             "cppStandard": "c++23",
             "intelliSenseMode": "linux-gcc-x64",
-            "configurationProvider": "ms-vscode.cmake-tools",
             "forcedInclude": [
                 "${workspaceFolder}/Amber/Core/Types.h",
                 "${workspaceFolder}/Amber/Core/Macros.h",
                 "${workspaceFolder}/Amber/Math/MathTypes.h"
-            ],
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+            ]
         }
     ],
     "version": 4
