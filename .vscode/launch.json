@@ -2,6 +2,56 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "(macOS) Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Amber",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "preLaunchTask": "cmake: build debug"
+        },
+        {
+            "name": "(macOS) Release",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Amber",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "preLaunchTask": "cmake: build release"
+        },
+        {
+            "name": "(macOS) RelWithDebInfo",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Amber",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "preLaunchTask": "cmake: build relwithdebinfo"
+        },
+        {
+            "name": "(macOS) MinSizeRel",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Amber",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "preLaunchTask": "cmake: build minsizerel"
+        },
+        {
+            "name": "(macOS) Attach to Process",
+            "type": "lldb",
+            "request": "attach",
+            "pid": "${command:pickMyProcess}"
+        },
+        {
             "name": "(Windows) Debug",
             "type": "cppvsdbg",
             "request": "launch",
@@ -11,7 +61,7 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "integratedTerminal",
-            "preLaunchTask": "cmake: build"
+            "preLaunchTask": "cmake: build debug"
         },
         {
             "name": "(Windows) Release",
@@ -23,7 +73,7 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "integratedTerminal",
-            "preLaunchTask": "cmake: build"
+            "preLaunchTask": "cmake: build release"
         },
         {
             "name": "(Windows) RelWithDebInfo",
@@ -35,7 +85,7 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "integratedTerminal",
-            "preLaunchTask": "cmake: build"
+            "preLaunchTask": "cmake: build relwithdebinfo"
         },
         {
             "name": "(Windows) MinSizeRel",
@@ -47,46 +97,13 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "integratedTerminal",
-            "preLaunchTask": "cmake: build"
+            "preLaunchTask": "cmake: build minsizerel"
         },
         {
             "name": "(Windows) Attach to Process",
             "type": "cppvsdbg",
             "request": "attach",
             "processId": "${command:pickProcess}"
-        },
-        {
-            "name": "(Linux) Debug",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/bin/Amber",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "cmake: build"
-        },
-        {
-            "name": "(Linux) Release",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/bin/Amber",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "preLaunchTask": "cmake: build"
         }
     ]
 }

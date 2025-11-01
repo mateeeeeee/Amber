@@ -1,5 +1,5 @@
 #include "Camera.h"
-#include "Core/Input.h"
+#include "Platform/Input.h"
 
 namespace amber
 {
@@ -11,11 +11,9 @@ namespace amber
 		Vector3 look_vector = look_at - position;
 		look_vector.Normalize();
 
-		Float yaw = std::atan2(look_vector.x, look_vector.z);
-		Float pitch = std::asin(-look_vector.y);
-		Quaternion pitch_quat = Quaternion::CreateFromYawPitchRoll(0, pitch, 0);
-		Quaternion yaw_quat = Quaternion::CreateFromYawPitchRoll(yaw, 0, 0);
-		orientation = pitch_quat * orientation * yaw_quat;
+		Vector3 up_vector = Vector3::Up - Vector3::Up.Dot(look_vector) * look_vector;
+		up_vector.Normalize();
+		orientation = Quaternion::LookRotation(look_vector, up_vector);
 		fovy = 45.0f;
 		aspect_ratio = 1.0f;
 		changed = false;
@@ -35,7 +33,7 @@ namespace amber
 			Float dy = g_Input.GetMouseDeltaY();
 			Quaternion yaw_quaternion = Quaternion::CreateFromYawPitchRoll(0, dy * dt * 0.25f, 0);
 			Quaternion pitch_quaternion = Quaternion::CreateFromYawPitchRoll(dx * dt * 0.25f, 0, 0);
-			orientation = yaw_quaternion * orientation * pitch_quaternion;
+			orientation = pitch_quaternion * orientation * yaw_quaternion;
 			changed = true;
 		}
 
@@ -54,7 +52,7 @@ namespace amber
 			Float speed_factor = 1.0f;
 			if (g_Input.GetKey(KeyCode::ShiftLeft)) speed_factor *= 5.0f;
 			if (g_Input.GetKey(KeyCode::CtrlLeft))  speed_factor *= 0.2f;
-			position += velocity * dt * speed_factor * 10.0f;
+			position += velocity * dt * speed_factor * 5.0f;
 			changed = true;
 		}
 	}
@@ -67,11 +65,7 @@ namespace amber
 	void Camera::SetLookDir(Vector3 look_vector)
 	{
 		look_vector.Normalize();
-		Float yaw = std::atan2(look_vector.x, look_vector.z);
-		Float pitch = std::asin(-look_vector.y);
-		Quaternion pitch_quat = Quaternion::CreateFromYawPitchRoll(0, pitch, 0);
-		Quaternion yaw_quat = Quaternion::CreateFromYawPitchRoll(yaw, 0, 0);
-		orientation = pitch_quat * orientation * yaw_quat;
+		orientation = Quaternion::LookRotation(look_vector, Vector3::Up);
 	}
 
 	void Camera::GetFrame(Vector3& U, Vector3& V, Vector3& W) const

@@ -1,15 +1,15 @@
 #include "Editor.h"
 #include "EditorConsole.h"
 #include "EditorSink.h"
-#include "Core/Window.h"
-#include "Core/Input.h"
+#include "Platform/Windows/Window.h"
+#include "Platform/Input.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Scene/Camera.h"
-#include "Device/OptixPathTracer.h"
+#include "Device/Optix/OptixPathTracer.h"
 #include "ImGui/imgui.h"
-#include "ImGui/imgui_impl_sdl.h"
-#include "ImGui/imgui_impl_sdlrenderer.h"
+#include "ImGui/imgui_impl_sdl2.h"
+#include "ImGui/imgui_impl_sdlrenderer2.h"
 #include "FontAwesome/IconsFontAwesome6.h"
 
 namespace amber
@@ -40,7 +40,7 @@ namespace amber
 		io.ConfigWindowsResizeFromEdges = true;
 		ImGui::StyleColorsDark();
 		ImGui_ImplSDL2_InitForSDLRenderer(window.sdl_window.get(), sdl_renderer.get());
-		ImGui_ImplSDLRenderer_Init(sdl_renderer.get());
+		ImGui_ImplSDLRenderer2_Init(sdl_renderer.get());
 
 		ImFontConfig font_config{};
 		std::string font_name = paths::FontsDir + "roboto/Roboto-Light.ttf";
@@ -68,7 +68,7 @@ namespace amber
 
 	Editor::~Editor()
 	{
-		ImGui_ImplSDLRenderer_Shutdown();
+		ImGui_ImplSDLRenderer2_Shutdown();
 		ImGui_ImplSDL2_Shutdown();
 		ImGui::DestroyContext();
 		SDL_Quit();
@@ -221,13 +221,13 @@ namespace amber
 
 	void Editor::BeginGUI()
 	{
-		ImGui_ImplSDLRenderer_NewFrame();
+		ImGui_ImplSDLRenderer2_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
 		SDLCheck(SDL_SetRenderTarget(sdl_renderer.get(), gui_target.get()));
 		SDL_RenderClear(sdl_renderer.get());
-		ImGuiID dockspace_id = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+		ImGuiID dockspace_id = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 	}
 
 	void Editor::GUI()
@@ -276,7 +276,7 @@ namespace amber
 	void Editor::EndGUI()
 	{
 		ImGui::Render();
-		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), sdl_renderer.get());
 		SDLCheck(SDL_SetRenderTarget(sdl_renderer.get(), nullptr));
 		SDLCheck(SDL_RenderCopy(sdl_renderer.get(), gui_target.get(), nullptr, nullptr));
 	}
@@ -296,7 +296,7 @@ namespace amber
 						if (ImGui::MenuItem(item_name, nullptr, output == current_output)) { path_tracer.SetOutput(output); }
 					};
 
-#define AddPathTracerOutputMenuItem(name) AddMenuItem(PathTracerOutput::##name, #name)
+#define AddPathTracerOutputMenuItem(name) AddMenuItem(PathTracerOutput::name, #name)
 				AddPathTracerOutputMenuItem(Final);
 				AddPathTracerOutputMenuItem(Albedo);
 				AddPathTracerOutputMenuItem(Normal);

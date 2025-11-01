@@ -9,26 +9,32 @@
 
 #define AMBER_ASSERT(expr)			assert(expr)
 #define AMBER_ASSERT_MSG(expr, msg) assert(expr && msg)
-#define AMBER_UNREACHABLE()			__assume(false)
-#define AMBER_FORCEINLINE			__forceinline
+
+#if defined(_MSC_VER)
+	#define AMBER_UNREACHABLE()			__assume(false)
+	#define AMBER_DEBUGBREAK()			__debugbreak()
+	#define AMBER_FORCEINLINE			__forceinline
+	#define AMBER_DEBUGZONE_BEGIN       __pragma(optimize("", off))
+	#define AMBER_DEBUGZONE_END         __pragma(optimize("", on))
+#elif defined(__GNUC__) || defined(__clang__)
+	#define AMBER_UNREACHABLE()			__builtin_unreachable()
+	#define AMBER_DEBUGBREAK()	        __builtin_trap()
+	#define AMBER_FORCEINLINE			inline __attribute__((always_inline))
+	#define AMBER_DEBUGZONE_BEGIN       _Pragma("clang optimize off")
+	#define AMBER_DEBUGZONE_END         _Pragma("clang optimize on")
+#else
+	#define AMBER_UNREACHABLE()
+	#define AMBER_DEBUGBREAK()
+	#define AMBER_FORCEINLINE			inline
+	#define AMBER_DEBUGZONE_BEGIN
+	#define AMBER_DEBUGZONE_END
+#endif
+
 #define AMBER_NODISCARD				[[nodiscard]]
 #define AMBER_NORETURN				[[noreturn]]
 #define AMBER_DEPRECATED			[[deprecated]]
 #define AMBER_MAYBE_UNUSED          [[maybe_unused]]
 #define AMBER_DEPRECATED_MSG(msg)	[[deprecated(#msg)]]
-#define AMBER_DEBUGZONE_BEGIN       __pragma(optimize("", off))
-#define AMBER_DEBUGZONE_END         __pragma(optimize("", on))
-
-#if defined(_MSC_VER)
-#define AMBER_UNREACHABLE()			__assume(false)
-#define AMBER_DEBUGBREAK()			__debugbreak()
-#elif defined(__GNUC__)
-#define AMBER_UNREACHABLE()			__builtin_unreachable()
-#define AMBER_DEBUGBREAK()	        __builtin_trap()
-#else 
-#define AMBER_UNREACHABLE()			
-#define AMBER_DEBUGBREAK()	        
-#endif
 
 #define AMBER_NONCOPYABLE(Class)                 \
         Class(Class const&)            = delete; \

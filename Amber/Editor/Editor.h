@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "Utilities/SDLUtil.h"
+#include "SDL/SDLUtil.h"
 
 namespace amber
 {

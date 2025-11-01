@@ -1,7 +1,6 @@
 #define SDL_MAIN_HANDLED
 #include <fstream>
-#include "Utilities/SDLUtil.h"
-#include "Core/Window.h"
+#include "Platform/Windows/Window.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Core/CommandLineOptions.h"
@@ -9,7 +8,7 @@
 #include "Editor/Editor.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
-#include "Device/OptixPathTracer.h"
+#include "Device/Optix/OptixPathTracer.h"
 #include "Utilities/CpuBuffer2D.h"
 #include "Utilities/JsonUtil.h"
 
@@ -27,7 +26,6 @@ struct SceneConfig
 };
 Bool ParseSceneConfig(Char const* config_file, SceneConfig& cfg);
 void ProcessCVarIniFile(Char const* cvar_file);
-P
 int main(Int argc, Char* argv[])
 {
 	CommandLineOptions::Initialize(argc, argv);
@@ -137,7 +135,6 @@ Bool ParseSceneConfig(Char const* scene_config, SceneConfig& cfg)
 	Float look_at[3] = { 0.0f, 0.0f, 1.0f };
 	camera_params.FindArray("look_at", look_at);
 	cfg.camera.Initialize(Vector3(camera_position), Vector3(look_at));
-
 	Float fovy = camera_params.FindOr<Float>("fov", 45.0f);
 	cfg.camera.SetFovY(fovy);
 	cfg.camera.SetAspectRatio((Float)cfg.width / cfg.height);
