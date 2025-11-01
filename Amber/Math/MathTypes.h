@@ -1,169 +1,507 @@
 #pragma once
-#include "External/SimpleMath/SimpleMath.h"
+#include <cmath>
 
 namespace amber
 {
-	using BoundingBox = DirectX::BoundingBox;
-	using OrientedBoundingBox = DirectX::BoundingOrientedBox;
-	using BoundingFrustum = DirectX::BoundingFrustum;
-	using BoundingSphere = DirectX::BoundingSphere;
-	using Vector2 = DirectX::SimpleMath::Vector2;
-	using Vector3 = DirectX::SimpleMath::Vector3;
-	using Vector4 = DirectX::SimpleMath::Vector4;
-	using Matrix = DirectX::SimpleMath::Matrix;
-	using Quaternion = DirectX::SimpleMath::Quaternion;
-	using Color = DirectX::SimpleMath::Color;
-	using Ray = DirectX::SimpleMath::Ray;
-
-	using Vector2u = DirectX::XMUINT2;
-	using Vector3u = DirectX::XMUINT3;
-	using Vector4u = DirectX::XMUINT4;
-	using Vector2i = DirectX::XMINT2;
-	using Vector3i = DirectX::XMINT3;
-	using Vector4i = DirectX::XMINT4;
-
-	namespace colors
+	struct Vector2
 	{
-		static constexpr Color AliceBlue = { 0.941176534f, 0.972549081f, 1.000000000f, 1.000000000f };
-		static constexpr Color AntiqueWhite = { 0.980392218f, 0.921568692f, 0.843137324f, 1.000000000f };
-		static constexpr Color Aqua = { 0.000000000f, 1.000000000f, 1.000000000f, 1.000000000f };
-		static constexpr Color Aquamarine = { 0.498039246f, 1.000000000f, 0.831372619f, 1.000000000f };
-		static constexpr Color Azure = { 0.941176534f, 1.000000000f, 1.000000000f, 1.000000000f };
-		static constexpr Color Beige = { 0.960784376f, 0.960784376f, 0.862745166f, 1.000000000f };
-		static constexpr Color Bisque = { 1.000000000f, 0.894117713f, 0.768627524f, 1.000000000f };
-		static constexpr Color Black = { 0.000000000f, 0.000000000f, 0.000000000f, 1.000000000f };
-		static constexpr Color BlanchedAlmond = { 1.000000000f, 0.921568692f, 0.803921640f, 1.000000000f };
-		static constexpr Color Blue = { 0.000000000f, 0.000000000f, 1.000000000f, 1.000000000f };
-		static constexpr Color BlueViolet = { 0.541176498f, 0.168627456f, 0.886274576f, 1.000000000f };
-		static constexpr Color Brown = { 0.647058845f, 0.164705887f, 0.164705887f, 1.000000000f };
-		static constexpr Color BurlyWood = { 0.870588303f, 0.721568644f, 0.529411793f, 1.000000000f };
-		static constexpr Color CadetBlue = { 0.372549027f, 0.619607866f, 0.627451003f, 1.000000000f };
-		static constexpr Color Chartreuse = { 0.498039246f, 1.000000000f, 0.000000000f, 1.000000000f };
-		static constexpr Color Chocolate = { 0.823529482f, 0.411764741f, 0.117647067f, 1.000000000f };
-		static constexpr Color Coral = { 1.000000000f, 0.498039246f, 0.313725501f, 1.000000000f };
-		static constexpr Color CornflowerBlue = { 0.392156899f, 0.584313750f, 0.929411829f, 1.000000000f };
-		static constexpr Color Cornsilk = { 1.000000000f, 0.972549081f, 0.862745166f, 1.000000000f };
-		static constexpr Color Crimson = { 0.862745166f, 0.078431375f, 0.235294133f, 1.000000000f };
-		static constexpr Color Cyan = { 0.000000000f, 1.000000000f, 1.000000000f, 1.000000000f };
-		static constexpr Color DarkBlue = { 0.000000000f, 0.000000000f, 0.545098066f, 1.000000000f };
-		static constexpr Color DarkCyan = { 0.000000000f, 0.545098066f, 0.545098066f, 1.000000000f };
-		static constexpr Color DarkGoldenrod = { 0.721568644f, 0.525490224f, 0.043137256f, 1.000000000f };
-		static constexpr Color DarkGray = { 0.662745118f, 0.662745118f, 0.662745118f, 1.000000000f };
-		static constexpr Color DarkGreen = { 0.000000000f, 0.392156899f, 0.000000000f, 1.000000000f };
-		static constexpr Color DarkKhaki = { 0.741176486f, 0.717647076f, 0.419607878f, 1.000000000f };
-		static constexpr Color DarkMagenta = { 0.545098066f, 0.000000000f, 0.545098066f, 1.000000000f };
-		static constexpr Color DarkOliveGreen = { 0.333333343f, 0.419607878f, 0.184313729f, 1.000000000f };
-		static constexpr Color DarkOrange = { 1.000000000f, 0.549019635f, 0.000000000f, 1.000000000f };
-		static constexpr Color DarkOrchid = { 0.600000024f, 0.196078449f, 0.800000072f, 1.000000000f };
-		static constexpr Color DarkRed = { 0.545098066f, 0.000000000f, 0.000000000f, 1.000000000f };
-		static constexpr Color DarkSalmon = { 0.913725555f, 0.588235319f, 0.478431404f, 1.000000000f };
-		static constexpr Color DarkSeaGreen = { 0.560784340f, 0.737254918f, 0.545098066f, 1.000000000f };
-		static constexpr Color DarkSlateBlue = { 0.282352954f, 0.239215702f, 0.545098066f, 1.000000000f };
-		static constexpr Color DarkSlateGray = { 0.184313729f, 0.309803933f, 0.309803933f, 1.000000000f };
-		static constexpr Color DarkTurquoise = { 0.000000000f, 0.807843208f, 0.819607913f, 1.000000000f };
-		static constexpr Color DarkViolet = { 0.580392182f, 0.000000000f, 0.827451050f, 1.000000000f };
-		static constexpr Color DeepPink = { 1.000000000f, 0.078431375f, 0.576470613f, 1.000000000f };
-		static constexpr Color DeepSkyBlue = { 0.000000000f, 0.749019623f, 1.000000000f, 1.000000000f };
-		static constexpr Color DimGray = { 0.411764741f, 0.411764741f, 0.411764741f, 1.000000000f };
-		static constexpr Color DodgerBlue = { 0.117647067f, 0.564705908f, 1.000000000f, 1.000000000f };
-		static constexpr Color Firebrick = { 0.698039234f, 0.133333340f, 0.133333340f, 1.000000000f };
-		static constexpr Color FloralWhite = { 1.000000000f, 0.980392218f, 0.941176534f, 1.000000000f };
-		static constexpr Color ForestGreen = { 0.133333340f, 0.545098066f, 0.133333340f, 1.000000000f };
-		static constexpr Color Fuchsia = { 1.000000000f, 0.000000000f, 1.000000000f, 1.000000000f };
-		static constexpr Color Gainsboro = { 0.862745166f, 0.862745166f, 0.862745166f, 1.000000000f };
-		static constexpr Color GhostWhite = { 0.972549081f, 0.972549081f, 1.000000000f, 1.000000000f };
-		static constexpr Color Gold = { 1.000000000f, 0.843137324f, 0.000000000f, 1.000000000f };
-		static constexpr Color Goldenrod = { 0.854902029f, 0.647058845f, 0.125490203f, 1.000000000f };
-		static constexpr Color Gray = { 0.501960814f, 0.501960814f, 0.501960814f, 1.000000000f };
-		static constexpr Color Green = { 0.000000000f, 0.501960814f, 0.000000000f, 1.000000000f };
-		static constexpr Color GreenYellow = { 0.678431392f, 1.000000000f, 0.184313729f, 1.000000000f };
-		static constexpr Color Honeydew = { 0.941176534f, 1.000000000f, 0.941176534f, 1.000000000f };
-		static constexpr Color HotPink = { 1.000000000f, 0.411764741f, 0.705882370f, 1.000000000f };
-		static constexpr Color IndianRed = { 0.803921640f, 0.360784322f, 0.360784322f, 1.000000000f };
-		static constexpr Color Indigo = { 0.294117659f, 0.000000000f, 0.509803951f, 1.000000000f };
-		static constexpr Color Ivory = { 1.000000000f, 1.000000000f, 0.941176534f, 1.000000000f };
-		static constexpr Color Khaki = { 0.941176534f, 0.901960850f, 0.549019635f, 1.000000000f };
-		static constexpr Color Lavender = { 0.901960850f, 0.901960850f, 0.980392218f, 1.000000000f };
-		static constexpr Color LavenderBlush = { 1.000000000f, 0.941176534f, 0.960784376f, 1.000000000f };
-		static constexpr Color LawnGreen = { 0.486274540f, 0.988235354f, 0.000000000f, 1.000000000f };
-		static constexpr Color LemonChiffon = { 1.000000000f, 0.980392218f, 0.803921640f, 1.000000000f };
-		static constexpr Color LightBlue = { 0.678431392f, 0.847058892f, 0.901960850f, 1.000000000f };
-		static constexpr Color LightCoral = { 0.941176534f, 0.501960814f, 0.501960814f, 1.000000000f };
-		static constexpr Color LightCyan = { 0.878431439f, 1.000000000f, 1.000000000f, 1.000000000f };
-		static constexpr Color LightGoldenrodYellow = { 0.980392218f, 0.980392218f, 0.823529482f, 1.000000000f };
-		static constexpr Color LightGreen = { 0.564705908f, 0.933333397f, 0.564705908f, 1.000000000f };
-		static constexpr Color LightGray = { 0.827451050f, 0.827451050f, 0.827451050f, 1.000000000f };
-		static constexpr Color LightPink = { 1.000000000f, 0.713725507f, 0.756862819f, 1.000000000f };
-		static constexpr Color LightSalmon = { 1.000000000f, 0.627451003f, 0.478431404f, 1.000000000f };
-		static constexpr Color LightSeaGreen = { 0.125490203f, 0.698039234f, 0.666666687f, 1.000000000f };
-		static constexpr Color LightSkyBlue = { 0.529411793f, 0.807843208f, 0.980392218f, 1.000000000f };
-		static constexpr Color LightSlateGray = { 0.466666698f, 0.533333361f, 0.600000024f, 1.000000000f };
-		static constexpr Color LightSteelBlue = { 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f };
-		static constexpr Color LightYellow = { 1.000000000f, 1.000000000f, 0.878431439f, 1.000000000f };
-		static constexpr Color Lime = { 0.000000000f, 1.000000000f, 0.000000000f, 1.000000000f };
-		static constexpr Color LimeGreen = { 0.196078449f, 0.803921640f, 0.196078449f, 1.000000000f };
-		static constexpr Color Linen = { 0.980392218f, 0.941176534f, 0.901960850f, 1.000000000f };
-		static constexpr Color Magenta = { 1.000000000f, 0.000000000f, 1.000000000f, 1.000000000f };
-		static constexpr Color Maroon = { 0.501960814f, 0.000000000f, 0.000000000f, 1.000000000f };
-		static constexpr Color MediumAquamarine = { 0.400000036f, 0.803921640f, 0.666666687f, 1.000000000f };
-		static constexpr Color MediumBlue = { 0.000000000f, 0.000000000f, 0.803921640f, 1.000000000f };
-		static constexpr Color MediumOrchid = { 0.729411781f, 0.333333343f, 0.827451050f, 1.000000000f };
-		static constexpr Color MediumPurple = { 0.576470613f, 0.439215720f, 0.858823597f, 1.000000000f };
-		static constexpr Color MediumSeaGreen = { 0.235294133f, 0.701960802f, 0.443137288f, 1.000000000f };
-		static constexpr Color MediumSlateBlue = { 0.482352972f, 0.407843173f, 0.933333397f, 1.000000000f };
-		static constexpr Color MediumSpringGreen = { 0.000000000f, 0.980392218f, 0.603921592f, 1.000000000f };
-		static constexpr Color MediumTurquoise = { 0.282352954f, 0.819607913f, 0.800000072f, 1.000000000f };
-		static constexpr Color MediumVioletRed = { 0.780392230f, 0.082352944f, 0.521568656f, 1.000000000f };
-		static constexpr Color MidnightBlue = { 0.098039225f, 0.098039225f, 0.439215720f, 1.000000000f };
-		static constexpr Color MintCream = { 0.960784376f, 1.000000000f, 0.980392218f, 1.000000000f };
-		static constexpr Color MistyRose = { 1.000000000f, 0.894117713f, 0.882353008f, 1.000000000f };
-		static constexpr Color Moccasin = { 1.000000000f, 0.894117713f, 0.709803939f, 1.000000000f };
-		static constexpr Color NavajoWhite = { 1.000000000f, 0.870588303f, 0.678431392f, 1.000000000f };
-		static constexpr Color Navy = { 0.000000000f, 0.000000000f, 0.501960814f, 1.000000000f };
-		static constexpr Color OldLace = { 0.992156923f, 0.960784376f, 0.901960850f, 1.000000000f };
-		static constexpr Color Olive = { 0.501960814f, 0.501960814f, 0.000000000f, 1.000000000f };
-		static constexpr Color OliveDrab = { 0.419607878f, 0.556862772f, 0.137254909f, 1.000000000f };
-		static constexpr Color Orange = { 1.000000000f, 0.647058845f, 0.000000000f, 1.000000000f };
-		static constexpr Color OrangeRed = { 1.000000000f, 0.270588249f, 0.000000000f, 1.000000000f };
-		static constexpr Color Orchid = { 0.854902029f, 0.439215720f, 0.839215755f, 1.000000000f };
-		static constexpr Color PaleGoldenrod = { 0.933333397f, 0.909803987f, 0.666666687f, 1.000000000f };
-		static constexpr Color PaleGreen = { 0.596078455f, 0.984313786f, 0.596078455f, 1.000000000f };
-		static constexpr Color PaleTurquoise = { 0.686274529f, 0.933333397f, 0.933333397f, 1.000000000f };
-		static constexpr Color PaleVioletRed = { 0.858823597f, 0.439215720f, 0.576470613f, 1.000000000f };
-		static constexpr Color PapayaWhip = { 1.000000000f, 0.937254965f, 0.835294187f, 1.000000000f };
-		static constexpr Color PeachPuff = { 1.000000000f, 0.854902029f, 0.725490212f, 1.000000000f };
-		static constexpr Color Peru = { 0.803921640f, 0.521568656f, 0.247058839f, 1.000000000f };
-		static constexpr Color Pink = { 1.000000000f, 0.752941251f, 0.796078503f, 1.000000000f };
-		static constexpr Color Plum = { 0.866666734f, 0.627451003f, 0.866666734f, 1.000000000f };
-		static constexpr Color PowderBlue = { 0.690196097f, 0.878431439f, 0.901960850f, 1.000000000f };
-		static constexpr Color Purple = { 0.501960814f, 0.000000000f, 0.501960814f, 1.000000000f };
-		static constexpr Color Red = { 1.000000000f, 0.000000000f, 0.000000000f, 1.000000000f };
-		static constexpr Color RosyBrown = { 0.737254918f, 0.560784340f, 0.560784340f, 1.000000000f };
-		static constexpr Color RoyalBlue = { 0.254901975f, 0.411764741f, 0.882353008f, 1.000000000f };
-		static constexpr Color SaddleBrown = { 0.545098066f, 0.270588249f, 0.074509807f, 1.000000000f };
-		static constexpr Color Salmon = { 0.980392218f, 0.501960814f, 0.447058856f, 1.000000000f };
-		static constexpr Color SandyBrown = { 0.956862807f, 0.643137276f, 0.376470625f, 1.000000000f };
-		static constexpr Color SeaGreen = { 0.180392161f, 0.545098066f, 0.341176480f, 1.000000000f };
-		static constexpr Color SeaShell = { 1.000000000f, 0.960784376f, 0.933333397f, 1.000000000f };
-		static constexpr Color Sienna = { 0.627451003f, 0.321568638f, 0.176470593f, 1.000000000f };
-		static constexpr Color Silver = { 0.752941251f, 0.752941251f, 0.752941251f, 1.000000000f };
-		static constexpr Color SkyBlue = { 0.529411793f, 0.807843208f, 0.921568692f, 1.000000000f };
-		static constexpr Color SlateBlue = { 0.415686309f, 0.352941185f, 0.803921640f, 1.000000000f };
-		static constexpr Color SlateGray = { 0.439215720f, 0.501960814f, 0.564705908f, 1.000000000f };
-		static constexpr Color Snow = { 1.000000000f, 0.980392218f, 0.980392218f, 1.000000000f };
-		static constexpr Color SpringGreen = { 0.000000000f, 1.000000000f, 0.498039246f, 1.000000000f };
-		static constexpr Color SteelBlue = { 0.274509817f, 0.509803951f, 0.705882370f, 1.000000000f };
-		static constexpr Color Tan = { 0.823529482f, 0.705882370f, 0.549019635f, 1.000000000f };
-		static constexpr Color Teal = { 0.000000000f, 0.501960814f, 0.501960814f, 1.000000000f };
-		static constexpr Color Thistle = { 0.847058892f, 0.749019623f, 0.847058892f, 1.000000000f };
-		static constexpr Color Tomato = { 1.000000000f, 0.388235331f, 0.278431386f, 1.000000000f };
-		static constexpr Color Transparent = { 0.000000000f, 0.000000000f, 0.000000000f, 0.000000000f };
-		static constexpr Color Turquoise = { 0.250980407f, 0.878431439f, 0.815686345f, 1.000000000f };
-		static constexpr Color Violet = { 0.933333397f, 0.509803951f, 0.933333397f, 1.000000000f };
-		static constexpr Color Wheat = { 0.960784376f, 0.870588303f, 0.701960802f, 1.000000000f };
-		static constexpr Color White = { 1.000000000f, 1.000000000f, 1.000000000f, 1.000000000f };
-		static constexpr Color WhiteSmoke = { 0.960784376f, 0.960784376f, 0.960784376f, 1.000000000f };
-		static constexpr Color Yellow = { 1.000000000f, 1.000000000f, 0.000000000f, 1.000000000f };
-		static constexpr Color YellowGreen = { 0.603921592f, 0.803921640f, 0.196078449f, 1.000000000f };
+		Float x, y;
+
+		Vector2() : x(0.0f), y(0.0f) {}
+		Vector2(Float x, Float y) : x(x), y(y) {}
+
+		Vector2 operator+(Vector2 const& v) const { return Vector2(x + v.x, y + v.y); }
+		Vector2 operator-(Vector2 const& v) const { return Vector2(x - v.x, y - v.y); }
+		Vector2 operator*(Float s) const { return Vector2(x * s, y * s); }
+		Vector2 operator/(Float s) const { return Vector2(x / s, y / s); }
+
+		Float Length() const { return std::sqrt(x * x + y * y); }
+		Vector2 Normalized() const { Float len = Length(); return len > 0 ? *this / len : Vector2(); }
+	};
+
+	struct Vector3
+	{
+		Float x, y, z;
+
+		Vector3() : x(0.0f), y(0.0f), z(0.0f) {}
+		Vector3(Float x, Float y, Float z) : x(x), y(y), z(z) {}
+		Vector3(Float* arr) : x(arr[0]), y(arr[1]), z(arr[2]) {}
+
+		Vector3 operator+(Vector3 const& v) const { return Vector3(x + v.x, y + v.y, z + v.z); }
+		Vector3 operator-(Vector3 const& v) const { return Vector3(x - v.x, y - v.y, z - v.z); }
+		Vector3 operator*(Float s) const { return Vector3(x * s, y * s, z * s); }
+		Vector3 operator/(Float s) const { return Vector3(x / s, y / s, z / s); }
+		Vector3 operator-() const { return Vector3(-x, -y, -z); }
+
+		Vector3& operator+=(Vector3 const& v) { x += v.x; y += v.y; z += v.z; return *this; }
+		Vector3& operator-=(Vector3 const& v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
+		Vector3& operator*=(Float s) { x *= s; y *= s; z *= s; return *this; }
+		Vector3& operator/=(Float s) { x /= s; y /= s; z /= s; return *this; }
+
+		Float Length() const { return std::sqrt(x * x + y * y + z * z); }
+		Float LengthSquared() const { return x * x + y * y + z * z; }
+		Vector3 Normalized() const { Float len = Length(); return len > 0 ? *this / len : Vector3(); }
+		void Normalize() { Float len = Length(); if (len > 0) { x /= len; y /= len; z /= len; } }
+
+		Float Dot(Vector3 const& v) const { return x * v.x + y * v.y + z * v.z; }
+		static Float Dot(Vector3 const& a, Vector3 const& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+		static Vector3 Cross(Vector3 const& a, Vector3 const& b)
+		{
+			return Vector3(
+				a.y * b.z - a.z * b.y,
+				a.z * b.x - a.x * b.z,
+				a.x * b.y - a.y * b.x
+			);
+		}
+
+		// Transform vector by quaternion
+		static Vector3 Transform(Vector3 const& v, struct Quaternion const& q);
+
+		// Transform vector by matrix (4x4 transformation) - defined after Matrix
+		static Vector3 Transform(Vector3 const& v, struct Matrix const& m);
+
+		// Lerp and smoothstep
+		static Vector3 Lerp(Vector3 const& a, Vector3 const& b, Float t)
+		{
+			return a + (b - a) * t;
+		}
+
+		static Vector3 SmoothStep(Vector3 const& a, Vector3 const& b, Float t)
+		{
+			t = t * t * (3.0f - 2.0f * t); // Smoothstep formula
+			return Lerp(a, b, t);
+		}
+
+		// Common direction vectors as static const members
+		static const Vector3 Zero;
+		static const Vector3 One;
+		static const Vector3 UnitX;
+		static const Vector3 UnitY;
+		static const Vector3 UnitZ;
+		static const Vector3 Up;
+		static const Vector3 Down;
+		static const Vector3 Right;
+		static const Vector3 Left;
+		static const Vector3 Forward;
+		static const Vector3 Backward;
+	};
+
+	inline Vector3 operator*(Float s, Vector3 const& v) { return Vector3(v.x * s, v.y * s, v.z * s); }
+
+	struct Vector4
+	{
+		Float x, y, z, w;
+
+		Vector4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
+		Vector4(Float x, Float y, Float z, Float w) : x(x), y(y), z(z), w(w) {}
+
+		Vector4 operator+(Vector4 const& v) const { return Vector4(x + v.x, y + v.y, z + v.z, w + v.w); }
+		Vector4 operator-(Vector4 const& v) const { return Vector4(x - v.x, y - v.y, z - v.z, w - v.w); }
+		Vector4 operator*(Float s) const { return Vector4(x * s, y * s, z * s, w * s); }
+		Vector4 operator/(Float s) const { return Vector4(x / s, y / s, z / s, w / s); }
+
+		Float Length() const { return std::sqrt(x * x + y * y + z * z + w * w); }
+		Vector4 Normalized() const { Float len = Length(); return len > 0 ? *this / len : Vector4(); }
+	};
+
+	struct Matrix
+	{
+		Float m[4][4];
+
+		Matrix()
+		{
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j < 4; j++)
+					m[i][j] = (i == j) ? 1.0f : 0.0f;
+		}
+
+		// Constructor from 4 Vector4s (rows)
+		Matrix(Vector4 const& r0, Vector4 const& r1, Vector4 const& r2, Vector4 const& r3)
+		{
+			m[0][0] = r0.x; m[0][1] = r0.y; m[0][2] = r0.z; m[0][3] = r0.w;
+			m[1][0] = r1.x; m[1][1] = r1.y; m[1][2] = r1.z; m[1][3] = r1.w;
+			m[2][0] = r2.x; m[2][1] = r2.y; m[2][2] = r2.z; m[2][3] = r2.w;
+			m[3][0] = r3.x; m[3][1] = r3.y; m[3][2] = r3.z; m[3][3] = r3.w;
+		}
+
+		Matrix operator*(Matrix const& other) const
+		{
+			Matrix result;
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					result.m[i][j] = 0.0f;
+					for (int k = 0; k < 4; k++)
+					{
+						result.m[i][j] += m[i][k] * other.m[k][j];
+					}
+				}
+			}
+			return result;
+		}
+
+		Matrix& operator*=(Matrix const& other)
+		{
+			*this = *this * other;
+			return *this;
+		}
+
+		Matrix Transpose() const
+		{
+			Matrix result;
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					result.m[i][j] = m[j][i];
+				}
+			}
+			return result;
+		}
+
+		static const Matrix Identity;
+
+		static Matrix CreateScale(Float sx, Float sy, Float sz)
+		{
+			Matrix mat;
+			mat.m[0][0] = sx;
+			mat.m[1][1] = sy;
+			mat.m[2][2] = sz;
+			return mat;
+		}
+
+		static Matrix CreateFromQuaternion(struct Quaternion const& q);
+
+		Bool Decompose(Vector3& scale, struct Quaternion& rotation, Vector3& translation) const;
+	};
+
+	struct Quaternion
+	{
+		Float x, y, z, w;
+
+		Quaternion() : x(0.0f), y(0.0f), z(0.0f), w(1.0f) {}
+		Quaternion(Float x, Float y, Float z, Float w) : x(x), y(y), z(z), w(w) {}
+
+		Quaternion operator*(Quaternion const& q) const
+		{
+			return Quaternion(
+				w * q.x + x * q.w + y * q.z - z * q.y,
+				w * q.y - x * q.z + y * q.w + z * q.x,
+				w * q.z + x * q.y - y * q.x + z * q.w,
+				w * q.w - x * q.x - y * q.y - z * q.z
+			);
+		}
+
+		Quaternion& operator*=(Quaternion const& q)
+		{
+			*this = *this * q;
+			return *this;
+		}
+
+		Float Length() const { return std::sqrt(x * x + y * y + z * z + w * w); }
+		Float LengthSquared() const { return x * x + y * y + z * z + w * w; }
+
+		void Normalize()
+		{
+			Float len = Length();
+			if (len > 0.0f)
+			{
+				Float invLen = 1.0f / len;
+				x *= invLen;
+				y *= invLen;
+				z *= invLen;
+				w *= invLen;
+			}
+		}
+
+		Quaternion Normalized() const
+		{
+			Float len = Length();
+			if (len > 0.0f)
+			{
+				Float invLen = 1.0f / len;
+				return Quaternion(x * invLen, y * invLen, z * invLen, w * invLen);
+			}
+			return Quaternion();
+		}
+
+		static Quaternion CreateFromYawPitchRoll(Float yaw, Float pitch, Float roll)
+		{
+			// Note: DirectXMath's XMQuaternionRotationRollPitchYaw takes (pitch, yaw, roll)
+			// So when SimpleMath calls CreateFromYawPitchRoll(yaw, pitch, roll),
+			// it internally calls XMQuaternionRotationRollPitchYaw(pitch, yaw, roll)
+			Float halfPitch = pitch * 0.5f;
+			Float halfYaw = yaw * 0.5f;
+			Float halfRoll = roll * 0.5f;
+
+			Float sinPitch = std::sin(halfPitch);
+			Float cosPitch = std::cos(halfPitch);
+			Float sinYaw = std::sin(halfYaw);
+			Float cosYaw = std::cos(halfYaw);
+			Float sinRoll = std::sin(halfRoll);
+			Float cosRoll = std::cos(halfRoll);
+
+			return Quaternion(
+				cosYaw * sinPitch * cosRoll + sinYaw * cosPitch * sinRoll,
+				sinYaw * cosPitch * cosRoll - cosYaw * sinPitch * sinRoll,
+				cosYaw * cosPitch * sinRoll - sinYaw * sinPitch * cosRoll,
+				cosYaw * cosPitch * cosRoll + sinYaw * sinPitch * sinRoll
+			);
+		}
+
+		static Quaternion CreateFromAxisAngle(Vector3 const& axis, Float angle)
+		{
+			Float halfAngle = angle * 0.5f;
+			Float sinHalf = std::sin(halfAngle);
+			Float cosHalf = std::cos(halfAngle);
+
+			return Quaternion(
+				axis.x * sinHalf,
+				axis.y * sinHalf,
+				axis.z * sinHalf,
+				cosHalf
+			);
+		}
+
+		// Create a rotation from one vector to another
+		static Quaternion FromToRotation(Vector3 const& from, Vector3 const& to)
+		{
+			Vector3 f = from.Normalized();
+			Vector3 t = to.Normalized();
+
+			Float dot = Vector3::Dot(f, t);
+
+			if (dot >= 0.999999f) {
+				return Quaternion::Identity();
+			}
+
+			if (dot <= -0.999999f) {
+				// Vectors are opposite, return 180 degree rotation around any perpendicular axis
+				Vector3 axis = Vector3::Cross(f, Vector3::Right);
+				if (axis.LengthSquared() < 0.000001f) {
+					axis = Vector3::Cross(f, Vector3::Up);
+				}
+				axis.Normalize();
+				return CreateFromAxisAngle(axis, 3.14159265359f); // PI
+			}
+
+			Vector3 axis = Vector3::Cross(f, t);
+			Float s = std::sqrt((1.0f + dot) * 2.0f);
+			Float invS = 1.0f / s;
+
+			return Quaternion(
+				axis.x * invS,
+				axis.y * invS,
+				axis.z * invS,
+				s * 0.5f
+			);
+		}
+
+		// Create a rotation that looks in the forward direction with the given up vector
+		static Quaternion LookRotation(Vector3 const& forward, Vector3 const& up)
+		{
+			Quaternion q1 = FromToRotation(Vector3::Forward, forward);
+
+			Vector3 right = Vector3::Cross(forward, up);
+			if (right.LengthSquared() < 0.000001f) {
+				// forward and up are co-linear
+				return q1;
+			}
+
+			Vector3 upTransformed = Vector3::Transform(Vector3::Up, q1);
+			Quaternion q2 = FromToRotation(upTransformed, up);
+
+			return q2 * q1;
+		}
+
+		static Quaternion Identity() { return Quaternion(0.0f, 0.0f, 0.0f, 1.0f); }
+	};
+
+	// Implement Vector3::Transform after Quaternion is defined
+	inline Vector3 Vector3::Transform(Vector3 const& v, Quaternion const& q)
+	{
+		// v' = q * v * q^-1
+		// For unit quaternions, q^-1 = q* (conjugate)
+		// Optimized formula: v' = v + 2 * cross(q.xyz, cross(q.xyz, v) + q.w * v)
+		Vector3 qvec(q.x, q.y, q.z);
+		Vector3 cross1 = Cross(qvec, v);
+		Vector3 cross2 = Cross(qvec, cross1 + v * q.w);
+		return v + cross2 * 2.0f;
 	}
+
+	// Implement Vector3::Transform for Matrix
+	inline Vector3 Vector3::Transform(Vector3 const& v, Matrix const& m)
+	{
+		Float x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0] + m.m[3][0];
+		Float y = v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1] + m.m[3][1];
+		Float z = v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2] + m.m[3][2];
+		return Vector3(x, y, z);
+	}
+
+	// Implement Matrix functions that depend on Quaternion
+	inline Matrix Matrix::CreateFromQuaternion(Quaternion const& q)
+	{
+		Float xx = q.x * q.x;
+		Float yy = q.y * q.y;
+		Float zz = q.z * q.z;
+		Float xy = q.x * q.y;
+		Float xz = q.x * q.z;
+		Float yz = q.y * q.z;
+		Float wx = q.w * q.x;
+		Float wy = q.w * q.y;
+		Float wz = q.w * q.z;
+
+		Matrix mat;
+		mat.m[0][0] = 1.0f - 2.0f * (yy + zz);
+		mat.m[0][1] = 2.0f * (xy + wz);
+		mat.m[0][2] = 2.0f * (xz - wy);
+		mat.m[0][3] = 0.0f;
+
+		mat.m[1][0] = 2.0f * (xy - wz);
+		mat.m[1][1] = 1.0f - 2.0f * (xx + zz);
+		mat.m[1][2] = 2.0f * (yz + wx);
+		mat.m[1][3] = 0.0f;
+
+		mat.m[2][0] = 2.0f * (xz + wy);
+		mat.m[2][1] = 2.0f * (yz - wx);
+		mat.m[2][2] = 1.0f - 2.0f * (xx + yy);
+		mat.m[2][3] = 0.0f;
+
+		mat.m[3][0] = 0.0f;
+		mat.m[3][1] = 0.0f;
+		mat.m[3][2] = 0.0f;
+		mat.m[3][3] = 1.0f;
+
+		return mat;
+	}
+
+	inline Bool Matrix::Decompose(Vector3& scale, Quaternion& rotation, Vector3& translation) const
+	{
+		// Extract translation
+		translation.x = m[3][0];
+		translation.y = m[3][1];
+		translation.z = m[3][2];
+
+		// Extract scale
+		Vector3 row0(m[0][0], m[0][1], m[0][2]);
+		Vector3 row1(m[1][0], m[1][1], m[1][2]);
+		Vector3 row2(m[2][0], m[2][1], m[2][2]);
+
+		scale.x = row0.Length();
+		scale.y = row1.Length();
+		scale.z = row2.Length();
+
+		// Remove scaling from matrix to get rotation
+		if (scale.x != 0.0f) { row0 = row0 / scale.x; }
+		if (scale.y != 0.0f) { row1 = row1 / scale.y; }
+		if (scale.z != 0.0f) { row2 = row2 / scale.z; }
+
+		// Convert rotation matrix to quaternion
+		Float trace = row0.x + row1.y + row2.z;
+		if (trace > 0.0f)
+		{
+			Float s = std::sqrt(trace + 1.0f) * 2.0f;
+			rotation.w = 0.25f * s;
+			rotation.x = (row2.y - row1.z) / s;
+			rotation.y = (row0.z - row2.x) / s;
+			rotation.z = (row1.x - row0.y) / s;
+		}
+		else if ((row0.x > row1.y) && (row0.x > row2.z))
+		{
+			Float s = std::sqrt(1.0f + row0.x - row1.y - row2.z) * 2.0f;
+			rotation.w = (row2.y - row1.z) / s;
+			rotation.x = 0.25f * s;
+			rotation.y = (row0.y + row1.x) / s;
+			rotation.z = (row0.z + row2.x) / s;
+		}
+		else if (row1.y > row2.z)
+		{
+			Float s = std::sqrt(1.0f + row1.y - row0.x - row2.z) * 2.0f;
+			rotation.w = (row0.z - row2.x) / s;
+			rotation.x = (row0.y + row1.x) / s;
+			rotation.y = 0.25f * s;
+			rotation.z = (row1.z + row2.y) / s;
+		}
+		else
+		{
+			Float s = std::sqrt(1.0f + row2.z - row0.x - row1.y) * 2.0f;
+			rotation.w = (row1.x - row0.y) / s;
+			rotation.x = (row0.z + row2.x) / s;
+			rotation.y = (row1.z + row2.y) / s;
+			rotation.z = 0.25f * s;
+		}
+
+		return true;
+	}
+
+	// Define Vector3 static constants
+	inline const Vector3 Vector3::Zero     = Vector3(0.0f, 0.0f, 0.0f);
+	inline const Vector3 Vector3::One      = Vector3(1.0f, 1.0f, 1.0f);
+	inline const Vector3 Vector3::UnitX    = Vector3(1.0f, 0.0f, 0.0f);
+	inline const Vector3 Vector3::UnitY    = Vector3(0.0f, 1.0f, 0.0f);
+	inline const Vector3 Vector3::UnitZ    = Vector3(0.0f, 0.0f, 1.0f);
+	inline const Vector3 Vector3::Up       = Vector3(0.0f, 1.0f, 0.0f);
+	inline const Vector3 Vector3::Down     = Vector3(0.0f, -1.0f, 0.0f);
+	inline const Vector3 Vector3::Right    = Vector3(1.0f, 0.0f, 0.0f);
+	inline const Vector3 Vector3::Left     = Vector3(-1.0f, 0.0f, 0.0f);
+	inline const Vector3 Vector3::Forward  = Vector3(0.0f, 0.0f, 1.0f);
+	inline const Vector3 Vector3::Backward = Vector3(0.0f, 0.0f, -1.0f);
+
+	// Define Matrix static constants
+	inline const Matrix Matrix::Identity = Matrix();
+
+	using Color = Vector4;
+
+	// Integer vectors
+	struct Vector2u
+	{
+		Uint32 x, y;
+		Vector2u() : x(0), y(0) {}
+		Vector2u(Uint32 x, Uint32 y) : x(x), y(y) {}
+	};
+
+	struct Vector3u
+	{
+		Uint32 x, y, z;
+		Vector3u() : x(0), y(0), z(0) {}
+		Vector3u(Uint32 x, Uint32 y, Uint32 z) : x(x), y(y), z(z) {}
+	};
+
+	struct Vector4u
+	{
+		Uint32 x, y, z, w;
+		Vector4u() : x(0), y(0), z(0), w(0) {}
+		Vector4u(Uint32 x, Uint32 y, Uint32 z, Uint32 w) : x(x), y(y), z(z), w(w) {}
+	};
+
+	struct Vector2i
+	{
+		Int32 x, y;
+		Vector2i() : x(0), y(0) {}
+		Vector2i(Int32 x, Int32 y) : x(x), y(y) {}
+	};
+
+	struct Vector3i
+	{
+		Int32 x, y, z;
+		Vector3i() : x(0), y(0), z(0) {}
+		Vector3i(Int32 x, Int32 y, Int32 z) : x(x), y(y), z(z) {}
+	};
+
+	struct Vector4i
+	{
+		Int32 x, y, z, w;
+		Vector4i() : x(0), y(0), z(0), w(0) {}
+		Vector4i(Int32 x, Int32 y, Int32 z, Int32 w) : x(x), y(y), z(z), w(w) {}
+	};
+
+	struct Ray
+	{
+		Vector3 origin;
+		Vector3 direction;
+
+		Ray() : origin(), direction(0, 0, 1) {}
+		Ray(Vector3 const& origin, Vector3 const& direction) : origin(origin), direction(direction) {}
+	};
 }

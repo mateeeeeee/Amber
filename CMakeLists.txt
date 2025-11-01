@@ -6,18 +6,29 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel" CACHE ST
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-  set(CMAKE_CUDA_ARCHITECTURES 75)
+if(APPLE)
+    set(AMBER_BACKEND "Metal" CACHE STRING "Graphics backend: Metal")
+    project(Amber LANGUAGES CXX OBJCXX)
+else()
+    set(AMBER_BACKEND "OptiX" CACHE STRING "Graphics backend: OptiX")
+
+    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+      set(CMAKE_CUDA_ARCHITECTURES 75)
+    endif()
+
+    if(NOT DEFINED CMAKE_CUDA_STANDARD)
+        set(CMAKE_CUDA_STANDARD 17)
+        set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    endif()
+
+    project(Amber LANGUAGES CUDA CXX)
 endif()
 
-if(NOT DEFINED CMAKE_CUDA_STANDARD)
-    set(CMAKE_CUDA_STANDARD 17)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+message(STATUS "Building with ${AMBER_BACKEND} backend")
+
+if(NOT APPLE)
+    set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 endif()
-
-project(Amber CUDA CXX)
-
-set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -36,7 +47,6 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
-# Configuration-specific defines
 add_compile_definitions(
     "$<$<CONFIG:Debug>:AMBER_DEBUG_BUILD>"
     "$<$<CONFIG:Release>:AMBER_RELEASE_BUILD>"
@@ -44,7 +54,7 @@ add_compile_definitions(
     "$<$<CONFIG:MinSizeRel>:AMBER_MINSIZEREL_BUILD>"
 )
 
-add_subdirectory(Libraries/pbrtParser) 
+add_subdirectory(External/pbrtParser)
 add_subdirectory(Amber)
 
 add_dependencies(Amber pbrtParser)

@@ -2,11 +2,8 @@
     "cmake.sourceDirectory": "${workspaceFolder}",
     "cmake.buildDirectory": "${workspaceFolder}/build",
     "cmake.configureOnOpen": true,
-    "cmake.generator": "Visual Studio 17 2022",
-    "cmake.preferredGenerators": [
-        "Visual Studio 17 2022",
-        "Visual Studio 16 2019",
-        "Ninja"
+    "cmake.configureArgs": [
+        "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
     ],
     "cmake.configureSettings": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",

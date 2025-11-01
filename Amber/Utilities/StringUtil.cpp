@@ -90,17 +90,6 @@ namespace amber
 		return false;
 	}
 
-	Bool FromCString(Char const* in, Vector3& out)
-	{
-		std::istringstream iss(in);
-		Char open_parenthesis, comma1, comma2, close_parenthesis;
-		if (iss >> open_parenthesis >> out.x >> comma1 >> out.y >> comma2 >> out.z >> close_parenthesis)
-		{
-			return open_parenthesis == '(' && comma1 == ',' && comma2 == ',' && close_parenthesis == ')' && iss.eof();
-		}
-		return false;
-	}
-
 	std::string IntToString(int val)
 	{
 		return std::to_string(val);
@@ -116,11 +105,6 @@ namespace amber
 	std::string BoolToString(Bool val)
 	{
 		return val ? "true" : "false";
-	}
-
-	std::string Vector3ToString(Vector3 const& val)
-	{
-		return "(" + std::to_string(val.x) + "," + std::to_string(val.y) + "," + std::to_string(val.z) + ")";
 	}
 
 	std::vector<std::string> SplitString(const std::string& text, Char delimeter)
