@@ -392,7 +392,7 @@ namespace amber
 		{
 			LaunchTonemapKernel(ldr_buffer, debug_buffer, width, height);
 			CudaSyncCheck();
-			cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(uchar4), cudaMemcpyDeviceToHost);
+			cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(RGBA8), cudaMemcpyDeviceToHost);
 			CudaSyncCheck();
 			++frame_index;
 			return;
@@ -431,7 +431,7 @@ namespace amber
 			CudaSyncCheck();
 		}
 
-		cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(Uchar4), cudaMemcpyDeviceToHost);
+		cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(RGBA8), cudaMemcpyDeviceToHost);
 		CudaSyncCheck();
 
 		++frame_index;
@@ -456,7 +456,7 @@ namespace amber
 	void OptixPathTracer::WriteFramebuffer(Char const* outfile)
 	{
 		std::string output_path = paths::ScreenshotDir + outfile + ".png";
-		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), framebuffer.Cols() * sizeof(uchar4));
+		WriteImageToFile(ImageFormat::PNG, output_path.data(), framebuffer.Cols(), framebuffer.Rows(), framebuffer.Data(), framebuffer.Cols() * sizeof(RGBA8));
 	}
 
 	void OptixPathTracer::ManageDenoiserResources()

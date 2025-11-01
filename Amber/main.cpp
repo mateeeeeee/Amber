@@ -1,6 +1,6 @@
 #define SDL_MAIN_HANDLED
 #include <fstream>
-#include "Platform/Windows/Window.h"
+#include "Platform/Window.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Core/CommandLineOptions.h"
@@ -8,7 +8,7 @@
 #include "Editor/Editor.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
-#include "Device/Optix/OptixPathTracer.h"
+#include "Device/PathTracer.h"
 #include "Utilities/CpuBuffer2D.h"
 #include "Utilities/JsonUtil.h"
 
@@ -26,14 +26,15 @@ struct SceneConfig
 };
 Bool ParseSceneConfig(Char const* config_file, SceneConfig& cfg);
 void ProcessCVarIniFile(Char const* cvar_file);
+
 int main(Int argc, Char* argv[])
 {
 	CommandLineOptions::Initialize(argc, argv);
-#ifdef _DEBUG
+#if defined(AMBER_DEBUG)
 	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Debug);
 #else 
 	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Error);
-#endif
+#endif 
 
 	SceneConfig cfg{};
 	if (!ParseSceneConfig(CommandLineOptions::GetConfigFile().c_str(), cfg))
@@ -57,10 +58,11 @@ int main(Int argc, Char* argv[])
 		AMBER_ERROR("{}", e.what());
 		return EXIT_FAILURE;
 	}
+	
 	Camera camera = std::move(cfg.camera);
 	Uint32 windowWidth = cfg.width;
 	Uint32 windowHeight = cfg.height;
-	OptixPathTracer path_tracer(windowWidth, windowHeight, cfg.path_tracer_config, std::move(scene));
+	PathTracer path_tracer(windowWidth, windowHeight, cfg.path_tracer_config, std::move(scene));
 	ProcessCVarIniFile("cvars.ini");
 	if(CommandLineOptions::GetUseEditor())
 	{

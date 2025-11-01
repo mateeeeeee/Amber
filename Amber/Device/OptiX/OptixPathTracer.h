@@ -1,12 +1,13 @@
 #pragma once
 #include <memory>
 #include "OptixUtils.h"
-#include "Device/DeviceHostCommon.h"
+#include "DeviceHostCommon.h"
+#include "Math/MathTypes.h"
 #include "Utilities/CpuBuffer2D.h"
 
 namespace amber
 {
-	class Scene;
+	struct Scene;
 	class Camera;
 
 	struct PathTracerConfig
@@ -73,7 +74,7 @@ namespace amber
 		optix::TBuffer<Float3>		debug_buffer;
 		optix::TBuffer<Float3>		hdr_buffer;
 		optix::TBuffer<Uchar4>		ldr_buffer;
-		CpuBuffer2D<Uchar4>			framebuffer;
+		CpuBuffer2D<RGBA8>			framebuffer;
 
 		std::unique_ptr<optix::Pipeline> pipeline;
 		optix::ShaderBindingTable sbt;

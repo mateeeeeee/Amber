@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
-#include "SDL/SDLUtil.h"
+#include "Utilities/SDLUtil.h"
+#include "Device/PathTracer.h"
 
 namespace amber
 {
@@ -10,7 +11,6 @@ namespace amber
 	class EditorSink;
 	class EditorConsole;
 	class Camera;
-	class OptixPathTracer;
 
 	class Editor
 	{
@@ -28,7 +28,7 @@ namespace amber
 		};
 
 	public:
-		Editor(Window& window, Camera& camera, OptixPathTracer& path_tracer);
+		Editor(Window& window, Camera& camera, PathTracer& path_tracer);
 		~Editor();
 
 		void Run();
@@ -44,7 +44,7 @@ namespace amber
 	private:
 		Window& window;
 		Camera& camera;
-		OptixPathTracer& path_tracer;
+		PathTracer& path_tracer;
 		SDLRendererPtr sdl_renderer;
 		SDLTexturePtr render_target = nullptr;
 		SDLTexturePtr gui_target = nullptr;

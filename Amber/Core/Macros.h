@@ -1,6 +1,14 @@
 #pragma once
 #include <cassert>
 
+#if defined(__APPLE__)
+	#define AMBER_PLATFORM_APPLE
+#elif defined(_WIN32) || defined(_WIN64)
+	#define AMBER_PLATFORM_WINDOWS
+#elif defined(__linux__)
+	#define AMBER_PLATFORM_LINUX
+#endif
+
 #define _AMBER_STRINGIFY_IMPL(a) #a
 #define _AMBER_CONCAT_IMPL(x, y) x##y
 

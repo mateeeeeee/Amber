@@ -3,6 +3,28 @@
 
 namespace amber
 {
+	// RGBA8: 8-bit per channel color type for framebuffers
+	// Compatible across CPU and GPU code
+	struct RGBA8
+	{
+		Uint8 r, g, b, a;
+
+		RGBA8() : r(0), g(0), b(0), a(255) {}
+		RGBA8(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255)
+			: r(r), g(g), b(b), a(a) {}
+
+		// Conversion from float colors [0,1] to byte [0,255]
+		static RGBA8 FromFloat(Float r, Float g, Float b, Float a = 1.0f)
+		{
+			return RGBA8(
+				static_cast<Uint8>(r * 255.0f),
+				static_cast<Uint8>(g * 255.0f),
+				static_cast<Uint8>(b * 255.0f),
+				static_cast<Uint8>(a * 255.0f)
+			);
+		}
+	};
+
 	struct Vector2
 	{
 		Float x, y;
