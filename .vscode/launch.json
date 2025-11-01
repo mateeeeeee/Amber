@@ -6,7 +6,7 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/Amber",
-            "args": [],
+            "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

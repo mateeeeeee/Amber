@@ -16,7 +16,7 @@ if(NOT APPLE)
 
         if(OPTIX_PATHS)
             list(SORT OPTIX_PATHS)
-            list(REVERSE OPTIX_PATHS) 
+            list(REVERSE OPTIX_PATHS)
             list(GET OPTIX_PATHS 0 OptiX_INSTALL_DIR)
             message(STATUS "Found OptiX SDK at: ${OptiX_INSTALL_DIR}")
         else()
@@ -50,13 +50,6 @@ if(NOT APPLE)
     if(NOT NVRTC_LIB)
         message(FATAL_ERROR "NVRTC library not found!")
     endif()
-else()
-    find_library(METAL_LIBRARY Metal REQUIRED)
-    find_library(METALKIT_LIBRARY MetalKit REQUIRED)
-    find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
-    find_library(QUARTZCORE_LIBRARY QuartzCore REQUIRED)
-    find_library(APPKIT_LIBRARY AppKit REQUIRED)
-    find_library(GAMECONTROLLER_LIBRARY GameController REQUIRED)
 endif()
 
 
@@ -91,6 +84,8 @@ set(UTILITY_FILES
     Utilities/CpuBuffer2D.h
     Utilities/CLIParser.h
     Utilities/CLIParser.cpp
+    Utilities/SDLUtil.h
+    Utilities/SDLUtil.cpp
 )
 
 
@@ -104,31 +99,14 @@ set(SCENE_FILES
     Scene/Material.h
 )
 
-set(EDITOR_COMMON_FILES
-    Editor/IImGuiManager.h
+set(EDITOR_FILES
     Editor/EditorConsole.h
     Editor/EditorConsole.cpp
     Editor/EditorSink.h
     Editor/EditorSink.cpp
+    Editor/Editor.h
+    Editor/Editor.cpp
 )
-
-if(APPLE)
-    set(EDITOR_FILES
-        ${EDITOR_COMMON_FILES}
-        Editor/Metal/MetalImGuiManager.h
-        Editor/Metal/MetalImGuiManager.mm
-    )
-else()
-    set(EDITOR_FILES
-        ${EDITOR_COMMON_FILES}
-        Editor/Editor.h
-        Editor/Editor.cpp
-        Editor/SDL/SDLImGuiManager.h
-        Editor/SDL/SDLImGuiManager.cpp
-        Editor/SDL/SDLUtil.h
-        Editor/SDL/SDLUtil.cpp
-    )
-endif()
 
 set(EXTERNAL_COMMON_FILES
     ${CMAKE_SOURCE_DIR}/External/stb/stb_image.h
@@ -156,69 +134,57 @@ set(EXTERNAL_COMMON_FILES
     ${CMAKE_SOURCE_DIR}/External/cgltf/cgltf.h
 )
 
-if(APPLE)
-    set(EXTERNAL_FILES
-        ${EXTERNAL_COMMON_FILES}
-        ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_metal.h
-        ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_metal.mm
-        ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_osx.h
-        ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_osx.mm
-    )
-else()
-    set(EXTERNAL_FILES
-        ${EXTERNAL_COMMON_FILES}
-        ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdl2.h
-        ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdl2.cpp
-        ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdlrenderer2.h
-        ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdlrenderer2.cpp
-    )
-endif()
+set(EXTERNAL_FILES
+    ${EXTERNAL_COMMON_FILES}
+    ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdl2.h
+    ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdl2.cpp
+    ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdlrenderer2.h
+    ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdlrenderer2.cpp
+)
 
 if(APPLE)
     set(DEVICE_BACKEND_FILES
-        Device/DeviceHostCommon.h
-    )
-    set(PLATFORM_FILES
-        Platform/Mac/MetalWindow.h
-        Platform/Mac/MetalWindow.mm
-        Platform/Mac/Input.mm
-        Platform/Input.h
+        Device/PathTracer.h
+        Device/Metal/MetalPathTracer.h
+        Device/Metal/MetalPathTracer.cpp
     )
 else()
     set(DEVICE_BACKEND_FILES
+        Device/PathTracer.h
         Device/OptiX/OptixUtils.h
         Device/OptiX/OptixUtils.cpp
         Device/OptiX/OptixPathTracer.h
         Device/OptiX/OptixPathTracer.cpp
-        Device/DeviceHostCommon.h
+        Device/OptiX/DeviceHostCommon.h
         Device/OptiX/KernelCompiler.h
         Device/OptiX/KernelCompiler.cpp
     )
-    set(PLATFORM_FILES
-        Platform/Windows/Window.h
-        Platform/Windows/Window.cpp
-        Platform/Windows/Input.cpp
-        Platform/Input.h
-    )
 endif()
+
+set(PLATFORM_FILES
+    Platform/Window.h
+    Platform/Window.cpp
+    Platform/Input.cpp
+    Platform/Input.h
+)
 
 if(NOT APPLE)
     set(CUDA_KERNEL_FILES
-        Device/Kernels/PostProcessing.cu
-        Device/Kernels/PRNG.cuh
-        Device/Kernels/Color.cuh
-        Device/Kernels/ONB.cuh
-        Device/Kernels/Material.cuh
-        Device/Kernels/Disney.cuh
-        Device/Kernels/Math.cuh
-        Device/Kernels/DeviceCommon.cuh
-        Device/Kernels/DeviceTypes.cuh
-        Device/Kernels/Impl/MathImpl.cuh
-        Device/Kernels/Impl/MathDefines.cuh
+        Device/OptiX/Kernels/PostProcessing.cu
+        Device/OptiX/Kernels/PRNG.cuh
+        Device/OptiX/Kernels/Color.cuh
+        Device/OptiX/Kernels/ONB.cuh
+        Device/OptiX/Kernels/Material.cuh
+        Device/OptiX/Kernels/Disney.cuh
+        Device/OptiX/Kernels/Math.cuh
+        Device/OptiX/Kernels/DeviceCommon.cuh
+        Device/OptiX/Kernels/DeviceTypes.cuh
+        Device/OptiX/Kernels/Impl/MathImpl.cuh
+        Device/OptiX/Kernels/Impl/MathDefines.cuh
     )
 
     set(OPTIX_KERNEL_FILES
-        Device/Kernels/PathTracing.cu
+        Device/OptiX/Kernels/PathTracing.cu
     )
 else()
     set(CUDA_KERNEL_FILES "")
@@ -229,15 +195,9 @@ set(MATH_FILES
     Math/MathTypes.h
 )
 
-if(APPLE)
-    set(MAIN_FILES
-        main.mm
-    )
-else()
-    set(MAIN_FILES
-        main.cpp
-    )
-endif()
+set(MAIN_FILES
+    main.cpp
+)
 
 set(MISC_FILES
     Saved/Scenes/sponza.json
@@ -273,15 +233,26 @@ target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/spdlog/inc
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/pbrtParser)
 
 if(APPLE)
-    target_link_libraries(Amber PRIVATE
-        ${METAL_LIBRARY}
-        ${METALKIT_LIBRARY}
-        ${FOUNDATION_LIBRARY}
-        ${QUARTZCORE_LIBRARY}
-        ${APPKIT_LIBRARY}
-        ${GAMECONTROLLER_LIBRARY}
-    )
-    target_compile_options(Amber PRIVATE -fobjc-arc)
+    # SDL2 headers are in External/SDL2/include/SDL2/, so add parent directory
+    target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/SDL2/include)
+
+    target_compile_definitions(Amber PRIVATE SDL_VIDEO_DRIVER_COCOA)
+
+    # Use bundled SDL2.framework
+    set(SDL2_FRAMEWORK_PATH "${CMAKE_SOURCE_DIR}/External/SDL2/lib/SDL2.framework")
+    if(EXISTS ${SDL2_FRAMEWORK_PATH})
+        target_link_libraries(Amber PRIVATE ${SDL2_FRAMEWORK_PATH})
+        message(STATUS "Using bundled SDL2.framework from External/SDL2/lib")
+    else()
+        # Fallback: try to find system SDL2
+        find_package(SDL2 QUIET)
+        if(SDL2_FOUND)
+            target_link_libraries(Amber PRIVATE SDL2::SDL2)
+            message(STATUS "Using system SDL2")
+        else()
+            message(FATAL_ERROR "SDL2.framework not found at ${SDL2_FRAMEWORK_PATH}. Please add SDL2.framework to External/SDL2/lib or install via 'brew install sdl2'")
+        endif()
+    endif()
 else()
     target_include_directories(Amber PRIVATE ${CUDA_INCLUDE_DIRS})
     target_include_directories(Amber PRIVATE ${SDL2_INCLUDE_DIRS})
@@ -327,6 +298,16 @@ endif()
 set(AMBER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Amber PRIVATE AMBER_PATH="${AMBER_PATH}")
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(Amber PRIVATE AMBER_DEBUG=1)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(Amber PRIVATE AMBER_RELEASE=1)
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    target_compile_definitions(Amber PRIVATE AMBER_RELWITHDEBINFO=1)
+elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    target_compile_definitions(Amber PRIVATE AMBER_MINSIZEREL=1)
+endif()
+
 if(NOT APPLE)
     target_compile_definitions(Amber PRIVATE CUDA_PATH="${CUDA_TOOLKIT_ROOT_DIR}")
     target_compile_definitions(Amber PRIVATE OPTIX_PATH="${OPTIX_INSTALL_DIR}")
@@ -335,7 +316,6 @@ endif()
 if(WIN32)
     target_compile_definitions(Amber PRIVATE NOMINMAX)
 endif()
-
 
 install(TARGETS Amber DESTINATION bin)
 

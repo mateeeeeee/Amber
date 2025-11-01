@@ -12,7 +12,7 @@ namespace amber
 	std::string const paths::IniDir = SavedDir + "Ini/";
 	std::string const paths::SceneDir = SavedDir + "Scenes/";
 	std::string const paths::ModelDir = ResourcesDir + "Models/";
-	std::string const paths::KernelsDir = AMBER_PATH"/Device/Kernels/";
+	std::string const paths::KernelsDir = AMBER_PATH"/Device/OptiX/Kernels/";
 
 }
 

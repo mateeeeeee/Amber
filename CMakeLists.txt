@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 
+# Allow older CMake versions in subprojects (for pbrtParser compatibility)
+if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
+    set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "Minimum CMake policy version" FORCE)
+endif()
+
 # Set configuration types BEFORE project()
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel" CACHE STRING "Available configuration types" FORCE)
 
