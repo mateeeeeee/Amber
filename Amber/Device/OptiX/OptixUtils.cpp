@@ -13,7 +13,7 @@ namespace amber::optix
 		cudaError_t code = cudaDeviceSynchronize();
 		if (code != cudaSuccess)
 		{
-			AMBER_ERROR("Kernel launch failed: %s", cudaGetErrorString(code));
+			AMBER_ERROR_LOG("Kernel launch failed: %s", cudaGetErrorString(code));
 			std::exit(EXIT_FAILURE);
 		}
 	}
@@ -21,7 +21,7 @@ namespace amber::optix
 	{
 		if (code != cudaSuccess)
 		{
-			AMBER_ERROR("%s", cudaGetErrorString(code));
+			AMBER_ERROR_LOG("%s", cudaGetErrorString(code));
 			std::exit(EXIT_FAILURE);
 		}
 	}
@@ -29,7 +29,7 @@ namespace amber::optix
 	{
 		if (code != OPTIX_SUCCESS)
 		{
-			AMBER_ERROR("%s", optixGetErrorString(code));
+			AMBER_ERROR_LOG("%s", optixGetErrorString(code));
 			std::exit(EXIT_FAILURE);
 		}
 	}
@@ -59,9 +59,10 @@ namespace amber::optix
 			std::string kernel_full_path = paths::KernelsDir + options.input_file_name;
 			KernelCompilerInput compiler_input{};
 			compiler_input.kernel_file = kernel_full_path;
-			std::expected<KernelPTX, CompilerError> ptx = CompileKernel(compiler_input);
+			KernelPTX ptx{};
+			Bool success = CompileKernel(compiler_input, ptx);
 
-			if (ptx.has_value())
+			if (success && !ptx.empty())
 			{
 				Char log[512];
 				Uint64 log_size = sizeof(log);
@@ -69,12 +70,12 @@ namespace amber::optix
 					optix_ctx,
 					&module_compile_options,
 					&pipeline_compile_options,
-					ptx.value().data(),
-					ptx.value().size(),
+					ptx.data(),
+					ptx.size(),
 					log, &log_size,
 					&module
 				));
-				if (log_size > 0) AMBER_INFO("%s", log);
+				if (log_size > 0) AMBER_INFO_LOG("%s", log);
 			}
 		}
 	}
@@ -95,7 +96,7 @@ namespace amber::optix
 			log, &log_size,
 			&pipeline
 		));
-		if (log_size > 0) AMBER_INFO("%s", log);
+		if (log_size > 0) AMBER_INFO_LOG("%s", log);
 
 		OptixStackSizes stack_sizes{};
 		for (auto& prog_group : program_groups)
@@ -136,7 +137,7 @@ namespace amber::optix
 			log, &log_size,
 			&prog_group
 		));
-		if (log_size > 0) AMBER_INFO("%s", log);
+		if (log_size > 0) AMBER_INFO_LOG("%s", log);
 
 		return program_groups.emplace_back(prog_group);
 	}
@@ -161,7 +162,7 @@ namespace amber::optix
 			log, &log_size,
 			&prog_group
 		));
-		if (log_size > 0) AMBER_INFO("%s", log);
+		if (log_size > 0) AMBER_INFO_LOG("%s", log);
 		return program_groups.emplace_back(prog_group);
 	}
 
@@ -198,7 +199,7 @@ namespace amber::optix
 			log, &log_size,
 			&prog_group
 		));
-		if (log_size > 0) AMBER_INFO("%s", log);
+		if (log_size > 0) AMBER_INFO_LOG("%s", log);
 		return program_groups.emplace_back(prog_group);
 	}
 

@@ -9,6 +9,14 @@
 
 namespace amber
 {
+	template<typename T>
+	static auto CreateBuffer(id<MTLDevice> mtlDevice, std::vector<T> const& buf)
+	{
+		std::unique_ptr<metal::Buffer> buffer = std::make_unique<metal::Buffer>(mtlDevice, buf.size() * sizeof(T));
+		buffer->Update(buf.data(), buf.size() * sizeof(T));
+		return buffer;
+	}
+
 	MetalPathTracer::MetalPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& _scene)
 		: width(width), height(height), scene(std::move(_scene)), framebuffer(width, height)
 	{
@@ -63,21 +71,11 @@ namespace amber
 			}
 		}
 
-		vertices_buffer = std::make_unique<metal::Buffer>(device->GetDevice(), vertices.size() * sizeof(Vector3));
-		vertices_buffer->Update(vertices.data(), vertices.size() * sizeof(Vector3));
-
-		normals_buffer = std::make_unique<metal::Buffer>(device->GetDevice(), normals.size() * sizeof(Vector3));
-		normals_buffer->Update(normals.data(), normals.size() * sizeof(Vector3));
-
-		uvs_buffer = std::make_unique<metal::Buffer>(device->GetDevice(), uvs.size() * sizeof(Vector2));
-		uvs_buffer->Update(uvs.data(), uvs.size() * sizeof(Vector2));
-
-		indices_buffer = std::make_unique<metal::Buffer>(device->GetDevice(), indices.size() * sizeof(Vector3u));
-		indices_buffer->Update(indices.data(), indices.size() * sizeof(Vector3u));
-
-		mesh_list_buffer = std::make_unique<metal::Buffer>(device->GetDevice(), gpu_meshes.size() * sizeof(MeshGPU));
-		mesh_list_buffer->Update(gpu_meshes.data(), gpu_meshes.size() * sizeof(MeshGPU));
-
+		vertices_buffer = CreateBuffer(device->GetDevice(), vertices); 
+		normals_buffer = CreateBuffer(device->GetDevice(), normals); 
+		uvs_buffer = CreateBuffer(device->GetDevice(), uvs); 
+		indices_buffer = CreateBuffer(device->GetDevice(), indices); 
+		mesh_list_buffer = CreateBuffer(device->GetDevice(), gpu_meshes); 
 		AMBER_INFO_LOG("Loaded geometry: %zu vertices, %zu indices, %zu meshes", vertices.size(), indices.size(), gpu_meshes.size());
 
 		sky_texture = std::make_unique<metal::Texture2D>(
@@ -85,7 +83,7 @@ namespace amber
 			scene->environment->GetWidth(),
 			scene->environment->GetHeight(),
 			MTLPixelFormatRGBA8Unorm,
-			true); // Read-only
+			true); 
 		sky_texture->Update(scene->environment->GetData(), scene->environment->GetWidth() * 4);
 
 		textures.reserve(scene->textures.size());
@@ -241,8 +239,7 @@ namespace amber
 		accum_texture  = std::make_unique<metal::Texture2D>(device->GetDevice(), width, height, MTLPixelFormatRGBA32Float);
 		output_texture = std::make_unique<metal::Texture2D>(device->GetDevice(), width, height, MTLPixelFormatRGBA8Unorm);
         
-        std::string pipeline_path = std::string(AMBER_PATH) + "/Device/Metal/PathTracing.metal";
-
+        std::string const pipeline_path = std::string(AMBER_PATH) + "/Device/Metal/PathTracing.metal";
 		pathtracer_pipeline = metal::ComputePipeline::CreateFromFile(
 			device->GetDevice(),
             pipeline_path.c_str(),
@@ -277,7 +274,6 @@ namespace amber
 			AMBER_WARN_LOG("Scene has %zu textures but MAX_TEXTURES is %d, some textures will not be available", texture_count, MAX_TEXTURES);
 			texture_count = MAX_TEXTURES;
 		}
-
 		for (Uint64 i = 0; i < texture_count; i++)
 		{
 			scene_resources->textures[i] = textures[i]->GetTexture().gpuResourceID;
@@ -374,7 +370,8 @@ namespace amber
 		[encoder endEncoding];
 
 		[cmd_buffer addCompletedHandler:^(id<MTLCommandBuffer> buffer) {
-			if (buffer.error) {
+			if (buffer.error) 
+			{
 				AMBER_ERROR_LOG("Command buffer completed with error: %s",
 					[[buffer.error localizedDescription] UTF8String]);
 			}
