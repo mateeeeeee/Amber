@@ -41,8 +41,8 @@ namespace amber
 	};
 	#define g_Log amber::LogManager::Get()
 
-#define AMBER_DEBUG(fmt, ...)  g_Log.CLog(amber::LogLevel::Debug, fmt  __VA_OPT__(,) __VA_ARGS__)
-#define AMBER_INFO(fmt, ...)   g_Log.CLog(amber::LogLevel::Info, fmt  __VA_OPT__(,) __VA_ARGS__)
-#define AMBER_WARN(fmt, ...)   g_Log.CLog(amber::LogLevel::Warning, fmt  __VA_OPT__(,) __VA_ARGS__)
-#define AMBER_ERROR(fmt, ...)  g_Log.CLog(amber::LogLevel::Error, fmt  __VA_OPT__(,) __VA_ARGS__)
+#define AMBER_DEBUG_LOG(fmt, ...)  g_Log.CLog(amber::LogLevel::Debug, fmt  __VA_OPT__(,) __VA_ARGS__)
+#define AMBER_INFO_LOG(fmt, ...)   g_Log.CLog(amber::LogLevel::Info, fmt  __VA_OPT__(,) __VA_ARGS__)
+#define AMBER_WARN_LOG(fmt, ...)   g_Log.CLog(amber::LogLevel::Warning, fmt  __VA_OPT__(,) __VA_ARGS__)
+#define AMBER_ERROR_LOG(fmt, ...)  g_Log.CLog(amber::LogLevel::Error, fmt  __VA_OPT__(,) __VA_ARGS__)
 }

@@ -1,11 +1,23 @@
 #pragma once
 #include <memory>
+#include <vector>
 #include "Utilities/CpuBuffer2D.h"
 
 namespace amber
 {
 	class Scene;
 	class Camera;
+
+	struct LightGPU;
+
+	namespace metal
+	{
+		class Device;
+		class Buffer;
+		class Texture2D;
+		class ComputePipeline;
+		class AccelerationStructure;
+	}
 
 	struct PathTracerConfig
 	{
@@ -25,7 +37,6 @@ namespace amber
 		Custom
 	};
 
-	// Metal-based path tracer for macOS
 	class MetalPathTracer
 	{
 		static constexpr Uint32 MAX_DEPTH = 3;
@@ -57,6 +68,30 @@ namespace amber
 		Uint32 height;
 		std::unique_ptr<Scene>		scene;
 		CpuBuffer2D<RGBA8>			framebuffer;
+
+		std::unique_ptr<metal::Device> device;
+
+		std::unique_ptr<metal::Buffer> vertices_buffer;
+		std::unique_ptr<metal::Buffer> normals_buffer;
+		std::unique_ptr<metal::Buffer> uvs_buffer;
+		std::unique_ptr<metal::Buffer> indices_buffer;
+		std::unique_ptr<metal::Buffer> mesh_list_buffer;
+
+		std::unique_ptr<metal::Buffer> material_list_buffer;
+		std::unique_ptr<metal::Buffer> light_list_buffer;
+		std::vector<LightGPU> lights;
+
+		std::unique_ptr<metal::Texture2D> sky_texture;
+		std::vector<std::unique_ptr<metal::Texture2D>> textures;
+
+		std::unique_ptr<metal::Texture2D> accum_texture;
+		std::unique_ptr<metal::Texture2D> output_texture;
+
+		std::vector<std::unique_ptr<metal::AccelerationStructure>> blas_list;
+		std::unique_ptr<metal::AccelerationStructure> tlas;
+
+		std::unique_ptr<metal::ComputePipeline> pathtracer_pipeline;
+		std::unique_ptr<metal::Buffer> scene_argument_buffer;
 
 		Bool   accumulate	= true;
 		Uint   frame_index	= 0;

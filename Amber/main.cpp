@@ -39,7 +39,7 @@ int main(Int argc, Char* argv[])
 	SceneConfig cfg{};
 	if (!ParseSceneConfig(CommandLineOptions::GetConfigFile().c_str(), cfg))
 	{
-		AMBER_ERROR("Config parsing failed!");
+		AMBER_ERROR_LOG("Config parsing failed!");
 		return EXIT_FAILURE;
 	}
 	
@@ -49,13 +49,13 @@ int main(Int argc, Char* argv[])
 		scene = LoadScene(cfg.model_file.c_str(), cfg.scene_environment.c_str(), cfg.model_scale);
 		if (!scene)
 		{
-			AMBER_ERROR("Scene loading failed!");
+			AMBER_ERROR_LOG("Scene loading failed!");
 			return EXIT_FAILURE;
 		}
 	}
 	catch (std::runtime_error const& e)
 	{
-		AMBER_ERROR("{}", e.what());
+		AMBER_ERROR_LOG("{}", e.what());
 		return EXIT_FAILURE;
 	}
 	
@@ -98,7 +98,7 @@ Bool ParseSceneConfig(Char const* scene_config, SceneConfig& cfg)
 	}
 	catch (json::parse_error const& e)
 	{
-		AMBER_ERROR("JSON parsing error: {}! ", e.what());
+		AMBER_ERROR_LOG("JSON parsing error: {}! ", e.what());
 		return false;
 	}
 	JsonParams scene_params(json_scene);
@@ -107,7 +107,7 @@ Bool ParseSceneConfig(Char const* scene_config, SceneConfig& cfg)
 	Bool model_file_found = scene_params.Find<std::string>("model file", model_file);
 	if (!model_file_found)
 	{
-		AMBER_ERROR("Scene file not specified in config file!");
+		AMBER_ERROR_LOG("Scene file not specified in config file!");
 		return false;
 	}
 	std::string scene_environment;
@@ -126,7 +126,7 @@ Bool ParseSceneConfig(Char const* scene_config, SceneConfig& cfg)
 	json camera_json = scene_params.FindJson("camera");
 	if (camera_json.is_null())
 	{
-		AMBER_ERROR("Missing camera parameters in config file!");
+		AMBER_ERROR_LOG("Missing camera parameters in config file!");
 		return false;
 	}
 

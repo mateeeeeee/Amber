@@ -18,7 +18,7 @@ namespace amber
 		virtual Char const* GetName() const override { return name.c_str(); }
 		virtual void SetName(Char const* _name) override { name = _name; }
 
-		virtual void AddOnChanged(ConsoleVariableDelegate const& delegate)
+		virtual void AddOnChanged(ConsoleVariableDelegate const& delegate) override
 		{
 			on_changed_callback.Add(delegate);
 		}

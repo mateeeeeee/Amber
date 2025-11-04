@@ -146,7 +146,11 @@ if(APPLE)
     set(DEVICE_BACKEND_FILES
         Device/PathTracer.h
         Device/Metal/MetalPathTracer.h
-        Device/Metal/MetalPathTracer.cpp
+        Device/Metal/MetalPathTracer.mm
+        Device/Metal/MetalUtils.h
+        Device/Metal/MetalUtils.mm
+        Device/Metal/MetalDeviceHostCommon.h
+        Device/Metal/PathTracing.metal
     )
 else()
     set(DEVICE_BACKEND_FILES
@@ -216,9 +220,7 @@ add_executable(Amber ${MAIN_FILES} ${MATH_FILES} ${DEVICE_BACKEND_FILES} ${OPTIX
 set_target_properties(Amber PROPERTIES OUTPUT_NAME Amber)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-# Group source files within Amber/ directory
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${DEVICE_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${PLATFORM_FILES} ${MISC_FILES})
-# Group external files separately (they're in root/External/)
 source_group(TREE ${CMAKE_SOURCE_DIR}/External PREFIX "External" FILES ${EXTERNAL_FILES})
 
 if(NOT APPLE)
@@ -232,13 +234,26 @@ target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External)
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/spdlog/include)
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/pbrtParser)
 
-if(APPLE)
-    # SDL2 headers are in External/SDL2/include/SDL2/, so add parent directory
-    target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/SDL2/include)
+target_compile_definitions(Amber PRIVATE SPDLOG_USE_STD_FORMAT)
 
+if(APPLE)
+    enable_language(OBJCXX)
+    set_source_files_properties(
+        Device/Metal/MetalPathTracer.mm
+        Device/Metal/MetalUtils.mm
+        PROPERTIES
+        COMPILE_FLAGS "-x objective-c++ -fobjc-arc"
+    )
+
+    target_link_libraries(Amber PRIVATE
+        "-framework Metal"
+        "-framework Foundation"
+        "-framework QuartzCore"
+    )
+
+    target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/SDL2/include)
     target_compile_definitions(Amber PRIVATE SDL_VIDEO_DRIVER_COCOA)
 
-    # Use bundled SDL2.framework
     set(SDL2_FRAMEWORK_PATH "${CMAKE_SOURCE_DIR}/External/SDL2/lib/SDL2.framework")
     if(EXISTS ${SDL2_FRAMEWORK_PATH})
         target_link_libraries(Amber PRIVATE ${SDL2_FRAMEWORK_PATH})

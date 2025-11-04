@@ -1,62 +1,198 @@
 {
     "version": "0.2.0",
     "configurations": [
+        // ========================================================================
+        // macOS Debug Configurations
+        // Use "Debug - Makefile" if you configured with: cmake -B build
+        // Use "Debug - Xcode" if you configured with: cmake -B build -G Xcode
+        // ========================================================================
         {
-            "name": "(macOS) Debug",
+            "name": "(macOS) Debug - Makefile",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/Amber",
             "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
+            "environment": [
+                {
+                    "name": "METAL_DEVICE_WRAPPER_TYPE",
+                    "value": "1"
+                },
+                {
+                    "name": "METAL_ERROR_MODE",
+                    "value": "0"
+                }
+            ],
             "preLaunchTask": "cmake: build debug"
         },
         {
-            "name": "(macOS) Release",
+            "name": "(macOS) Debug - Xcode",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Debug/Amber",
+            "args": ["--config-file", "sponza.json"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "METAL_DEVICE_WRAPPER_TYPE",
+                    "value": "1"
+                },
+                {
+                    "name": "METAL_ERROR_MODE",
+                    "value": "0"
+                }
+            ],
+            "preLaunchTask": "cmake: build debug"
+        },
+        // ========================================================================
+        // macOS Release Configurations
+        // ========================================================================
+        {
+            "name": "(macOS) Release - Makefile",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/Amber",
-            "args": [],
+            "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
+            "environment": [
+                {
+                    "name": "METAL_DEVICE_WRAPPER_TYPE",
+                    "value": "1"
+                },
+                {
+                    "name": "METAL_ERROR_MODE",
+                    "value": "0"
+                }
+            ],
             "preLaunchTask": "cmake: build release"
         },
         {
-            "name": "(macOS) RelWithDebInfo",
+            "name": "(macOS) Release - Xcode",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Release/Amber",
+            "args": ["--config-file", "sponza.json"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "METAL_DEVICE_WRAPPER_TYPE",
+                    "value": "1"
+                },
+                {
+                    "name": "METAL_ERROR_MODE",
+                    "value": "0"
+                }
+            ],
+            "preLaunchTask": "cmake: build release"
+        },
+        // ========================================================================
+        // macOS RelWithDebInfo Configurations
+        // ========================================================================
+        {
+            "name": "(macOS) RelWithDebInfo - Makefile",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/Amber",
-            "args": [],
+            "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
+            "environment": [
+                {
+                    "name": "METAL_DEVICE_WRAPPER_TYPE",
+                    "value": "1"
+                },
+                {
+                    "name": "METAL_ERROR_MODE",
+                    "value": "0"
+                }
+            ],
             "preLaunchTask": "cmake: build relwithdebinfo"
         },
         {
-            "name": "(macOS) MinSizeRel",
+            "name": "(macOS) RelWithDebInfo - Xcode",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/RelWithDebInfo/Amber",
+            "args": ["--config-file", "sponza.json"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "METAL_DEVICE_WRAPPER_TYPE",
+                    "value": "1"
+                },
+                {
+                    "name": "METAL_ERROR_MODE",
+                    "value": "0"
+                }
+            ],
+            "preLaunchTask": "cmake: build relwithdebinfo"
+        },
+        // ========================================================================
+        // macOS MinSizeRel Configurations
+        // ========================================================================
+        {
+            "name": "(macOS) MinSizeRel - Makefile",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/Amber",
-            "args": [],
+            "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
+            "environment": [
+                {
+                    "name": "METAL_DEVICE_WRAPPER_TYPE",
+                    "value": "1"
+                },
+                {
+                    "name": "METAL_ERROR_MODE",
+                    "value": "0"
+                }
+            ],
             "preLaunchTask": "cmake: build minsizerel"
         },
+        {
+            "name": "(macOS) MinSizeRel - Xcode",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/MinSizeRel/Amber",
+            "args": ["--config-file", "sponza.json"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "METAL_DEVICE_WRAPPER_TYPE",
+                    "value": "1"
+                },
+                {
+                    "name": "METAL_ERROR_MODE",
+                    "value": "0"
+                }
+            ],
+            "preLaunchTask": "cmake: build minsizerel"
+        },
+        // ========================================================================
+        // macOS Attach to Process (no preLaunchTask - attach to running process)
+        // ========================================================================
         {
             "name": "(macOS) Attach to Process",
             "type": "lldb",
             "request": "attach",
             "pid": "${command:pickMyProcess}"
         },
+        // ========================================================================
+        // Windows Configurations (Visual Studio multi-config generator)
+        // ========================================================================
         {
             "name": "(Windows) Debug",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/Debug/Amber.exe",
-            "args": [],
+            "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -68,7 +204,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/Release/Amber.exe",
-            "args": [],
+            "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -80,7 +216,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/RelWithDebInfo/Amber.exe",
-            "args": [],
+            "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -92,7 +228,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/MinSizeRel/Amber.exe",
-            "args": [],
+            "args": ["--config-file", "sponza.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

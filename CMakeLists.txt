@@ -8,8 +8,12 @@ endif()
 # Set configuration types BEFORE project()
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel" CACHE STRING "Available configuration types" FORCE)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Minimum macOS deployment version" FORCE)
+endif()
 
 if(APPLE)
     set(AMBER_BACKEND "Metal" CACHE STRING "Graphics backend: Metal")
@@ -50,6 +54,12 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
     set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+elseif(APPLE OR UNIX)
+    # Enable debug symbols for all build types
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
+    set(CMAKE_OBJCXX_FLAGS_DEBUG "${CMAKE_OBJCXX_FLAGS_DEBUG} -g -O0")
+    set(CMAKE_OBJCXX_FLAGS_RELWITHDEBINFO "${CMAKE_OBJCXX_FLAGS_RELWITHDEBINFO} -g")
 endif()
 
 add_compile_definitions(
@@ -59,7 +69,11 @@ add_compile_definitions(
     "$<$<CONFIG:MinSizeRel>:AMBER_MINSIZEREL_BUILD>"
 )
 
-add_subdirectory(External/pbrtParser)
+add_subdirectory(External/pbrtParser EXCLUDE_FROM_ALL)
+
+# Restore correct runtime output directory for Amber after pbrtParser
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 add_subdirectory(Amber)
 
 add_dependencies(Amber pbrtParser)

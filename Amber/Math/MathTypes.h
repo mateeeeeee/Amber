@@ -116,6 +116,7 @@ namespace amber
 
 		Vector4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
 		Vector4(Float x, Float y, Float z, Float w) : x(x), y(y), z(z), w(w) {}
+		Vector4(Vector3 const& v, Float w) : x(v.x), y(v.y), z(v.z), w(w) {}
 
 		Vector4 operator+(Vector4 const& v) const { return Vector4(x + v.x, y + v.y, z + v.z, w + v.w); }
 		Vector4 operator-(Vector4 const& v) const { return Vector4(x - v.x, y - v.y, z - v.z, w - v.w); }
