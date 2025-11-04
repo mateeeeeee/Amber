@@ -52,7 +52,7 @@ namespace amber
 		cudaGetDeviceCount(&num_devices);
 		if (num_devices == 0) 
 		{
-			AMBER_ERROR("No CUDA devices found!");
+			AMBER_ERROR_LOG("No CUDA devices found!");
 			std::exit(1);
 		}
 
@@ -62,11 +62,11 @@ namespace amber
 		CudaCheck(cudaSetDevice(device));
 		cudaDeviceProp props{};
 		CudaCheck(cudaGetDeviceProperties(&props, device));
-		AMBER_INFO("Device: %s\n", props.name);
+		AMBER_INFO_LOG("Device: %s\n", props.name);
 
 		cuCtxGetCurrent(&cuda_context);
 
-#ifdef AMBER_DEBUG
+#if defined(AMBER_DEBUG)
 		OptixDeviceContextOptions ctx_options{};
 		ctx_options.validationMode = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
 		OptixCheck(optixDeviceContextCreate(cuda_context, &ctx_options, &optix_context));
