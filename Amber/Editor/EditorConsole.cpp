@@ -194,7 +194,7 @@ namespace amber
 		for (int i = 0; i < History.Size; i++) free(History[i]);
 		History.clear();
 	}
-	void EditorConsole::AddLog(const Char* fmt, ...) IM_FMTARGS(2)
+	void EditorConsole::AddLog(const Char* fmt, ...)
 	{
 		// FIXME-OPT
 		Char buf[1024];

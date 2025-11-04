@@ -27,13 +27,13 @@ namespace amber
 		{
 		case 1:
 		case 2:
-			AMBER_ERROR("%s", message);
+			AMBER_ERROR_LOG("%s", message);
 			return;
 		case 3:
-			AMBER_WARN("%s", message);
+			AMBER_WARN_LOG("%s", message);
 			return;
 		case 4:
-			AMBER_INFO("%s", message);
+			AMBER_INFO_LOG("%s", message);
 			return;
 		}
 	}
@@ -66,7 +66,7 @@ namespace amber
 
 		cuCtxGetCurrent(&cuda_context);
 
-#ifdef _DEBUG
+#ifdef AMBER_DEBUG
 		OptixDeviceContextOptions ctx_options{};
 		ctx_options.validationMode = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
 		OptixCheck(optixDeviceContextCreate(cuda_context, &ctx_options, &optix_context));

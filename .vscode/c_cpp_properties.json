@@ -3,8 +3,16 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
                 "${workspaceFolder}/Amber",
+                "${workspaceFolder}/External",
+                "${workspaceFolder}/External/spdlog/include",
+                "${workspaceFolder}/External/pbrtParser",
+                "${workspaceFolder}/External/SDL2/include",
+                "${workspaceFolder}/External/ImGui",
+                "${workspaceFolder}/External/stb",
+                "${workspaceFolder}/External/json",
+                "${workspaceFolder}/External/tinyobjloader",
+                "${workspaceFolder}/External/cgltf",
                 "${env:CUDA_PATH}/include",
                 "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v*/include",
                 "C:/ProgramData/NVIDIA Corporation/OptiX SDK*/include"
@@ -13,13 +21,15 @@
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE",
+                "NOMINMAX",
+                "AMBER_DEBUG_BUILD",
                 "__CUDACC__",
                 "__NVCC__"
             ],
             "windowsSdkVersion": "10.0.22621.0",
             "compilerPath": "cl.exe",
             "cStandard": "c17",
-            "cppStandard": "c++23",
+            "cppStandard": "c++20",
             "intelliSenseMode": "windows-msvc-x64",
             "forcedInclude": [
                 "${workspaceFolder}/Amber/Core/Types.h",
@@ -30,39 +40,67 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**",
                 "${workspaceFolder}/Amber",
-                "${workspaceFolder}/Libraries/DirectXMath/include"
+                "${workspaceFolder}/External",
+                "${workspaceFolder}/External/spdlog/include",
+                "${workspaceFolder}/External/pbrtParser",
+                "${workspaceFolder}/External/SDL2/include",
+                "${workspaceFolder}/External/ImGui",
+                "${workspaceFolder}/External/stb",
+                "${workspaceFolder}/External/json",
+                "${workspaceFolder}/External/tinyobjloader",
+                "${workspaceFolder}/External/cgltf",
+                "${workspaceFolder}/External/FontAwesome"
             ],
             "defines": [
-                "_DEBUG"
+                "AMBER_DEBUG_BUILD",
+                "SPDLOG_USE_STD_FORMAT",
+                "SDL_VIDEO_DRIVER_COCOA"
             ],
             "macFrameworkPath": [
                 "/System/Library/Frameworks",
-                "/Library/Frameworks"
+                "/Library/Frameworks",
+                "${workspaceFolder}/External/SDL2/lib"
             ],
             "compilerPath": "/usr/bin/clang++",
             "cStandard": "c17",
-            "cppStandard": "c++23",
+            "cppStandard": "c++20",
             "intelliSenseMode": "macos-clang-arm64",
+            "forcedInclude": [
+                "${workspaceFolder}/Amber/Core/Types.h",
+                "${workspaceFolder}/Amber/Core/Macros.h",
+                "${workspaceFolder}/Amber/Math/MathTypes.h"
+            ],
             "browse": {
-                "limitSymbolsToIncludedHeaders": false
+                "limitSymbolsToIncludedHeaders": false,
+                "path": [
+                    "${workspaceFolder}"
+                ]
             }
         },
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
                 "${workspaceFolder}/Amber",
+                "${workspaceFolder}/External",
+                "${workspaceFolder}/External/spdlog/include",
+                "${workspaceFolder}/External/pbrtParser",
+                "${workspaceFolder}/External/SDL2/include",
+                "${workspaceFolder}/External/ImGui",
+                "${workspaceFolder}/External/stb",
+                "${workspaceFolder}/External/json",
+                "${workspaceFolder}/External/tinyobjloader",
+                "${workspaceFolder}/External/cgltf",
                 "/usr/local/cuda/include"
             ],
             "defines": [
+                "AMBER_DEBUG_BUILD",
                 "__CUDACC__",
                 "__NVCC__"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
-            "cppStandard": "c++23",
+            "cppStandard": "c++20",
             "intelliSenseMode": "linux-gcc-x64",
             "forcedInclude": [
                 "${workspaceFolder}/Amber/Core/Types.h",

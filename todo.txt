@@ -1,0 +1,5 @@
+- Add triple buffering managed by fences to avoid calling waitUntilCompleted in the render loop
+- Use MTLHeap for indirect resources instead of useResource
+- Move post processing stuff to another kernel, i.e. compute dispatch
+- Implement the path tracer :))
+- AS Compaction

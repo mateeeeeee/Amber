@@ -1,6 +1,11 @@
 {
     "version": "2.0.0",
     "tasks": [
+        // ========================================================================
+        // Build Tasks
+        // These work with both Makefile and multi-config generators (Xcode/VS)
+        // The --config flag is ignored by Makefile generator and used by Xcode/VS
+        // ========================================================================
         {
             "label": "cmake: build",
             "type": "cmake",
@@ -73,6 +78,9 @@
                 "$gcc"
             ]
         },
+        // ========================================================================
+        // Utility Tasks
+        // ========================================================================
         {
             "label": "cmake: clean",
             "type": "shell",
@@ -85,7 +93,25 @@
             ]
         },
         {
-            "label": "cmake: configure",
+            "label": "cmake: clean all",
+            "type": "shell",
+            "command": "rm",
+            "args": [
+                "-rf",
+                "${workspaceFolder}/build"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        // ========================================================================
+        // Configure Tasks
+        // Use "configure - Makefile" for Unix Makefiles (default on macOS/Linux)
+        // Use "configure - Xcode" for Xcode projects (recommended on macOS)
+        // Use "configure - VS" for Visual Studio (on Windows)
+        // ========================================================================
+        {
+            "label": "cmake: configure - Makefile",
             "type": "shell",
             "command": "cmake",
             "args": [
@@ -93,8 +119,60 @@
                 "${workspaceFolder}",
                 "-B",
                 "${workspaceFolder}/build",
+                "-DCMAKE_BUILD_TYPE=Debug",
                 "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
-            ]
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "cmake: configure - Xcode",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S",
+                "${workspaceFolder}",
+                "-B",
+                "${workspaceFolder}/build",
+                "-G",
+                "Xcode",
+                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "cmake: configure - VS",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S",
+                "${workspaceFolder}",
+                "-B",
+                "${workspaceFolder}/build",
+                "-G",
+                "Visual Studio 17 2022",
+                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        // ========================================================================
+        // Reconfigure (without cleaning build directory)
+        // ========================================================================
+        {
+            "label": "cmake: reconfigure",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "${workspaceFolder}/build"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            }
         }
     ]
 }

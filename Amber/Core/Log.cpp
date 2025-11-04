@@ -16,8 +16,10 @@ namespace amber
 		case LogLevel::Info:	return spdlog::level::info;
 		case LogLevel::Warning: return spdlog::level::warn;
 		case LogLevel::Error:   return spdlog::level::err;
+		case LogLevel::Count:
+		default:				
+								return spdlog::level::debug;
 		}
-		return spdlog::level::debug;
 	}
 
 	void LogManager::Initialize(Char const* log_file, LogLevel log_level)

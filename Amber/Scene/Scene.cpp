@@ -52,7 +52,7 @@ namespace amber
 			}
 			else if (auto t = texture->as<pbrt::ConstantTexture>())
 			{
-				AMBER_WARN("LoadPBRTTexture for ConstantTexture! This case should be covered in LoadPBRTMaterial!");
+				AMBER_WARN_LOG("LoadPBRTTexture for ConstantTexture! This case should be covered in LoadPBRTMaterial!");
 			}
 			else if (auto t = texture->as<pbrt::CheckerTexture>())
 			{
@@ -264,7 +264,7 @@ namespace amber
 				}
 				else
 				{
-					AMBER_WARN("Light source type %s not yet supported", pbrt_light->toString().c_str());
+					AMBER_WARN_LOG("Light source type %s not yet supported", pbrt_light->toString().c_str());
 				}
 			}
 
@@ -325,21 +325,21 @@ namespace amber
 						}
 						else if (pbrt::Sphere::SP mesh = shape->as<pbrt::Sphere>())
 						{
-							AMBER_WARN("Sphere mesh encountered! Not supported yet.");
+							AMBER_WARN_LOG("Sphere mesh encountered! Not supported yet.");
 						}
 						else if (pbrt::QuadMesh::SP mesh = shape->as<pbrt::QuadMesh>())
 						{
-							AMBER_WARN("Quad mesh encountered! Not supported yet.");
+							AMBER_WARN_LOG("Quad mesh encountered! Not supported yet.");
 						}
 						else
 						{
-							AMBER_WARN("Unsupported mesh type encountered!");
+							AMBER_WARN_LOG("Unsupported mesh type encountered!");
 						}
 					}
 
 					if (geometries.empty()) 
 					{
-						AMBER_WARN("Skipping instance with unsupported geometry...");
+						AMBER_WARN_LOG("Skipping instance with unsupported geometry...");
 						continue;
 					}
 
@@ -371,13 +371,13 @@ namespace amber
 			{
 				if (!reader.Error().empty())
 				{
-					AMBER_ERROR("TinyOBJ error: %s", reader.Error().c_str());
+					AMBER_ERROR_LOG("TinyOBJ error: %s", reader.Error().c_str());
 				}
 				return nullptr;
 			}
 			if (!reader.Warning().empty())
 			{
-				AMBER_WARN("TinyOBJ warning: %s", reader.Warning().c_str());
+				AMBER_WARN_LOG("TinyOBJ warning: %s", reader.Warning().c_str());
 			}
 
 			std::string obj_base_dir = std::string(scene_file.substr(0, scene_file.rfind('/')));
@@ -496,13 +496,13 @@ namespace amber
 			cgltf_result result = cgltf_parse_file(&options, scene_file.data(), &gltf_data);
 			if (result != cgltf_result_success)
 			{
-				AMBER_WARN("GLTF - Failed to load '%s'", scene_file.data());
+				AMBER_WARN_LOG("GLTF - Failed to load '%s'", scene_file.data());
 				return nullptr;
 			}
 			result = cgltf_load_buffers(&options, gltf_data, scene_file.data());
 			if (result != cgltf_result_success)
 			{
-				AMBER_WARN("GLTF - Failed to load buffers '%s'", scene_file.data());
+				AMBER_WARN_LOG("GLTF - Failed to load buffers '%s'", scene_file.data());
 				return nullptr;
 			}
 
@@ -763,7 +763,7 @@ namespace amber
 		break;
 		case SceneFormat::Unknown:
 		default:
-			AMBER_ERROR("Invalid scene format: %s", scene_file);
+			AMBER_ERROR_LOG("Invalid scene format: %s", scene_file);
 		}
 
 		if (scene && !environment_texture.empty())
