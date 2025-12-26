@@ -1,0 +1,26 @@
+{
+  "scene":
+   {
+		"model file" : "Outdoor/Puddles.usd",
+		"model scale" : 1,
+		"scene environment" : "environment/barcelona.hdr",
+		"width" : 1080,
+		"height" : 720,
+		"max depth" : 2,
+		"samples per pixel" : 1,
+        "camera":
+		{
+			"position": [
+			   0.0,
+				2.0,
+				5.0
+			],
+			"look_at": [
+			   0.0,
+				0.0,
+				0.0
+			],
+			"fov": 60.0
+		}
+    }
+}

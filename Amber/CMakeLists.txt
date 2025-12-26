@@ -233,6 +233,7 @@ target_include_directories(Amber PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External)
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/spdlog/include)
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/pbrtParser)
+target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/tinyusdz/src)
 
 target_compile_definitions(Amber PRIVATE SPDLOG_USE_STD_FORMAT)
 
@@ -281,6 +282,7 @@ else()
 endif()
 
 target_link_libraries(Amber PRIVATE pbrtParser)
+target_link_libraries(Amber PRIVATE tinyusdz_static)
 
 if(MSVC)
     set(DISABLED_WARNINGS /wd4996)
