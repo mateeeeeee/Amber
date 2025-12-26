@@ -6,6 +6,10 @@
 #include "pbrtParser/Scene.h"
 #include "tinyobjloader/tiny_obj_loader.h"
 #include "cgltf/cgltf.h"
+#include "tinyusdz.hh"
+#include "tydra/render-data.hh"
+#include "tydra/scene-access.hh"
+#include "io-util.hh"
 
 
 namespace amber
@@ -14,8 +18,13 @@ namespace amber
 	{
 		OBJ,
 		GLTF,
+		GLB,
 		PBRT,
 		PBF,
+		USD,
+		USDA,
+		USDC,
+		USDZ,
 		Unknown
 	};
 
@@ -25,6 +34,11 @@ namespace amber
 		else if (scene_file.ends_with(".pbf")) return SceneFormat::PBF;
 		else if (scene_file.ends_with(".obj")) return SceneFormat::OBJ;
 		else if (scene_file.ends_with(".gltf")) return SceneFormat::GLTF;
+		else if (scene_file.ends_with(".glb")) return SceneFormat::GLB;
+		else if (scene_file.ends_with(".usd")) return SceneFormat::USD;
+		else if (scene_file.ends_with(".usda")) return SceneFormat::USDA;
+		else if (scene_file.ends_with(".usdc")) return SceneFormat::USDC;
+		else if (scene_file.ends_with(".usdz")) return SceneFormat::USDZ;
 		else return SceneFormat::Unknown;
 	}
 	
@@ -728,6 +742,262 @@ namespace amber
 
 			return gltf_scene;
 		}
+
+		std::unique_ptr<Scene> LoadUsdScene(std::string_view scene_file, Float scale)
+		{
+			std::string warn, err;
+			tinyusdz::Stage stage;
+			Bool ret = tinyusdz::LoadUSDFromFile(std::string(scene_file), &stage, &warn, &err);
+			if (!warn.empty())
+			{
+				AMBER_WARN_LOG("USD warning: %s", warn.c_str());
+			}
+			if (!ret)
+			{
+				AMBER_ERROR_LOG("USD - Failed to load '%s': %s", scene_file.data(), err.c_str());
+				return nullptr;
+			}
+
+			tinyusdz::tydra::RenderScene render_scene;
+			tinyusdz::tydra::RenderSceneConverter converter;
+			tinyusdz::tydra::RenderSceneConverterEnv env(stage);
+
+			env.mesh_config.triangulate = true;
+			env.mesh_config.build_vertex_indices = true;
+			env.mesh_config.compute_normals = true;
+			std::string usd_base_dir = tinyusdz::io::GetBaseDir(std::string(scene_file));
+			env.set_search_paths({usd_base_dir});
+			env.scene_config.load_texture_assets = true;
+
+			if (!converter.ConvertToRenderScene(env, &render_scene))
+			{
+				AMBER_ERROR_LOG("USD - Failed to convert scene: %s", converter.GetError().c_str());
+				return nullptr;
+			}
+
+			std::unique_ptr<Scene> usd_scene = std::make_unique<Scene>();
+			std::unordered_map<std::string, Int32> texture_ids;
+			for (auto const& usd_material : render_scene.materials)
+			{
+				Material material{};
+
+				auto const& shader = usd_material.surfaceShader;
+				material.base_color = Vector3(
+					shader.diffuseColor.value[0],
+					shader.diffuseColor.value[1],
+					shader.diffuseColor.value[2]
+				);
+				material.emissive_color = Vector3(
+					shader.emissiveColor.value[0],
+					shader.emissiveColor.value[1],
+					shader.emissiveColor.value[2]
+				);
+				material.metallic = shader.metallic.value;
+				material.roughness = shader.roughness.value;
+				material.clearcoat = shader.clearcoat.value;
+				material.clearcoat_gloss = 1.0f - shader.clearcoatRoughness.value;
+				material.ior = shader.ior.value;
+				material.specular_transmission = 1.0f - shader.opacity.value;
+				material.alpha_cutoff = shader.opacityThreshold.value;
+
+				if (shader.diffuseColor.is_texture() && shader.diffuseColor.texture_id >= 0)
+				{
+					Int32 tex_idx = shader.diffuseColor.texture_id;
+					if (tex_idx < (Int32)render_scene.textures.size())
+					{
+						auto const& uv_tex = render_scene.textures[tex_idx];
+						if (uv_tex.texture_image_id >= 0 && uv_tex.texture_image_id < (Int64)render_scene.images.size())
+						{
+							auto const& tex_image = render_scene.images[uv_tex.texture_image_id];
+							std::string tex_path = tex_image.asset_identifier;
+							if (!tex_path.empty())
+							{
+								if (!texture_ids.contains(tex_path))
+								{
+									texture_ids[tex_path] = usd_scene->textures.size();
+									std::string full_path = usd_base_dir + "/" + tex_path;
+									usd_scene->textures.emplace_back(full_path.c_str(), true);
+								}
+								material.diffuse_tex_id = texture_ids[tex_path];
+							}
+						}
+					}
+				}
+
+				if (shader.normal.is_texture() && shader.normal.texture_id >= 0)
+				{
+					Int32 tex_idx = shader.normal.texture_id;
+					if (tex_idx < (Int32)render_scene.textures.size())
+					{
+						auto const& uv_tex = render_scene.textures[tex_idx];
+						if (uv_tex.texture_image_id >= 0 && uv_tex.texture_image_id < (Int64)render_scene.images.size())
+						{
+							auto const& tex_image = render_scene.images[uv_tex.texture_image_id];
+							std::string tex_path = tex_image.asset_identifier;
+							if (!tex_path.empty())
+							{
+								if (!texture_ids.contains(tex_path))
+								{
+									texture_ids[tex_path] = usd_scene->textures.size();
+									std::string full_path = usd_base_dir + "/" + tex_path;
+									usd_scene->textures.emplace_back(full_path.c_str(), false);
+								}
+								material.normal_tex_id = texture_ids[tex_path];
+							}
+						}
+					}
+				}
+
+				if (shader.metallic.is_texture() && shader.metallic.texture_id >= 0)
+				{
+					Int32 tex_idx = shader.metallic.texture_id;
+					if (tex_idx < (Int32)render_scene.textures.size())
+					{
+						auto const& uv_tex = render_scene.textures[tex_idx];
+						if (uv_tex.texture_image_id >= 0 && uv_tex.texture_image_id < (Int64)render_scene.images.size())
+						{
+							auto const& tex_image = render_scene.images[uv_tex.texture_image_id];
+							std::string tex_path = tex_image.asset_identifier;
+							if (!tex_path.empty())
+							{
+								if (!texture_ids.contains(tex_path))
+								{
+									texture_ids[tex_path] = usd_scene->textures.size();
+									std::string full_path = usd_base_dir + "/" + tex_path;
+									usd_scene->textures.emplace_back(full_path.c_str(), false);
+								}
+								material.metallic_roughness_tex_id = texture_ids[tex_path];
+							}
+						}
+					}
+				}
+
+				if (shader.emissiveColor.is_texture() && shader.emissiveColor.texture_id >= 0)
+				{
+					Int32 tex_idx = shader.emissiveColor.texture_id;
+					if (tex_idx < (Int32)render_scene.textures.size())
+					{
+						auto const& uv_tex = render_scene.textures[tex_idx];
+						if (uv_tex.texture_image_id >= 0 && uv_tex.texture_image_id < (Int64)render_scene.images.size())
+						{
+							auto const& tex_image = render_scene.images[uv_tex.texture_image_id];
+							std::string tex_path = tex_image.asset_identifier;
+							if (!tex_path.empty())
+							{
+								if (!texture_ids.contains(tex_path))
+								{
+									texture_ids[tex_path] = usd_scene->textures.size();
+									std::string full_path = usd_base_dir + "/" + tex_path;
+									usd_scene->textures.emplace_back(full_path.c_str(), false);
+								}
+								material.emissive_tex_id = texture_ids[tex_path];
+							}
+						}
+					}
+				}
+				usd_scene->materials.push_back(material);
+			}
+
+			if (usd_scene->materials.empty())
+			{
+				usd_scene->materials.emplace_back();
+			}
+
+			for (Uint32 mesh_idx = 0; mesh_idx < render_scene.meshes.size(); ++mesh_idx)
+			{
+				auto const& usd_mesh = render_scene.meshes[mesh_idx];
+				Mesh mesh;
+				Geometry geometry{};
+				geometry.vertices.reserve(usd_mesh.points.size());
+				for (auto const& p : usd_mesh.points)
+				{
+					geometry.vertices.emplace_back(p[0] * scale, p[1] * scale, p[2] * scale * -1.0f);
+				}
+
+				auto const& indices = usd_mesh.faceVertexIndices();
+				geometry.indices.reserve(indices.size() / 3);
+				for (Uint64 i = 0; i + 2 < indices.size(); i += 3)
+				{
+					geometry.indices.emplace_back(indices[i], indices[i + 2], indices[i + 1]);
+				}
+
+				if (!usd_mesh.normals.empty())
+				{
+					auto const& norm_data = usd_mesh.normals.get_data();
+					Uint64 num_normals = usd_mesh.normals.vertex_count();
+					geometry.normals.reserve(num_normals);
+
+					const float* norm_ptr = reinterpret_cast<const float*>(norm_data.data());
+					for (Uint64 i = 0; i < num_normals; ++i)
+					{
+						geometry.normals.emplace_back(norm_ptr[i * 3], norm_ptr[i * 3 + 1], norm_ptr[i * 3 + 2]);
+					}
+				}
+
+				auto tex_it = usd_mesh.texcoords.find(0);
+				if (tex_it != usd_mesh.texcoords.end())
+				{
+					auto const& uv_attr = tex_it->second;
+					auto const& uv_data = uv_attr.get_data();
+					Uint64 num_uvs = uv_attr.vertex_count();
+					geometry.uvs.reserve(num_uvs);
+
+					const float* uv_ptr = reinterpret_cast<const float*>(uv_data.data());
+					for (Uint64 i = 0; i < num_uvs; ++i)
+					{
+						geometry.uvs.emplace_back(uv_ptr[i * 2], uv_ptr[i * 2 + 1]);
+					}
+				}
+
+				mesh.geometries.push_back(std::move(geometry));
+				Int32 mat_id = usd_mesh.material_id >= 0 ? usd_mesh.material_id : 0;
+				mesh.material_ids.push_back(mat_id);
+				usd_scene->meshes.push_back(std::move(mesh));
+			}
+
+			std::function<void(tinyusdz::tydra::Node const&)> ProcessNode = [&](tinyusdz::tydra::Node const& node)
+			{
+				if (node.nodeType == tinyusdz::tydra::NodeType::Mesh && node.id >= 0)
+				{
+					Instance instance;
+					instance.mesh_id = node.id;
+
+					auto const& m = node.global_matrix;
+					Matrix transform(
+						Vector4((Float)m.m[0][0], (Float)m.m[0][1], (Float)m.m[0][2], (Float)m.m[0][3]),
+						Vector4((Float)m.m[1][0], (Float)m.m[1][1], (Float)m.m[1][2], (Float)m.m[1][3]),
+						Vector4((Float)m.m[2][0], (Float)m.m[2][1], (Float)m.m[2][2], (Float)m.m[2][3]),
+						Vector4((Float)m.m[3][0], (Float)m.m[3][1], (Float)m.m[3][2], (Float)m.m[3][3])
+					);
+
+					transform *= Matrix::CreateScale(scale, scale, -scale);
+					instance.transform = transform;
+					usd_scene->instances.push_back(instance);
+				}
+				for (auto const& child : node.children)
+				{
+					ProcessNode(child);
+				}
+			};
+
+			for (auto const& root_node : render_scene.nodes)
+			{
+				ProcessNode(root_node);
+			}
+
+			if (usd_scene->instances.empty() && !usd_scene->meshes.empty())
+			{
+				for (Uint64 i = 0; i < usd_scene->meshes.size(); ++i)
+				{
+					Instance instance;
+					instance.mesh_id = i;
+					instance.transform = Matrix::CreateScale(scale, scale, -scale);
+					usd_scene->instances.push_back(instance);
+				}
+			}
+
+			return usd_scene;
+		}
 	}
 
 	std::unique_ptr<Scene> LoadScene(Char const* _scene_file, Char const* _environment_texture, Float scale)
@@ -761,9 +1031,18 @@ namespace amber
 			scene = ConvertPBRTScene(pbrt_scene, scene_file);
 		}
 		break;
+		case SceneFormat::USD:
+		case SceneFormat::USDA:
+		case SceneFormat::USDC:
+		case SceneFormat::USDZ:
+		{
+			scene = LoadUsdScene(scene_file, scale);
+		}
+		break;
+		case SceneFormat::GLB:
 		case SceneFormat::Unknown:
 		default:
-			AMBER_ERROR_LOG("Invalid scene format: %s", scene_file);
+			AMBER_ERROR_LOG("Invalid or unsupported scene format: %s", scene_file);
 		}
 
 		if (scene && !environment_texture.empty())
