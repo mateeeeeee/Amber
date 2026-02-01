@@ -89,9 +89,20 @@ namespace amber
 		Float		padding0;
 		Float		padding1;
 		Float		padding2;
-		Float4		direction;  
-		Float4		position;   
-		Float4		color;      
+		Float4		direction;
+		Float4		position;
+		Float4		color;
+	};
+
+	struct InstanceData
+	{
+		Uint32 mesh_id;
+		Uint32 padding0;
+		Uint32 padding1;
+		Uint32 padding2;
+		Float4 transform_row0;
+		Float4 transform_row1;
+		Float4 transform_row2;
 	};
 
 	struct RenderParams
@@ -127,13 +138,14 @@ namespace amber
 
 	struct SceneResources
 	{
-		CONSTANT_PTR(float3) vertices;
-		CONSTANT_PTR(float3) normals;
+		CONSTANT_PTR(packed_float3) vertices;
+		CONSTANT_PTR(packed_float3) normals;
 		CONSTANT_PTR(float2) uvs;
 		CONSTANT_PTR(Uint) indices;
 		CONSTANT_PTR(MeshGPU) meshes;
 		CONSTANT_PTR(MaterialGPU) materials;
 		CONSTANT_PTR(LightGPU) lights;
+		CONSTANT_PTR(InstanceData) instances;
 #ifdef __METAL_VERSION__
 		array<texture2d<float>, MAX_TEXTURES> textures;
 #else

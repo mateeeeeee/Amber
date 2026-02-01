@@ -190,14 +190,16 @@ namespace amber
 		std::vector<MTLAccelerationStructureInstanceDescriptor> instance_descriptors;
 		instance_descriptors.reserve(scene->instances.size());
 
+		std::vector<InstanceData> instance_data;
+		instance_data.reserve(scene->instances.size());
 		for (Uint64 i = 0; i < scene->instances.size(); ++i)
 		{
 			Instance const& inst = scene->instances[i];
 			MTLAccelerationStructureInstanceDescriptor desc{};
 			auto const& mat = inst.transform.Transpose();
-			for (int row = 0; row < 4; ++row)
+			for (Int row = 0; row < 4; ++row)
 			{
-				for (int col = 0; col < 3; ++col)
+				for (Int col = 0; col < 3; ++col)
 				{
 					desc.transformationMatrix.columns[col][row] = mat.m[row][col];
 				}
@@ -208,7 +210,15 @@ namespace amber
 			desc.intersectionFunctionTableOffset = 0;
 			desc.options = MTLAccelerationStructureInstanceOptionNone;
 			instance_descriptors.push_back(desc);
+
+			InstanceData data{};
+			data.mesh_id = inst.mesh_id;
+			data.transform_row0 = Vector4(mat.m[0][0], mat.m[0][1], mat.m[0][2], mat.m[0][3]);
+			data.transform_row1 = Vector4(mat.m[1][0], mat.m[1][1], mat.m[1][2], mat.m[1][3]);
+			data.transform_row2 = Vector4(mat.m[2][0], mat.m[2][1], mat.m[2][2], mat.m[2][3]);
+			instance_data.push_back(data);
 		}
+		instance_data_buffer = CreateBuffer(device->GetDevice(), instance_data);
 
 		std::vector<id<MTLAccelerationStructure>> blas_handles;
 		blas_handles.reserve(blas_list.size());
@@ -267,6 +277,7 @@ namespace amber
 		scene_resources->meshes = mesh_list_buffer->GetBuffer().gpuAddress;
 		scene_resources->materials = material_list_buffer->GetBuffer().gpuAddress;
 		scene_resources->lights = light_list_buffer->GetBuffer().gpuAddress;
+		scene_resources->instances = instance_data_buffer->GetBuffer().gpuAddress;
 
 		Uint64 texture_count = textures.size();
 		if (texture_count > MAX_TEXTURES)
@@ -349,6 +360,7 @@ namespace amber
 		[encoder useResource:mesh_list_buffer->GetBuffer() usage:MTLResourceUsageRead];
 		[encoder useResource:material_list_buffer->GetBuffer() usage:MTLResourceUsageRead];
 		[encoder useResource:light_list_buffer->GetBuffer() usage:MTLResourceUsageRead];
+		[encoder useResource:instance_data_buffer->GetBuffer() usage:MTLResourceUsageRead];
 
 		for (auto const& blas : blas_list)
 		{

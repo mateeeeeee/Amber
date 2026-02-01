@@ -76,6 +76,7 @@ namespace amber
 		std::unique_ptr<metal::Buffer> uvs_buffer;
 		std::unique_ptr<metal::Buffer> indices_buffer;
 		std::unique_ptr<metal::Buffer> mesh_list_buffer;
+		std::unique_ptr<metal::Buffer> instance_data_buffer;
 
 		std::unique_ptr<metal::Buffer> material_list_buffer;
 		std::unique_ptr<metal::Buffer> light_list_buffer;
