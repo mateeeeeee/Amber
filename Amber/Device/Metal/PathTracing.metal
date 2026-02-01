@@ -720,7 +720,7 @@ kernel void pathtrace_kernel(
 
             float3 T, B;
             BuildONB(Ns, T, B);
-e material
+
             EvaluatedMaterial mat = EvaluateMaterial(material_gpu, vtx.texcoord, scene, hitFromInside);
 
             radiance += throughput * mat.emissive;

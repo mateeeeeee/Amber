@@ -175,11 +175,6 @@ set(PLATFORM_FILES
 if(NOT APPLE)
     set(CUDA_KERNEL_FILES
         Device/OptiX/Kernels/PostProcessing.cu
-        Device/OptiX/Kernels/PRNG.cuh
-        Device/OptiX/Kernels/Color.cuh
-        Device/OptiX/Kernels/ONB.cuh
-        Device/OptiX/Kernels/Material.cuh
-        Device/OptiX/Kernels/Disney.cuh
         Device/OptiX/Kernels/Math.cuh
         Device/OptiX/Kernels/DeviceCommon.cuh
         Device/OptiX/Kernels/DeviceTypes.cuh
