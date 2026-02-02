@@ -1,17 +1,69 @@
 #pragma once
+#include <memory>
+#include <string>
+#include "Utilities/CpuBuffer2D.h"
 
-// Platform-specific path tracer selection
-// Each platform has exactly one path tracer implementation at compile time
-#if defined(AMBER_PLATFORM_APPLE)
-	#include "Metal/MetalPathTracer.h"
-	namespace amber
+namespace amber
+{
+	class Scene;
+	class Camera;
+
+	enum class PathTracerBackend : Uint8
 	{
-		using PathTracer = MetalPathTracer;
-	}
-#else
-	#include "OptiX/OptixPathTracer.h"
-	namespace amber
+		Metal,
+		OptiX
+	};
+
+	struct PathTracerConfig
 	{
-		using PathTracer = OptixPathTracer;
-	}
-#endif
+		Uint   max_depth;
+		Uint   samples_per_pixel;
+		Bool   use_denoiser;
+		Bool   accumulate;
+	};
+
+	enum class PathTracerOutput : Uint8
+	{
+		Final,
+		Albedo,
+		Normal,
+		UV,
+		MaterialID,
+		Custom
+	};
+
+	class PathTracerBase
+	{
+	public:
+		virtual ~PathTracerBase() = default;
+
+		virtual void Update(Float dt) = 0;
+		virtual void Render(Camera const& camera) = 0;
+		virtual void OnResize(Uint32 w, Uint32 h) = 0;
+		virtual void WriteFramebuffer(Char const* outfile) = 0;
+
+		virtual CpuBuffer2D<RGBA8> const& GetFramebuffer() const = 0;
+		virtual Uint32 GetMaxDepth() const = 0;
+
+		virtual void SetOutput(PathTracerOutput pto) = 0;
+		virtual PathTracerOutput GetOutput() const = 0;
+
+		virtual void OptionsGUI() = 0;
+		virtual void LightsGUI() = 0;
+		virtual void MemoryUsageGUI() = 0;
+
+		virtual PathTracerBackend GetBackend() const = 0;
+	};
+
+	std::unique_ptr<PathTracerBase> CreatePathTracer(
+		PathTracerBackend backend,
+		Uint32 width,
+		Uint32 height,
+		PathTracerConfig const& config,
+		std::unique_ptr<Scene>&& scene);
+
+	PathTracerBackend GetDefaultBackend();
+	Bool IsBackendAvailable(PathTracerBackend backend);
+	std::string GetBackendName(PathTracerBackend backend);
+	Bool ParseBackend(std::string const& str, PathTracerBackend& backend);
+}

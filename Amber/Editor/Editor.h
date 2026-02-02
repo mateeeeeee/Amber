@@ -28,7 +28,7 @@ namespace amber
 		};
 
 	public:
-		Editor(Window& window, Camera& camera, PathTracer& path_tracer);
+		Editor(Window& window, Camera& camera, PathTracerBase& path_tracer);
 		~Editor();
 
 		void Run();
@@ -44,7 +44,7 @@ namespace amber
 	private:
 		Window& window;
 		Camera& camera;
-		PathTracer& path_tracer;
+		PathTracerBase& path_tracer;
 		SDLRendererPtr sdl_renderer;
 		SDLTexturePtr render_target = nullptr;
 		SDLTexturePtr gui_target = nullptr;

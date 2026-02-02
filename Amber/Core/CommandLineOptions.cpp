@@ -8,6 +8,7 @@ namespace amber::CommandLineOptions
 		std::string config_file;
 		std::string log_file;
 		std::string output_file;
+		std::string backend;
 		Bool use_editor = true;
 		Bool maximize_window = false;
 		Bool stats_enabled = false;
@@ -17,6 +18,7 @@ namespace amber::CommandLineOptions
 			cli_parser.AddArg(true, "--config-file");
 			cli_parser.AddArg(true, "--log-file");
 			cli_parser.AddArg(true, "--output-file");
+			cli_parser.AddArg(true, "--backend");
 			cli_parser.AddArg(false, "--noeditor");
 			cli_parser.AddArg(false, "--max");
 		}
@@ -30,6 +32,7 @@ namespace amber::CommandLineOptions
 		config_file = cli_result["--config-file"].AsStringOr("sponza.json");
 		log_file = cli_result["--log-file"].AsStringOr("amber.log");
 		output_file = cli_result["--output-file"].AsStringOr("output");
+		backend = cli_result["--backend"].AsStringOr("default");
 		use_editor = !cli_result["--noeditor"];
 		maximize_window = !cli_result["--max"];
 	}
@@ -45,6 +48,10 @@ namespace amber::CommandLineOptions
 	std::string const& GetConfigFile()
 	{
 		return config_file;
+	}
+	std::string const& GetBackend()
+	{
+		return backend;
 	}
 	Bool GetUseEditor()
 	{

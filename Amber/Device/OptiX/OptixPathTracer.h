@@ -2,31 +2,12 @@
 #include <memory>
 #include "OptixUtils.h"
 #include "DeviceHostCommon.h"
-#include "Math/MathTypes.h"
-#include "Utilities/CpuBuffer2D.h"
+#include "Device/PathTracer.h"
 
 namespace amber
 {
 	struct Scene;
 	class Camera;
-
-	struct PathTracerConfig
-	{
-		Uint   max_depth;
-		Uint   samples_per_pixel;
-		Bool   use_denoiser;
-		Bool   accumulate;
-	};
-
-	enum class PathTracerOutput : Uint8
-	{
-		Final,
-		Albedo,
-		Normal,
-		UV,
-		MaterialID,
-		Custom
-	};
 
 	class OptixInitializer
 	{
@@ -40,31 +21,33 @@ namespace amber
 		OptixDenoiser optix_denoiser = nullptr;
 	};
 
-	class OptixPathTracer : public OptixInitializer
+	class OptixPathTracer : public OptixInitializer, public PathTracerBase
 	{
 		static constexpr Uint32 MAX_DEPTH = 3;
 	public:
 		OptixPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& scene);
-		~OptixPathTracer();
+		~OptixPathTracer() override;
 
-		void Update(Float dt);
-		void Render(Camera const& camera);
+		void Update(Float dt) override;
+		void Render(Camera const& camera) override;
 
-		void OnResize(Uint32 w, Uint32 h);
-		void WriteFramebuffer(Char const* outfile);
+		void OnResize(Uint32 w, Uint32 h) override;
+		void WriteFramebuffer(Char const* outfile) override;
 
-		auto const& GetFramebuffer() const { return framebuffer; }
-		Uint32 GetMaxDepth() const { return MAX_DEPTH; }
+		CpuBuffer2D<RGBA8> const& GetFramebuffer() const override { return framebuffer; }
+		Uint32 GetMaxDepth() const override { return MAX_DEPTH; }
 
-		void SetOutput(PathTracerOutput pto)
+		void SetOutput(PathTracerOutput pto) override
 		{
 			output = pto;
 		}
-		PathTracerOutput GetOutput() const { return output; }
+		PathTracerOutput GetOutput() const override { return output; }
 
-		void OptionsGUI();
-		void LightsGUI();
-		void MemoryUsageGUI();
+		void OptionsGUI() override;
+		void LightsGUI() override;
+		void MemoryUsageGUI() override;
+
+		PathTracerBackend GetBackend() const override { return PathTracerBackend::OptiX; }
 
 	private:
 		Uint32 width;

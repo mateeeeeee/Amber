@@ -145,6 +145,7 @@ set(EXTERNAL_FILES
 if(APPLE)
     set(DEVICE_BACKEND_FILES
         Device/PathTracer.h
+        Device/PathTracer.cpp
         Device/Metal/MetalPathTracer.h
         Device/Metal/MetalPathTracer.mm
         Device/Metal/MetalUtils.h
@@ -155,6 +156,7 @@ if(APPLE)
 else()
     set(DEVICE_BACKEND_FILES
         Device/PathTracer.h
+        Device/PathTracer.cpp
         Device/OptiX/OptixUtils.h
         Device/OptiX/OptixUtils.cpp
         Device/OptiX/OptixPathTracer.h

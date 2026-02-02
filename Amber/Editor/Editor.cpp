@@ -6,11 +6,7 @@
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Scene/Camera.h"
-#if defined(AMBER_PLATFORM_APPLE)
-#include "Device/Metal/MetalPathTracer.h"
-#else
-#include "Device/OptiX/OptixPathTracer.h"
-#endif
+#include "Device/PathTracer.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_sdl2.h"
 #include "ImGui/imgui_impl_sdlrenderer2.h"
@@ -18,7 +14,7 @@
 
 namespace amber
 {
-	Editor::Editor(Window& window, Camera& camera, PathTracer& path_tracer)
+	Editor::Editor(Window& window, Camera& camera, PathTracerBase& path_tracer)
 		: window(window), camera(camera), path_tracer(path_tracer)
 	{
 		SDLCheck(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);

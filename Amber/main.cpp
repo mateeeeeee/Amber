@@ -32,9 +32,22 @@ int main(Int argc, Char* argv[])
 	CommandLineOptions::Initialize(argc, argv);
 #if defined(AMBER_DEBUG)
 	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Debug);
-#else 
+#else
 	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Error);
-#endif 
+#endif
+
+	PathTracerBackend backend;
+	if (!ParseBackend(CommandLineOptions::GetBackend(), backend))
+	{
+		AMBER_ERROR_LOG("Unknown backend '%s'. Valid options: default, metal, optix", CommandLineOptions::GetBackend().c_str());
+		return EXIT_FAILURE;
+	}
+
+	if (!IsBackendAvailable(backend))
+	{
+		AMBER_ERROR_LOG("Backend '%s' is not available on this platform", GetBackendName(backend).c_str());
+		return EXIT_FAILURE;
+	}
 
 	SceneConfig cfg{};
 	if (!ParseSceneConfig(CommandLineOptions::GetConfigFile().c_str(), cfg))
@@ -42,7 +55,7 @@ int main(Int argc, Char* argv[])
 		AMBER_ERROR_LOG("Config parsing failed!");
 		return EXIT_FAILURE;
 	}
-	
+
 	std::unique_ptr<Scene> scene = nullptr;
 	try
 	{
@@ -58,11 +71,21 @@ int main(Int argc, Char* argv[])
 		AMBER_ERROR_LOG("{}", e.what());
 		return EXIT_FAILURE;
 	}
-	
+
 	Camera camera = std::move(cfg.camera);
 	Uint32 windowWidth = cfg.width;
 	Uint32 windowHeight = cfg.height;
-	PathTracer path_tracer(windowWidth, windowHeight, cfg.path_tracer_config, std::move(scene));
+
+	std::unique_ptr<PathTracerBase> path_tracer = CreatePathTracer(
+		backend, windowWidth, windowHeight, cfg.path_tracer_config, std::move(scene));
+	if (!path_tracer)
+	{
+		AMBER_ERROR_LOG("Failed to create path tracer!");
+		return EXIT_FAILURE;
+	}
+
+	AMBER_INFO_LOG("Using %s backend", GetBackendName(backend).c_str());
+
 	ProcessCVarIniFile("cvars.ini");
 	if(CommandLineOptions::GetUseEditor())
 	{
@@ -71,7 +94,7 @@ int main(Int argc, Char* argv[])
 		{
 			window.Maximize();
 		}
-		Editor editor(window, camera, path_tracer);
+		Editor editor(window, camera, *path_tracer);
 		editor.SetEditorSink(g_Log.GetEditorSink());
 		while (window.Loop())
 		{
@@ -80,8 +103,8 @@ int main(Int argc, Char* argv[])
 	}
 	else
 	{
-		path_tracer.Render(camera);
-		path_tracer.WriteFramebuffer(CommandLineOptions::GetOutputFile().c_str());
+		path_tracer->Render(camera);
+		path_tracer->WriteFramebuffer(CommandLineOptions::GetOutputFile().c_str());
 	}
 	g_Log.Destroy();
 
