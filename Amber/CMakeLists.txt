@@ -1,54 +1,57 @@
+set(AMBER_HAS_OPTIX OFF)
+
 if(NOT APPLE)
-    find_package(CUDA REQUIRED)
-    find_package(CUDAToolkit REQUIRED)
+    find_package(CUDA QUIET)
+    find_package(CUDAToolkit QUIET)
 
-    # Can be set via: cmake -DOptiX_INSTALL_DIR=/path/to/optix ..
-    if(NOT DEFINED OptiX_INSTALL_DIR)
-        if(WIN32)
-            file(GLOB OPTIX_PATHS "C:/ProgramData/NVIDIA Corporation/OptiX SDK*")
-        else()
-            file(GLOB OPTIX_PATHS
-                "/opt/optix*"
-                "/usr/local/optix*"
-                "$ENV{HOME}/optix*"
-                "$ENV{HOME}/Downloads/NVIDIA-OptiX-SDK*")
+    if(CUDA_FOUND AND CUDAToolkit_FOUND)
+        # Can be set via: cmake -DOptiX_INSTALL_DIR=/path/to/optix ..
+        if(NOT DEFINED OptiX_INSTALL_DIR)
+            if(WIN32)
+                file(GLOB OPTIX_PATHS "C:/ProgramData/NVIDIA Corporation/OptiX SDK*")
+            else()
+                file(GLOB OPTIX_PATHS
+                    "/opt/optix*"
+                    "/usr/local/optix*"
+                    "$ENV{HOME}/optix*"
+                    "$ENV{HOME}/Downloads/NVIDIA-OptiX-SDK*")
+            endif()
+
+            if(OPTIX_PATHS)
+                list(SORT OPTIX_PATHS)
+                list(REVERSE OPTIX_PATHS)
+                list(GET OPTIX_PATHS 0 OptiX_INSTALL_DIR)
+                message(STATUS "Found OptiX SDK at: ${OptiX_INSTALL_DIR}")
+            endif()
         endif()
 
-        if(OPTIX_PATHS)
-            list(SORT OPTIX_PATHS)
-            list(REVERSE OPTIX_PATHS)
-            list(GET OPTIX_PATHS 0 OptiX_INSTALL_DIR)
-            message(STATUS "Found OptiX SDK at: ${OptiX_INSTALL_DIR}")
+        if(DEFINED OptiX_INSTALL_DIR AND EXISTS "${OptiX_INSTALL_DIR}/include/optix.h")
+            file(STRINGS "${OptiX_INSTALL_DIR}/include/optix.h" OPTIX_VERSION_LINE REGEX "^#define OPTIX_VERSION")
+            if(OPTIX_VERSION_LINE)
+                string(REGEX MATCH "[0-9]+" OPTIX_VERSION "${OPTIX_VERSION_LINE}")
+                math(EXPR OPTIX_VERSION_MAJOR "${OPTIX_VERSION} / 10000")
+                math(EXPR OPTIX_VERSION_MINOR "(${OPTIX_VERSION} % 10000) / 100")
+                math(EXPR OPTIX_VERSION_PATCH "${OPTIX_VERSION} % 100")
+                message(STATUS "OptiX version: ${OPTIX_VERSION_MAJOR}.${OPTIX_VERSION_MINOR}.${OPTIX_VERSION_PATCH}")
+
+                if(OPTIX_VERSION_MAJOR GREATER_EQUAL 8)
+                    set(OPTIX_INSTALL_DIR "${OptiX_INSTALL_DIR}")
+                    find_library(NVRTC_LIB nvrtc PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64)
+                    if(NVRTC_LIB)
+                        set(AMBER_HAS_OPTIX ON)
+                        message(STATUS "OptiX support enabled")
+                    else()
+                        message(WARNING "NVRTC library not found, OptiX disabled")
+                    endif()
+                else()
+                    message(WARNING "OptiX 8.0 or newer required. Found version ${OPTIX_VERSION_MAJOR}.${OPTIX_VERSION_MINOR}.${OPTIX_VERSION_PATCH}")
+                endif()
+            endif()
         else()
-            message(FATAL_ERROR "OptiX SDK not found. Please set OptiX_INSTALL_DIR via cmake -DOptiX_INSTALL_DIR=/path/to/optix")
-        endif()
-    endif()
-
-    if(NOT EXISTS "${OptiX_INSTALL_DIR}/include/optix.h")
-        message(FATAL_ERROR "OptiX not found at ${OptiX_INSTALL_DIR}. Please set OptiX_INSTALL_DIR to the correct path.")
-    endif()
-
-    file(STRINGS "${OptiX_INSTALL_DIR}/include/optix.h" OPTIX_VERSION_LINE REGEX "^#define OPTIX_VERSION")
-    if(OPTIX_VERSION_LINE)
-        string(REGEX MATCH "[0-9]+" OPTIX_VERSION "${OPTIX_VERSION_LINE}")
-        math(EXPR OPTIX_VERSION_MAJOR "${OPTIX_VERSION} / 10000")
-        math(EXPR OPTIX_VERSION_MINOR "(${OPTIX_VERSION} % 10000) / 100")
-        math(EXPR OPTIX_VERSION_PATCH "${OPTIX_VERSION} % 100")
-        message(STATUS "OptiX version: ${OPTIX_VERSION_MAJOR}.${OPTIX_VERSION_MINOR}.${OPTIX_VERSION_PATCH}")
-
-        if(OPTIX_VERSION_MAJOR LESS 8)
-            message(FATAL_ERROR "OptiX 8.0 or newer required. Found version ${OPTIX_VERSION_MAJOR}.${OPTIX_VERSION_MINOR}.${OPTIX_VERSION_PATCH}")
+            message(STATUS "OptiX SDK not found, OptiX backend disabled")
         endif()
     else()
-        message(WARNING "Could not determine OptiX version")
-    endif()
-
-    set(OPTIX_INSTALL_DIR "${OptiX_INSTALL_DIR}")
-
-    find_library(NVRTC_LIB nvrtc PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64)
-
-    if(NOT NVRTC_LIB)
-        message(FATAL_ERROR "NVRTC library not found!")
+        message(STATUS "CUDA not found, OptiX backend disabled")
     endif()
 endif()
 
@@ -142,6 +145,11 @@ set(EXTERNAL_FILES
     ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdlrenderer2.cpp
 )
 
+set(DEVICE_CPU_FILES
+    Device/CPU/CpuPathTracer.h
+    Device/CPU/CpuPathTracer.cpp
+)
+
 if(APPLE)
     set(DEVICE_BACKEND_FILES
         Device/PathTracer.h
@@ -152,8 +160,9 @@ if(APPLE)
         Device/Metal/MetalUtils.mm
         Device/Metal/MetalDeviceHostCommon.h
         Device/Metal/PathTracing.metal
+        ${DEVICE_CPU_FILES}
     )
-else()
+elseif(AMBER_HAS_OPTIX)
     set(DEVICE_BACKEND_FILES
         Device/PathTracer.h
         Device/PathTracer.cpp
@@ -164,6 +173,13 @@ else()
         Device/OptiX/DeviceHostCommon.h
         Device/OptiX/KernelCompiler.h
         Device/OptiX/KernelCompiler.cpp
+        ${DEVICE_CPU_FILES}
+    )
+else()
+    set(DEVICE_BACKEND_FILES
+        Device/PathTracer.h
+        Device/PathTracer.cpp
+        ${DEVICE_CPU_FILES}
     )
 endif()
 
@@ -266,7 +282,7 @@ if(APPLE)
             message(FATAL_ERROR "SDL2.framework not found at ${SDL2_FRAMEWORK_PATH}. Please add SDL2.framework to External/SDL2/lib or install via 'brew install sdl2'")
         endif()
     endif()
-else()
+elseif(AMBER_HAS_OPTIX)
     target_include_directories(Amber PRIVATE ${CUDA_INCLUDE_DIRS})
     target_include_directories(Amber PRIVATE ${SDL2_INCLUDE_DIRS})
     target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/SDL2/include)
@@ -276,6 +292,8 @@ else()
     target_link_libraries(Amber PUBLIC  ${NVRTC_LIB})
     target_link_libraries(Amber PRIVATE CUDA::cudart CUDA::cuda_driver)
     target_link_libraries(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/SDL2/lib/SDL2.lib)
+else()
+    target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/SDL2/include)
 endif()
 
 target_link_libraries(Amber PRIVATE pbrtParser)
@@ -322,7 +340,8 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
     target_compile_definitions(Amber PRIVATE AMBER_MINSIZEREL=1)
 endif()
 
-if(NOT APPLE)
+if(AMBER_HAS_OPTIX)
+    target_compile_definitions(Amber PRIVATE AMBER_OPTIX_FOUND=1)
     target_compile_definitions(Amber PRIVATE CUDA_PATH="${CUDA_TOOLKIT_ROOT_DIR}")
     target_compile_definitions(Amber PRIVATE OPTIX_PATH="${OPTIX_INSTALL_DIR}")
 endif()

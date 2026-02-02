@@ -11,7 +11,8 @@ namespace amber
 	enum class PathTracerBackend : Uint8
 	{
 		Metal,
-		OptiX
+		OptiX,
+		CPU
 	};
 
 	struct PathTracerConfig

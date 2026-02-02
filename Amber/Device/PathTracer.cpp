@@ -1,9 +1,12 @@
 #include "PathTracer.h"
 #include "Core/Log.h"
+#include "CPU/CpuPathTracer.h"
 
-#if defined(__APPLE__)
+#if defined(AMBER_HAS_METAL)
 	#include "Metal/MetalPathTracer.h"
-#else
+#endif
+
+#if defined(AMBER_HAS_OPTIX)
 	#include "OptiX/OptixPathTracer.h"
 #endif
 
@@ -22,29 +25,62 @@ namespace amber
 			return nullptr;
 		}
 
-#if defined(__APPLE__)
-		return std::make_unique<MetalPathTracer>(width, height, config, std::move(scene));
-#else
-		return std::make_unique<OptixPathTracer>(width, height, config, std::move(scene));
+		switch (backend)
+		{
+		case PathTracerBackend::CPU:
+			return std::make_unique<CpuPathTracer>(width, height, config, std::move(scene));
+
+#if defined(AMBER_HAS_METAL)
+		case PathTracerBackend::Metal:
+			return std::make_unique<MetalPathTracer>(width, height, config, std::move(scene));
 #endif
+
+#if defined(AMBER_HAS_OPTIX)
+		case PathTracerBackend::OptiX:
+			return std::make_unique<OptixPathTracer>(width, height, config, std::move(scene));
+#endif
+
+		default:
+			AMBER_ERROR_LOG("Unknown backend requested");
+			return nullptr;
+		}
 	}
 
 	PathTracerBackend GetDefaultBackend()
 	{
-#if defined(__APPLE__)
+#if defined(AMBER_HAS_METAL)
 		return PathTracerBackend::Metal;
-#else
+#elif defined(AMBER_HAS_OPTIX)
 		return PathTracerBackend::OptiX;
+#else
+		return PathTracerBackend::CPU;
 #endif
 	}
 
 	Bool IsBackendAvailable(PathTracerBackend backend)
 	{
-#if defined(__APPLE__)
-		return backend == PathTracerBackend::Metal;
+		switch (backend)
+		{
+		case PathTracerBackend::CPU:
+			return true;
+
+		case PathTracerBackend::Metal:
+#if defined(AMBER_HAS_METAL)
+			return true;
 #else
-		return backend == PathTracerBackend::OptiX;
+			return false;
 #endif
+
+		case PathTracerBackend::OptiX:
+#if defined(AMBER_HAS_OPTIX)
+			return true;
+#else
+			return false;
+#endif
+
+		default:
+			return false;
+		}
 	}
 
 	std::string GetBackendName(PathTracerBackend backend)
@@ -53,6 +89,7 @@ namespace amber
 		{
 		case PathTracerBackend::Metal: return "metal";
 		case PathTracerBackend::OptiX: return "optix";
+		case PathTracerBackend::CPU:   return "cpu";
 		}
 		return "unknown";
 	}
@@ -72,6 +109,11 @@ namespace amber
 		if (str == "optix" || str == "OptiX" || str == "Optix")
 		{
 			backend = PathTracerBackend::OptiX;
+			return true;
+		}
+		if (str == "cpu" || str == "CPU")
+		{
+			backend = PathTracerBackend::CPU;
 			return true;
 		}
 		return false;

@@ -9,6 +9,16 @@
 	#define AMBER_PLATFORM_LINUX
 #endif
 
+#define AMBER_HAS_CPU
+
+#if defined(AMBER_PLATFORM_APPLE)
+	#define AMBER_HAS_METAL
+#endif
+
+#if defined(AMBER_OPTIX_FOUND)
+	#define AMBER_HAS_OPTIX
+#endif
+
 #define _AMBER_STRINGIFY_IMPL(a) #a
 #define _AMBER_CONCAT_IMPL(x, y) x##y
 

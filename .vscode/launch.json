@@ -27,6 +27,17 @@
             "preLaunchTask": "cmake: build debug"
         },
         {
+            "name": "(macOS) Debug - Makefile (CPU)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Amber",
+            "args": ["--config-file", "sponza.json", "--backend", "cpu"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "preLaunchTask": "cmake: build debug"
+        },
+        {
             "name": "(macOS) Debug - Xcode",
             "type": "lldb",
             "request": "launch",
@@ -67,6 +78,17 @@
                     "value": "0"
                 }
             ],
+            "preLaunchTask": "cmake: build release"
+        },
+        {
+            "name": "(macOS) Release - Makefile (CPU)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/Amber",
+            "args": ["--config-file", "sponza.json", "--backend", "cpu"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
             "preLaunchTask": "cmake: build release"
         },
         {
