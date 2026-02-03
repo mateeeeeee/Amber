@@ -13,7 +13,6 @@ namespace amber
 		RGBA8(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255)
 			: r(r), g(g), b(b), a(a) {}
 
-		// Conversion from float colors [0,1] to byte [0,255]
 		static RGBA8 FromFloat(Float r, Float g, Float b, Float a = 1.0f)
 		{
 			return RGBA8(
@@ -353,7 +352,6 @@ namespace amber
 		return v + cross2 * 2.0f;
 	}
 
-	// Implement Vector3::Transform for Matrix
 	inline Vector3 Vector3::Transform(Vector3 const& v, Matrix const& m)
 	{
 		Float x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0] + m.m[3][0];
@@ -362,7 +360,6 @@ namespace amber
 		return Vector3(x, y, z);
 	}
 
-	// Implement Matrix functions that depend on Quaternion
 	inline Matrix Matrix::CreateFromQuaternion(Quaternion const& q)
 	{
 		Float xx = q.x * q.x;
@@ -401,12 +398,10 @@ namespace amber
 
 	inline Bool Matrix::Decompose(Vector3& scale, Quaternion& rotation, Vector3& translation) const
 	{
-		// Extract translation
 		translation.x = m[3][0];
 		translation.y = m[3][1];
 		translation.z = m[3][2];
 
-		// Extract scale
 		Vector3 row0(m[0][0], m[0][1], m[0][2]);
 		Vector3 row1(m[1][0], m[1][1], m[1][2]);
 		Vector3 row2(m[2][0], m[2][1], m[2][2]);
@@ -415,12 +410,10 @@ namespace amber
 		scale.y = row1.Length();
 		scale.z = row2.Length();
 
-		// Remove scaling from matrix to get rotation
 		if (scale.x != 0.0f) { row0 = row0 / scale.x; }
 		if (scale.y != 0.0f) { row1 = row1 / scale.y; }
 		if (scale.z != 0.0f) { row2 = row2 / scale.z; }
 
-		// Convert rotation matrix to quaternion
 		Float trace = row0.x + row1.y + row2.z;
 		if (trace > 0.0f)
 		{
@@ -458,7 +451,6 @@ namespace amber
 		return true;
 	}
 
-	// Define Vector3 static constants
 	inline const Vector3 Vector3::Zero     = Vector3(0.0f, 0.0f, 0.0f);
 	inline const Vector3 Vector3::One      = Vector3(1.0f, 1.0f, 1.0f);
 	inline const Vector3 Vector3::UnitX    = Vector3(1.0f, 0.0f, 0.0f);
@@ -471,12 +463,10 @@ namespace amber
 	inline const Vector3 Vector3::Forward  = Vector3(0.0f, 0.0f, 1.0f);
 	inline const Vector3 Vector3::Backward = Vector3(0.0f, 0.0f, -1.0f);
 
-	// Define Matrix static constants
 	inline const Matrix Matrix::Identity = Matrix();
 
 	using Color = Vector4;
 
-	// Integer vectors
 	struct Vector2u
 	{
 		Uint32 x, y;
@@ -517,14 +507,5 @@ namespace amber
 		Int32 x, y, z, w;
 		Vector4i() : x(0), y(0), z(0), w(0) {}
 		Vector4i(Int32 x, Int32 y, Int32 z, Int32 w) : x(x), y(y), z(z), w(w) {}
-	};
-
-	struct Ray
-	{
-		Vector3 origin;
-		Vector3 direction;
-
-		Ray() : origin(), direction(0, 0, 1) {}
-		Ray(Vector3 const& origin, Vector3 const& direction) : origin(origin), direction(direction) {}
 	};
 }

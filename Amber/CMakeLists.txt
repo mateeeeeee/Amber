@@ -148,6 +148,10 @@ set(EXTERNAL_FILES
 set(DEVICE_CPU_FILES
     Device/CPU/CpuPathTracer.h
     Device/CPU/CpuPathTracer.cpp
+    Device/CPU/Primitives.h
+    Device/CPU/Intersection.h
+    Device/CPU/BVH.h
+    Device/CPU/BVH.cpp
 )
 
 if(APPLE)
