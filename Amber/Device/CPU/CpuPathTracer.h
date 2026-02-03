@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "Device/PathTracer.h"
+#include "BVH.h"
 
 namespace amber
 {
@@ -38,7 +39,13 @@ namespace amber
 		std::unique_ptr<Scene> scene;
 		CpuBuffer2D<RGBA8> framebuffer;
 
+		std::vector<Triangle> triangles;
+		BVH bvh;
+
 		Uint frame_index = 0;
 		PathTracerOutput output = PathTracerOutput::Final;
+
+	private:
+		void BuildSceneGeometry();
 	};
 }
