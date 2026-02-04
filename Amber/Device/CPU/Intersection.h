@@ -69,7 +69,6 @@ namespace amber
 
 		Vector3 edge1 = tri.v1 - tri.v0;
 		Vector3 edge2 = tri.v2 - tri.v0;
-
 		Vector3 h = Vector3::Cross(ray.direction, edge2);
 		Float a = edge1.Dot(h);
 		if (a > -EPSILON && a < EPSILON)

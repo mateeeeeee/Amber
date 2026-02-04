@@ -152,6 +152,8 @@ set(DEVICE_CPU_FILES
     Device/CPU/Intersection.h
     Device/CPU/BVH.h
     Device/CPU/BVH.cpp
+    Device/CPU/MedianSplitBuilder.h
+    Device/CPU/MedianSplitBuilder.cpp
 )
 
 if(APPLE)

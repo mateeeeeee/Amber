@@ -1,4 +1,5 @@
 #include "CpuPathTracer.h"
+#include "MedianSplitBuilder.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Core/Log.h"
@@ -11,6 +12,7 @@ namespace amber
 	CpuPathTracer::CpuPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& _scene)
 		: width(width), height(height), scene(std::move(_scene)), framebuffer(height, width)
 	{
+		g_ThreadPool.Initialize();
 		framebuffer.Clear(RGBA8(0, 0, 0, 255));
 		AMBER_INFO_LOG("Building scene geometry...");
 		BuildSceneGeometry();
@@ -21,6 +23,7 @@ namespace amber
 
 	CpuPathTracer::~CpuPathTracer()
 	{
+		g_ThreadPool.Destroy();
 	}
 
 	void CpuPathTracer::BuildSceneGeometry()
@@ -68,12 +71,6 @@ namespace amber
 		if (camera.IsChanged())
 		{
 			frame_index = 0;
-			current_row = 0;
-		}
-
-		if (current_row >= height)
-		{
-			return;
 		}
 
 		Vector3 origin = camera.GetPosition();
@@ -84,45 +81,62 @@ namespace amber
 		Float tan_half_fov = std::tan(fov_rad * 0.5f);
 		Float aspect = camera.GetAspectRatio();
 
-		Uint32 rows_per_frame = 4;
-		Uint32 end_row = std::min(current_row + rows_per_frame, height);
-		for (Uint32 y = current_row; y < end_row; ++y)
+		Uint32 tiles_x = (width + TILE_SIZE - 1) / TILE_SIZE;
+		Uint32 tiles_y = (height + TILE_SIZE - 1) / TILE_SIZE;
+
+		std::vector<std::future<void>> futures;
+		futures.reserve(tiles_x * tiles_y);
+		for (Uint32 ty = 0; ty < tiles_y; ++ty)
 		{
-			for (Uint32 x = 0; x < width; ++x)
+			for (Uint32 tx = 0; tx < tiles_x; ++tx)
 			{
-				Float ndc_x = (2.0f * (x + 0.5f) / width - 1.0f) * aspect * tan_half_fov;
-				Float ndc_y = (1.0f - 2.0f * (y + 0.5f) / height) * tan_half_fov;
-
-				Vector3 direction = (W + U * ndc_x + V * ndc_y).Normalized();
-				Ray ray(origin, direction);
-
-				HitInfo hit;
-				if (bvh.Intersect(ray, hit))
+				futures.push_back(g_ThreadPool.Submit([this, tx, ty, origin, U, V, W, tan_half_fov, aspect]()
 				{
-					Triangle const& tri = triangles[hit.tri_idx];
-					Vector3 e1 = tri.v1 - tri.v0;
-					Vector3 e2 = tri.v2 - tri.v0;
-					Vector3 normal = Vector3::Cross(e1, e2).Normalized();
+					Uint32 x_begin = tx * TILE_SIZE;
+					Uint32 y_begin = ty * TILE_SIZE;
+					Uint32 x_end = std::min(x_begin + TILE_SIZE, width);
+					Uint32 y_end = std::min(y_begin + TILE_SIZE, height);
 
-					RGBA8 color = RGBA8::FromFloat(
-						normal.x * 0.5f + 0.5f,
-						normal.y * 0.5f + 0.5f,
-						normal.z * 0.5f + 0.5f
-					);
-					framebuffer(y, x) = color;
-				}
-				else
-				{
-					framebuffer(y, x) = RGBA8(25, 25, 25, 255);
-				}
+					for (Uint32 y = y_begin; y < y_end; ++y)
+					{
+						for (Uint32 x = x_begin; x < x_end; ++x)
+						{
+							Float ndc_x = (2.0f * (x + 0.5f) / width - 1.0f) * aspect * tan_half_fov;
+							Float ndc_y = (1.0f - 2.0f * (y + 0.5f) / height) * tan_half_fov;
+
+							Vector3 direction = (W + U * ndc_x + V * ndc_y).Normalized();
+							Ray ray(origin, direction);
+
+							HitInfo hit;
+							if (bvh.Intersect(ray, hit))
+							{
+								Triangle const& tri = triangles[hit.tri_idx];
+								Vector3 e1 = tri.v1 - tri.v0;
+								Vector3 e2 = tri.v2 - tri.v0;
+								Vector3 normal = Vector3::Cross(e1, e2).Normalized();
+
+								RGBA8 color = RGBA8::FromFloat(
+									normal.x * 0.5f + 0.5f,
+									normal.y * 0.5f + 0.5f,
+									normal.z * 0.5f + 0.5f
+								);
+								framebuffer(y, x) = color;
+							}
+							else
+							{
+								framebuffer(y, x) = RGBA8(25, 25, 25, 255);
+							}
+						}
+					}
+				}));
 			}
 		}
-		current_row = end_row;
 
-		if (current_row >= height)
+		for (auto& f : futures)
 		{
-			++frame_index;
+			f.get();
 		}
+		++frame_index;
 	}
 
 	void CpuPathTracer::OnResize(Uint32 w, Uint32 h)
@@ -131,7 +145,6 @@ namespace amber
 		height = h;
 		framebuffer.Resize(height, width);
 		frame_index = 0;
-		current_row = 0;
 	}
 
 	void CpuPathTracer::WriteFramebuffer(Char const* outfile)

@@ -4,8 +4,8 @@
 		"model file" : "Sponza/Sponza.gltf",
 		"model scale" : 6,
 		"scene environment" : "environment/barcelona.hdr",
-		"width" : 1080,
-		"height" : 720,
+		"width" : 320,
+		"height" : 240,
 		"max depth" : 2,
 		"samples per pixel" : 1,
         "camera": 

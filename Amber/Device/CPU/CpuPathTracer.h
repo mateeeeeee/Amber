@@ -2,6 +2,7 @@
 #include <memory>
 #include "Device/PathTracer.h"
 #include "BVH.h"
+#include "Utilities/ThreadPool.h"
 
 namespace amber
 {
@@ -11,6 +12,8 @@ namespace amber
 	class CpuPathTracer : public PathTracerBase
 	{
 		static constexpr Uint32 MAX_DEPTH = 3;
+		static constexpr Uint32 TILE_SIZE = 16;
+		
 	public:
 		CpuPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& scene);
 		~CpuPathTracer() override;
@@ -43,7 +46,6 @@ namespace amber
 		BVH bvh;
 
 		Uint frame_index = 0;
-		Uint32 current_row = 0;
 		PathTracerOutput output = PathTracerOutput::Final;
 
 	private:

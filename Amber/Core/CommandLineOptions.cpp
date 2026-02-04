@@ -34,7 +34,7 @@ namespace amber::CommandLineOptions
 		output_file = cli_result["--output-file"].AsStringOr("output");
 		backend = cli_result["--backend"].AsStringOr("default");
 		use_editor = !cli_result["--noeditor"];
-		maximize_window = !cli_result["--max"];
+		maximize_window = cli_result["--max"];
 	}
 
 	std::string const& GetLogFile()
