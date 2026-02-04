@@ -5,6 +5,7 @@
 #include "Platform/Input.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
+#include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Device/PathTracer.h"
 #include "ImGui/imgui.h"
@@ -58,7 +59,7 @@ namespace amber
 		SDLCheck(render_target.get());
 
 		gui_target.reset(SDL_CreateTexture(
-						 sdl_renderer.get(), 
+						 sdl_renderer.get(),
 			SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET,
 						 window.Width(), window.Height()));
 		SDLCheck(gui_target.get());
@@ -164,7 +165,7 @@ namespace amber
 		style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
 		style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
 		style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
-		
+
 		for (Int i = 0; i <= ImGuiCol_COUNT; i++)
 		{
 			ImVec4& col = style.Colors[i];
@@ -238,20 +239,12 @@ namespace amber
 			{
 				if (ImGui::MenuItem(ICON_FA_GLOBE" Scene", 0, visibility_flags[Visibility_Scene]))
 					visibility_flags[Visibility_Scene] = !visibility_flags[Visibility_Scene];
-				if (ImGui::MenuItem(ICON_FA_COMMENT" Log", 0, visibility_flags[Visibility_Log]))
-					visibility_flags[Visibility_Log] = !visibility_flags[Visibility_Log];
-				if (ImGui::MenuItem(ICON_FA_TERMINAL" Console", 0, visibility_flags[Visibility_Console]))
-					visibility_flags[Visibility_Console] = !visibility_flags[Visibility_Console];
-				if (ImGui::MenuItem(ICON_FA_GEAR" Options", 0, visibility_flags[Visibility_Options]))
-					visibility_flags[Visibility_Options] = !visibility_flags[Visibility_Options];
-				if (ImGui::MenuItem(ICON_FA_BUG" Debug", 0, visibility_flags[Visibility_Debug]))
-					visibility_flags[Visibility_Debug] = !visibility_flags[Visibility_Debug];
+				if (ImGui::MenuItem(ICON_FA_SLIDERS" Properties", 0, visibility_flags[Visibility_Properties]))
+					visibility_flags[Visibility_Properties] = !visibility_flags[Visibility_Properties];
 				if (ImGui::MenuItem(ICON_FA_CLOCK" Stats", 0, visibility_flags[Visibility_Stats]))
 					visibility_flags[Visibility_Stats] = !visibility_flags[Visibility_Stats];
-				if (ImGui::MenuItem(ICON_FA_CAMERA" Camera", 0, visibility_flags[Visibility_Camera]))
-					visibility_flags[Visibility_Camera] = !visibility_flags[Visibility_Camera];
-				if (ImGui::MenuItem(ICON_FA_LIGHTBULB" Lights", 0, visibility_flags[Visibility_Lights]))
-					visibility_flags[Visibility_Lights] = !visibility_flags[Visibility_Lights];
+				if (ImGui::MenuItem(ICON_FA_TERMINAL" Console", 0, visibility_flags[Visibility_Console]))
+					visibility_flags[Visibility_Console] = !visibility_flags[Visibility_Console];
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu(" Help"))
@@ -264,13 +257,9 @@ namespace amber
 		}
 
 		SceneWindow();
-		LogWindow();
-		ConsoleWindow();
+		PropertiesWindow();
 		StatsWindow();
-		OptionsWindow();
-		DebugWindow();
-		CameraWindow();
-		LightsWindow();
+		ConsoleWindow();
 	}
 
 	void Editor::EndGUI()
@@ -321,84 +310,143 @@ namespace amber
 		ImGui::End();
 	}
 
-	void Editor::LogWindow()
+	void Editor::PropertiesWindow()
 	{
-		if (!visibility_flags[Visibility_Log]) return;
-		if(editor_sink) editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Log]);
-	}
+		if (!visibility_flags[Visibility_Properties]) return;
+		if (!ImGui::Begin(ICON_FA_SLIDERS" Properties", &visibility_flags[Visibility_Properties]))
+		{
+			ImGui::End();
+			return;
+		}
 
-	void Editor::ConsoleWindow()
-	{
-		if (!visibility_flags[Visibility_Console]) return;
-		editor_console->Draw(ICON_FA_TERMINAL" Console ", &visibility_flags[Visibility_Console]);
+		if (ImGui::CollapsingHeader("Renderer", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::Text("Backend: %s", GetBackendName(path_tracer.GetBackend()).c_str());
+			ImGui::Text("Frame: %u", path_tracer.GetFrameIndex());
+
+			Uint tri_count = path_tracer.GetTriangleCount();
+			if (tri_count > 0)
+			{
+				ImGui::Text("Triangles: %u", tri_count);
+			}
+
+			if (path_tracer.SupportsAccumulation())
+			{
+				Bool acc = path_tracer.GetAccumulate();
+				if (ImGui::Checkbox("Accumulate", &acc))
+				{
+					path_tracer.SetAccumulate(acc);
+				}
+
+				Int samples = path_tracer.GetSampleCount();
+				if (ImGui::SliderInt("Samples Per Pixel", &samples, 1, 128))
+				{
+					path_tracer.SetSampleCount(samples);
+				}
+
+				Int depth = path_tracer.GetDepthCount();
+				if (ImGui::SliderInt("Max Depth", &depth, 1, path_tracer.GetMaxDepth()))
+				{
+					path_tracer.SetDepthCount(depth);
+				}
+			}
+
+			if (path_tracer.HasDenoiser())
+			{
+				ImGui::Separator();
+				path_tracer.DenoiserGUI();
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Camera"))
+		{
+			Vector3 camera_eye = camera.GetPosition();
+			if (ImGui::InputFloat3("Position", &camera_eye.x))
+			{
+				camera.SetPosition(camera_eye);
+			}
+
+			Vector3 look_dir = camera.GetLookDir();
+			ImGui::Text("Look Dir: (%.2f, %.2f, %.2f)", look_dir.x, look_dir.y, look_dir.z);
+
+			Float fov = camera.GetFovY();
+			ImGui::Text("FoV: %.1f", fov);
+		}
+
+		// --- Lights ---
+		if (ImGui::CollapsingHeader("Lights"))
+		{
+			ImGui::Text("Light count: %zu", path_tracer.GetScene().lights.size());
+			if (path_tracer.HasLightEditor())
+			{
+				ImGui::Separator();
+				path_tracer.LightEditorGUI();
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Debug"))
+		{
+			static Char ss_name[32] = {};
+			ImGui::InputText("Screenshot Name", ss_name, sizeof(ss_name) - 1);
+			if (ImGui::Button("Take Screenshot"))
+			{
+				path_tracer.WriteFramebuffer(ss_name);
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Environment"))
+		{
+			ImGui::TextDisabled("Environment map settings coming soon");
+		}
+
+		if (ImGui::CollapsingHeader("Post Processing"))
+		{
+			ImGui::TextDisabled("Tone mapping, exposure coming soon");
+		}
+
+		ImGui::End();
 	}
 
 	void Editor::StatsWindow()
 	{
 		if (!visibility_flags[Visibility_Stats]) return;
-		if(ImGui::Begin(ICON_FA_CLOCK" Stats", &visibility_flags[Visibility_Stats]))
+		if (!ImGui::Begin(ICON_FA_CLOCK" Stats", &visibility_flags[Visibility_Stats]))
 		{
-			ImGuiIO& io = ImGui::GetIO();
-			ImGui::Text("FPS: %.1f ms", io.Framerate);
-			ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
-			path_tracer.MemoryUsageGUI();
+			ImGui::End();
+			return;
 		}
+
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::Text("FPS: %.1f", io.Framerate);
+		ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
+		ImGui::Text("Frame: %u", path_tracer.GetFrameIndex());
+
+		auto const& fb = path_tracer.GetFramebuffer();
+		ImGui::Text("Resolution: %llu x %llu", static_cast<unsigned long long>(fb.Cols()), static_cast<unsigned long long>(fb.Rows()));
+		ImGui::Text("Backend: %s", GetBackendName(path_tracer.GetBackend()).c_str());
+
+		ImGui::Separator();
+		ImGui::Text("Memory:");
+
+		Uint64 mem = path_tracer.GetMemoryUsage();
+		if (mem > 0)
+		{
+			ImGui::Text("  Total: %.2f MB", mem / (1024.0 * 1024.0));
+		}
+		else
+		{
+			ImGui::TextDisabled("  Not available");
+		}
+
 		ImGui::End();
 	}
 
-	void Editor::OptionsWindow()
+	void Editor::ConsoleWindow()
 	{
-		if (!visibility_flags[Visibility_Options]) return;
-		if(ImGui::Begin(ICON_FA_GEAR" Options", &visibility_flags[Visibility_Options]))
-		{
-			path_tracer.OptionsGUI();
-		}
-		ImGui::End();
-	}
+		if (!visibility_flags[Visibility_Console]) return;
 
-	void Editor::DebugWindow()
-	{
-		if (!visibility_flags[Visibility_Debug]) return;
-		if(ImGui::Begin(ICON_FA_BUG" Debug", &visibility_flags[Visibility_Debug]))
-		{
-			if (ImGui::TreeNode("Debug Options"))
-			{
-				static Char ss_name[32] = {};
-				ImGui::InputText("Name", ss_name, sizeof(ss_name) - 1);
-				if (ImGui::Button("Take Screenshot"))
-				{
-					path_tracer.WriteFramebuffer(ss_name);
-				}
-				ImGui::TreePop();
-			}
-		}
-		ImGui::End();
-	}
-
-	void Editor::CameraWindow()
-	{
-		if (!visibility_flags[Visibility_Camera]) return;
-		if(ImGui::Begin(ICON_FA_CAMERA" Camera", &visibility_flags[Visibility_Camera]))
-		{
-			Vector3 camera_eye = camera.GetPosition();
-			ImGui::InputFloat3("Camera Position", &camera_eye.x);
-			camera.SetPosition(camera_eye);
-
-			Vector3 camera_look_dir = camera.GetLookDir();
-			ImGui::Text("Camera Look Direction: (%f, %f, %f)", camera_look_dir.x, camera_look_dir.y, camera_look_dir.z);
-		}
-		ImGui::End();
-	}
-
-	void Editor::LightsWindow()
-	{
-		if (!visibility_flags[Visibility_Lights]) return;
-		if (ImGui::Begin(ICON_FA_LIGHTBULB " Lights", &visibility_flags[Visibility_Lights]))
-		{
-			path_tracer.LightsGUI();
-		}
-		ImGui::End();
+		if (editor_sink) editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Console]);
+		editor_console->Draw(ICON_FA_TERMINAL" Console", &visibility_flags[Visibility_Console]);
 	}
 
 }
-

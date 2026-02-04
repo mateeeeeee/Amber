@@ -142,6 +142,7 @@ namespace amber
 		normals_buffer = CreateBuffer(normals);
 		uvs_buffer = CreateBuffer(uvs);
 		indices_buffer = CreateBuffer(indices);
+		triangle_count = static_cast<Uint>(indices.size());
 		blas_handles.reserve(gpu_meshes.size());
 
 		for (MeshGPU const& gpu_mesh : gpu_meshes)
@@ -503,112 +504,87 @@ namespace amber
 		}
 	}
 
-	void OptixPathTracer::OptionsGUI()
+	void OptixPathTracer::DenoiserGUI()
 	{
-		if (ImGui::TreeNode("Path Tracer Options"))
+		if (ImGui::Checkbox("Use Denoiser", &denoise))
 		{
-			ImGui::SliderInt("Samples", &sample_count, 1, 8);
-			ImGui::SliderInt("Max Depth", &depth_count, 1, MAX_DEPTH);
-			ImGui::Checkbox("Accumulate Radiance", &accumulate);
-			if (ImGui::Checkbox("Use Denoiser", &denoise))
-			{
-				ManageDenoiserResources();
-			}
-			if (denoise)
-			{
-				ImGui::SliderFloat("Denoiser Blend Factor", &denoise_blend_factor, 0.0f, 1.0f);
-				if(accumulate) ImGui::SliderInt("Denoiser Accumulation Target", &denoise_accumulation_target, 1, 64);
-			}
-			ImGui::TreePop();
+			ManageDenoiserResources();
+		}
+		if (denoise)
+		{
+			ImGui::SliderFloat("Denoiser Blend Factor", &denoise_blend_factor, 0.0f, 1.0f);
+			if(accumulate) ImGui::SliderInt("Denoiser Accumulation Target", &denoise_accumulation_target, 1, 64);
 		}
 	}
 
-	void OptixPathTracer::LightsGUI()
+	void OptixPathTracer::LightEditorGUI()
 	{
-		if (ImGui::TreeNode("Lights"))
+		Bool changed = false;
+		Int light_index = 0;
+		for (LightGPU& light : lights)
 		{
-			Bool changed = false;
-			Int light_index = 0;
-			for (LightGPU& light : lights)
+			std::string light_label = "Light " + std::to_string(light_index++);
+
+			ImGui::PushID(light_index);
+			ImGui::BeginChild(light_label.c_str(), ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
+
+			ImGui::Columns(2, nullptr, false);
+
+			ImGui::Text("Light %d", light_index);
+			ImGui::NextColumn();
+			const Char* light_types[] = { "Directional", "Point" };
+			ImGui::Combo("Type", (int*)&light.type, light_types, IM_ARRAYSIZE(light_types));
+			ImGui::NextColumn();
+
+			ImGui::Text("Color");
+			ImGui::NextColumn();
+			changed |= ImGui::ColorEdit3("##Color", &light.color.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+			ImGui::NextColumn();
+
+			if (light.type == LightGPUType_Directional)
 			{
-				std::string light_label = "Light " + std::to_string(light_index++);
-
-				ImGui::PushID(light_index);
-				ImGui::BeginChild(light_label.c_str(), ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
-
-				ImGui::Columns(2, nullptr, false);
-
-				ImGui::Text("Light %d", light_index);
+				ImGui::Text("Sun Elevation");
 				ImGui::NextColumn();
-				const Char* light_types[] = { "Directional", "Point" };
-				ImGui::Combo("Type", (int*)&light.type, light_types, IM_ARRAYSIZE(light_types));
+				static Float sun_elevation = 75.0f;
+				changed |= ImGui::SliderFloat("##Elevation", &sun_elevation, -90.0f, 90.0f);
 				ImGui::NextColumn();
 
-				ImGui::Text("Color");
+				ImGui::Text("Sun Azimuth");
 				ImGui::NextColumn();
-				changed |= ImGui::ColorEdit3("##Color", &light.color.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+				static Float sun_azimuth = 260.0f;
+				changed |= ImGui::SliderFloat("##Azimuth", &sun_azimuth, 0.0f, 360.0f);
+
+				Vector3 light_direction = ConvertElevationAndAzimuthToDirection(sun_elevation, sun_azimuth);
+				light.direction.x = -light_direction.x;
+				light.direction.y = -light_direction.y;
+				light.direction.z = -light_direction.z;
+			}
+			else if (light.type == LightGPUType_Point)
+			{
+				ImGui::Text("Position");
 				ImGui::NextColumn();
-
-				if (light.type == LightGPUType_Directional)
-				{
-					ImGui::Text("Sun Elevation");
-					ImGui::NextColumn();
-					static Float sun_elevation = 75.0f;
-					changed |= ImGui::SliderFloat("##Elevation", &sun_elevation, -90.0f, 90.0f);
-					ImGui::NextColumn();
-
-					ImGui::Text("Sun Azimuth");
-					ImGui::NextColumn();
-					static Float sun_azimuth = 260.0f;
-					changed |= ImGui::SliderFloat("##Azimuth", &sun_azimuth, 0.0f, 360.0f);
-
-					Vector3 light_direction = ConvertElevationAndAzimuthToDirection(sun_elevation, sun_azimuth);
-					light.direction.x = -light_direction.x;
-					light.direction.y = -light_direction.y;
-					light.direction.z = -light_direction.z;
-				}
-				else if (light.type == LightGPUType_Point)
-				{
-					ImGui::Text("Position");
-					ImGui::NextColumn();
-					changed |= ImGui::InputFloat3("##Position", &light.position.x);
-				}
-
-				ImGui::Columns(1);
-				ImGui::EndChild();
-				ImGui::PopID();
-
-				ImGui::Separator();
+				changed |= ImGui::InputFloat3("##Position", &light.position.x);
 			}
 
-			if (changed)
-			{
-				frame_index = 0;
-				light_list_buffer = CreateBuffer(lights);
-			}
-			ImGui::TreePop();
+			ImGui::Columns(1);
+			ImGui::EndChild();
+			ImGui::PopID();
+
+			ImGui::Separator();
+		}
+
+		if (changed)
+		{
+			frame_index = 0;
+			light_list_buffer = CreateBuffer(lights);
 		}
 	}
 
-	void OptixPathTracer::MemoryUsageGUI()
+	Uint64 OptixPathTracer::GetMemoryUsage() const
 	{
-		if (ImGui::TreeNode("GPU Memory Usage"))
-		{
-			size_t free_bytes;
-			size_t total_bytes;
-			CudaCheck(cudaMemGetInfo(&free_bytes, &total_bytes));
-			Float free_db = (Float)free_bytes;
-			Float total_db = (Float)total_bytes;
-			Float used_db = total_db - free_db;
-			Float used_mb = used_db / 1024.0f / 1024.0f;
-			Float free_mb = free_db / 1024.0f / 1024.0f;
-			Float total_mb = total_db / 1024.0f / 1024.0f;
-
-			ImGui::Text("  Used Memory: %f MB", used_mb);
-			ImGui::Text("  Free Memory: %f MB", free_mb);
-			ImGui::Text("  Total Memory: %f MB", total_mb);
-			ImGui::TreePop();
-		}
+		Usize free_bytes;
+		Usize total_bytes;
+		cudaMemGetInfo(&free_bytes, &total_bytes);
+		return static_cast<Uint64>(total_bytes - free_bytes);
 	}
 }
-

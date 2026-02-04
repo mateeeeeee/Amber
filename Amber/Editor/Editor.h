@@ -17,13 +17,9 @@ namespace amber
 		enum VisibilityFlag
 		{
 			Visibility_Scene,
-			Visibility_Log,
-			Visibility_Console,
-			Visibility_Options,
-			Visibility_Debug,
-			Visibility_Lights,
+			Visibility_Properties,
 			Visibility_Stats,
-			Visibility_Camera,
+			Visibility_Console,
 			Visibility_Count
 		};
 
@@ -70,12 +66,8 @@ namespace amber
 		void EndGUI();
 
 		void SceneWindow();
-		void LogWindow();
-		void ConsoleWindow();
+		void PropertiesWindow();
 		void StatsWindow();
-		void OptionsWindow();
-		void DebugWindow();
-		void CameraWindow();
-		void LightsWindow();
+		void ConsoleWindow();
 	};
 }

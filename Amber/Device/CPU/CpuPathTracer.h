@@ -6,7 +6,7 @@
 
 namespace amber
 {
-	class Scene;
+	struct Scene;
 	class Camera;
 
 	class CpuPathTracer : public PathTracerBase
@@ -30,11 +30,15 @@ namespace amber
 		void SetOutput(PathTracerOutput pto) override { output = pto; }
 		PathTracerOutput GetOutput() const override { return output; }
 
-		void OptionsGUI() override;
-		void LightsGUI() override;
-		void MemoryUsageGUI() override;
-
 		PathTracerBackend GetBackend() const override { return PathTracerBackend::CPU; }
+		Scene const& GetScene() const override { return *scene; }
+
+		Uint   GetFrameIndex() const override { return frame_index; }
+		Uint   GetTriangleCount() const override { return static_cast<Uint>(triangles.size()); }
+		Uint64 GetMemoryUsage() const override
+		{
+			return static_cast<Uint64>(width) * height * sizeof(RGBA8) + triangles.size() * sizeof(Triangle);
+		}
 
 	private:
 		Uint32 width;

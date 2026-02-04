@@ -4,7 +4,6 @@
 #include "Scene/Camera.h"
 #include "Core/Log.h"
 #include "Utilities/ImageUtil.h"
-#include "ImGui/imgui.h"
 #include <cmath>
 
 namespace amber
@@ -151,26 +150,5 @@ namespace amber
 	{
 		WriteImageToFile(ImageFormat::PNG, outfile, width, height, framebuffer.Data(), width * 4);
 		AMBER_INFO_LOG("Wrote framebuffer to %s", outfile);
-	}
-
-	void CpuPathTracer::OptionsGUI()
-	{
-		ImGui::Text("CPU Path Tracer");
-		ImGui::Separator();
-		ImGui::Text("Frame: %u", frame_index);
-		ImGui::Text("Triangles: %zu", triangles.size());
-	}
-
-	void CpuPathTracer::LightsGUI()
-	{
-		ImGui::Text("Lights: %llu", static_cast<unsigned long long>(scene->lights.size()));
-	}
-
-	void CpuPathTracer::MemoryUsageGUI()
-	{
-		Uint64 fbMem = width * height * sizeof(RGBA8);
-		Uint64 triMem = triangles.size() * sizeof(Triangle);
-		ImGui::Text("Framebuffer: %.2f MB", fbMem / (1024.0 * 1024.0));
-		ImGui::Text("Triangles: %.2f MB", triMem / (1024.0 * 1024.0));
 	}
 }

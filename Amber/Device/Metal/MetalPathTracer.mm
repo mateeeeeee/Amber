@@ -5,7 +5,6 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Core/Log.h"
-#include "ImGui/imgui.h"
 
 namespace amber
 {
@@ -74,8 +73,9 @@ namespace amber
 		vertices_buffer = CreateBuffer(device->GetDevice(), vertices); 
 		normals_buffer = CreateBuffer(device->GetDevice(), normals); 
 		uvs_buffer = CreateBuffer(device->GetDevice(), uvs); 
-		indices_buffer = CreateBuffer(device->GetDevice(), indices); 
-		mesh_list_buffer = CreateBuffer(device->GetDevice(), gpu_meshes); 
+		indices_buffer = CreateBuffer(device->GetDevice(), indices);
+		mesh_list_buffer = CreateBuffer(device->GetDevice(), gpu_meshes);
+		triangle_count = static_cast<Uint>(indices.size());
 		AMBER_INFO_LOG("Loaded geometry: %zu vertices, %zu indices, %zu meshes", vertices.size(), indices.size(), gpu_meshes.size());
 
 		sky_texture = std::make_unique<metal::Texture2D>(
@@ -427,22 +427,8 @@ namespace amber
 		AMBER_WARN_LOG("WriteFramebuffer not yet implemented for Metal pathtracer");
 	}
 
-	void MetalPathTracer::OptionsGUI()
+	Uint MetalPathTracer::GetTriangleCount() const
 	{
-		ImGui::Text("Metal Path Tracer");
-		ImGui::Separator();
-		ImGui::Checkbox("Accumulate", &accumulate);
-		ImGui::SliderInt("Max Depth", &depth_count, 1, MAX_DEPTH);
-		ImGui::SliderInt("Samples Per Pixel", &sample_count, 1, 128);
-	}
-
-	void MetalPathTracer::LightsGUI()
-	{
-		ImGui::Text("Lights (Not implemented)");
-	}
-
-	void MetalPathTracer::MemoryUsageGUI()
-	{
-		ImGui::Text("Memory Usage (Not implemented)");
+		return triangle_count;
 	}
 }

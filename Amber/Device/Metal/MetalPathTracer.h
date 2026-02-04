@@ -5,7 +5,7 @@
 
 namespace amber
 {
-	class Scene;
+	struct Scene;
 	class Camera;
 
 	struct LightGPU;
@@ -41,11 +41,22 @@ namespace amber
 		}
 		PathTracerOutput GetOutput() const override { return output; }
 
-		void OptionsGUI() override;
-		void LightsGUI() override;
-		void MemoryUsageGUI() override;
-
 		PathTracerBackend GetBackend() const override { return PathTracerBackend::Metal; }
+		Scene const& GetScene() const override { return *scene; }
+
+		Uint   GetFrameIndex() const override { return frame_index; }
+		Uint   GetTriangleCount() const override;
+		Uint64 GetMemoryUsage() const override { return 0; }
+
+		Bool  SupportsAccumulation() const override { return true; }
+		Bool  GetAccumulate() const override { return accumulate; }
+		void  SetAccumulate(Bool v) override { accumulate = v; }
+
+		Int   GetSampleCount() const override { return sample_count; }
+		void  SetSampleCount(Int v) override { sample_count = v; }
+
+		Int   GetDepthCount() const override { return depth_count; }
+		void  SetDepthCount(Int v) override { depth_count = v; }
 
 	private:
 		Uint32 width;
@@ -80,6 +91,7 @@ namespace amber
 
 		Bool   accumulate	= true;
 		Uint   frame_index	= 0;
+		Uint   triangle_count = 0;
 		Int depth_count;
 		Int sample_count;
 		PathTracerOutput output = PathTracerOutput::Final;

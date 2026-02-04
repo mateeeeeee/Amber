@@ -5,7 +5,7 @@
 
 namespace amber
 {
-	class Scene;
+	struct Scene;
 	class Camera;
 
 	enum class PathTracerBackend : Uint8
@@ -49,11 +49,31 @@ namespace amber
 		virtual void SetOutput(PathTracerOutput pto) = 0;
 		virtual PathTracerOutput GetOutput() const = 0;
 
-		virtual void OptionsGUI() = 0;
-		virtual void LightsGUI() = 0;
-		virtual void MemoryUsageGUI() = 0;
-
 		virtual PathTracerBackend GetBackend() const = 0;
+		virtual Scene const& GetScene() const = 0;
+
+		// Data accessors for Editor
+		virtual Uint   GetFrameIndex() const = 0;
+		virtual Uint   GetTriangleCount() const { return 0; }
+		virtual Uint64 GetMemoryUsage() const { return 0; }
+
+		// Adjustable parameters (return false / no-op if not supported)
+		virtual Bool  SupportsAccumulation() const { return false; }
+		virtual Bool  GetAccumulate() const { return false; }
+		virtual void  SetAccumulate(Bool) {}
+
+		virtual Int   GetSampleCount() const { return 1; }
+		virtual void  SetSampleCount(Int) {}
+
+		virtual Int   GetDepthCount() const { return 1; }
+		virtual void  SetDepthCount(Int) {}
+
+		// Backend-specific GUI sections (only overridden where meaningful)
+		virtual Bool HasLightEditor() const { return false; }
+		virtual void LightEditorGUI() {}
+
+		virtual Bool HasDenoiser() const { return false; }
+		virtual void DenoiserGUI() {}
 	};
 
 	std::unique_ptr<PathTracerBase> CreatePathTracer(
