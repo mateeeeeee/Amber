@@ -43,6 +43,7 @@ namespace amber
 		BVH bvh;
 
 		Uint frame_index = 0;
+		Uint32 current_row = 0;
 		PathTracerOutput output = PathTracerOutput::Final;
 
 	private:

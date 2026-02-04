@@ -71,14 +71,8 @@ add_compile_definitions(
 
 add_subdirectory(External/pbrtParser EXCLUDE_FROM_ALL)
 
-set(TINYUSDZ_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(TINYUSDZ_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(TINYUSDZ_WITH_C_API OFF CACHE BOOL "" FORCE)
-set(TINYUSDZ_WITH_TYDRA ON CACHE BOOL "" FORCE)
-add_subdirectory(External/tinyusdz EXCLUDE_FROM_ALL)
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(Amber)
 
-add_dependencies(Amber pbrtParser tinyusdz_static)
+add_dependencies(Amber pbrtParser)

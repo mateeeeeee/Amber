@@ -12,7 +12,9 @@ namespace amber
 		: width(width), height(height), scene(std::move(_scene)), framebuffer(height, width)
 	{
 		framebuffer.Clear(RGBA8(0, 0, 0, 255));
+		AMBER_INFO_LOG("Building scene geometry...");
 		BuildSceneGeometry();
+		AMBER_INFO_LOG("Built %zu triangles, building BVH...", triangles.size());
 		bvh.Build<MedianSplitBuilder>(triangles);
 		AMBER_INFO_LOG("CPU PathTracer initialized with %zu triangles", triangles.size());
 	}
@@ -25,22 +27,34 @@ namespace amber
 	{
 		triangles.clear();
 
-		for (Instance const& instance : scene->instances)
+		struct FlatGeometry
 		{
-			Mesh const& mesh = scene->meshes[instance.mesh_id];
-			Matrix const& transform = instance.transform;
-
+			Geometry const* geometry;
+		};
+		std::vector<FlatGeometry> flat_geometries;
+		
+		for (Mesh const& mesh : scene->meshes)
+		{
 			for (Geometry const& geom : mesh.geometries)
 			{
-				for (Vector3u const& idx : geom.indices)
-				{
-					Triangle tri;
-					tri.v0 = Vector3::Transform(geom.vertices[idx.x], transform);
-					tri.v1 = Vector3::Transform(geom.vertices[idx.y], transform);
-					tri.v2 = Vector3::Transform(geom.vertices[idx.z], transform);
-					tri.centroid = (tri.v0 + tri.v1 + tri.v2) * (1.0f / 3.0f);
-					triangles.push_back(tri);
-				}
+				flat_geometries.push_back({ &geom });
+			}
+		}
+
+		for (Instance const& instance : scene->instances)
+		{
+			FlatGeometry const& fg = flat_geometries[instance.mesh_id];
+			Geometry const& geom = *fg.geometry;
+			Matrix const& transform = instance.transform;
+
+			for (Vector3u const& idx : geom.indices)
+			{
+				Triangle tri;
+				tri.v0 = Vector3::Transform(geom.vertices[idx.x], transform);
+				tri.v1 = Vector3::Transform(geom.vertices[idx.y], transform);
+				tri.v2 = Vector3::Transform(geom.vertices[idx.z], transform);
+				tri.centroid = (tri.v0 + tri.v1 + tri.v2) * (1.0f / 3.0f);
+				triangles.push_back(tri);
 			}
 		}
 	}
@@ -54,6 +68,12 @@ namespace amber
 		if (camera.IsChanged())
 		{
 			frame_index = 0;
+			current_row = 0;
+		}
+
+		if (current_row >= height)
+		{
+			return;
 		}
 
 		Vector3 origin = camera.GetPosition();
@@ -63,7 +83,10 @@ namespace amber
 		Float fov_rad = camera.GetFovY() * (3.14159265359f / 180.0f);
 		Float tan_half_fov = std::tan(fov_rad * 0.5f);
 		Float aspect = camera.GetAspectRatio();
-		for (Uint32 y = 0; y < height; ++y)
+
+		Uint32 rows_per_frame = 4;
+		Uint32 end_row = std::min(current_row + rows_per_frame, height);
+		for (Uint32 y = current_row; y < end_row; ++y)
 		{
 			for (Uint32 x = 0; x < width; ++x)
 			{
@@ -94,8 +117,12 @@ namespace amber
 				}
 			}
 		}
+		current_row = end_row;
 
-		++frame_index;
+		if (current_row >= height)
+		{
+			++frame_index;
+		}
 	}
 
 	void CpuPathTracer::OnResize(Uint32 w, Uint32 h)
@@ -104,6 +131,7 @@ namespace amber
 		height = h;
 		framebuffer.Resize(height, width);
 		frame_index = 0;
+		current_row = 0;
 	}
 
 	void CpuPathTracer::WriteFramebuffer(Char const* outfile)
