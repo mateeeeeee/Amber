@@ -4,12 +4,13 @@
 #include <optix_function_table_definition.h>
 #include <optix_stack_size.h>
 #include <nvrtc.h>
+#include "OptixPathTracer.h"
 #include "ImGui/imgui.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
-#include "OptixPathTracer.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
+#include "Core/Types.h"
 #include "Math/MathCommon.h"
 #include "Utilities/Random.h"
 #include "Utilities/ImageUtil.h"
@@ -582,8 +583,8 @@ namespace amber
 
 	Uint64 OptixPathTracer::GetMemoryUsage() const
 	{
-		Usize free_bytes;
-		Usize total_bytes;
+		size_t free_bytes;
+		size_t total_bytes;
 		cudaMemGetInfo(&free_bytes, &total_bytes);
 		return static_cast<Uint64>(total_bytes - free_bytes);
 	}
