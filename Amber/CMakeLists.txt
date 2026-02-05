@@ -145,15 +145,19 @@ set(EXTERNAL_FILES
     ${CMAKE_SOURCE_DIR}/External/ImGui/imgui_impl_sdlrenderer2.cpp
 )
 
+set(DEVICE_BVH_FILES
+    Device/BVH/Primitives.h
+    Device/BVH/Intersection.h
+    Device/BVH/BVHData.h
+    Device/BVH/MedianSplitBuilder.h
+)
+
 set(DEVICE_CPU_FILES
     Device/CPU/CpuPathTracer.h
     Device/CPU/CpuPathTracer.cpp
-    Device/CPU/Primitives.h
-    Device/CPU/Intersection.h
-    Device/CPU/BVH.h
-    Device/CPU/BVH.cpp
+    Device/CPU/CpuBVH.h
+    Device/CPU/CpuBVH.cpp
     Device/CPU/MedianSplitBuilder.h
-    Device/CPU/MedianSplitBuilder.cpp
 )
 
 if(APPLE)
@@ -167,6 +171,7 @@ if(APPLE)
         Device/Metal/MetalDeviceHostCommon.h
         Device/Metal/PathTracing.metal
         ${DEVICE_CPU_FILES}
+        ${DEVICE_BVH_FILES}
     )
 elseif(AMBER_HAS_OPTIX)
     set(DEVICE_BACKEND_FILES
@@ -180,12 +185,14 @@ elseif(AMBER_HAS_OPTIX)
         Device/OptiX/KernelCompiler.h
         Device/OptiX/KernelCompiler.cpp
         ${DEVICE_CPU_FILES}
+        ${DEVICE_BVH_FILES}
     )
 else()
     set(DEVICE_BACKEND_FILES
         Device/PathTracer.h
         Device/PathTracer.cpp
         ${DEVICE_CPU_FILES}
+        ${DEVICE_BVH_FILES}
     )
 endif()
 

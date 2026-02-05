@@ -1,8 +1,8 @@
-#include "BVH.h"
+#include "CpuBVH.h"
 
 namespace amber
 {
-	Bool BVH::Intersect(Ray const& ray, HitInfo& hit) const
+	Bool CpuBVH::Intersect(Ray const& ray, HitInfo& hit) const
 	{
 		if (data.nodes.empty())
 		{
@@ -13,7 +13,7 @@ namespace amber
 		return found;
 	}
 
-	void BVH::IntersectRecursive(Ray const& ray, Uint32 node_idx, HitInfo& hit, Bool& found) const
+	void CpuBVH::IntersectRecursive(Ray const& ray, Uint32 node_idx, HitInfo& hit, Bool& found) const
 	{
 		BVHNode const& node = data.nodes[node_idx];
 		if (!IntersectAABB(ray, node.aabb_min, node.aabb_max, hit.t))

@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include "Device/PathTracer.h"
-#include "BVH.h"
+#include "CpuBVH.h"
 #include "Utilities/ThreadPool.h"
 
 namespace amber
@@ -47,7 +47,7 @@ namespace amber
 		CpuBuffer2D<RGBA8> framebuffer;
 
 		std::vector<Triangle> triangles;
-		BVH bvh;
+		CpuBVH bvh;
 
 		Uint frame_index = 0;
 		PathTracerOutput output = PathTracerOutput::Final;

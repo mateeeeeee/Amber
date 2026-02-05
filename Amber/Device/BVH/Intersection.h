@@ -1,5 +1,5 @@
 #pragma once
-#include "Primitives.h"
+#include "Device/BVH/Primitives.h"
 
 namespace amber
 {
