@@ -469,7 +469,7 @@ __forceinline__ __device__ float3 reflect(const float3& i, const float3& n)
 	return i - 2.0f * n * dot(n, i);
 }
 
-__forceinline__ __device__ float3 refract_ray(const float3& i, const float3& n, float eta) {
+__forceinline__ __device__ float3 refract(const float3& i, const float3& n, float eta) {
 	float n_dot_i = dot(n, i);
 	float k = 1.f - eta * eta * (1.f - n_dot_i * n_dot_i);
 	if (k < 0.f) {

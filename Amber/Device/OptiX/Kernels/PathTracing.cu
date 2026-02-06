@@ -1,5 +1,6 @@
 #pragma once
 #include "DeviceCommon.cuh"
+#include "Math.cuh"
 #include "Device/OptiX/DeviceHostCommon.h"
 
 using namespace amber;
