@@ -148,16 +148,15 @@ set(EXTERNAL_FILES
 set(DEVICE_BVH_FILES
     Device/BVH/Primitives.h
     Device/BVH/Intersection.h
-    Device/BVH/BVHData.h
-    Device/BVH/MedianSplitBuilder.h
 )
 
 set(DEVICE_CPU_FILES
     Device/CPU/CpuPathTracer.h
     Device/CPU/CpuPathTracer.cpp
-    Device/CPU/CpuBVH.h
-    Device/CPU/CpuBVH.cpp
+    Device/CPU/BVH.h
+    Device/CPU/BVH.cpp
     Device/CPU/MedianSplitBuilder.h
+    Device/CPU/MedianSplitBuilder.cpp
 )
 
 if(APPLE)

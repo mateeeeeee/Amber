@@ -16,7 +16,8 @@ namespace amber
 		AMBER_INFO_LOG("Building scene geometry...");
 		BuildSceneGeometry();
 		AMBER_INFO_LOG("Built %zu triangles, building BVH...", triangles.size());
-		bvh.Build<MedianSplitBuilder>(triangles);
+		MedianSplitBuilder builder;
+		builder.Build(bvh, triangles);
 		AMBER_INFO_LOG("CPU PathTracer initialized with %zu triangles", triangles.size());
 	}
 
@@ -107,7 +108,7 @@ namespace amber
 							Ray ray(origin, direction);
 
 							HitInfo hit;
-							if (bvh.Intersect(ray, hit))
+							if (Intersect(bvh, ray, hit))
 							{
 								Triangle const& tri = triangles[hit.tri_idx];
 								Vector3 e1 = tri.v1 - tri.v0;
