@@ -421,6 +421,12 @@ namespace amber
 		ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
 		ImGui::Text("Frame: %u", path_tracer.GetFrameIndex());
 
+		Float render_time = path_tracer.GetRenderTime();
+		if (render_time > 0.0f)
+		{
+			ImGui::Text("Render time: %.2f ms", render_time);
+		}
+
 		auto const& fb = path_tracer.GetFramebuffer();
 		ImGui::Text("Resolution: %llu x %llu", static_cast<unsigned long long>(fb.Cols()), static_cast<unsigned long long>(fb.Rows()));
 		ImGui::Text("Backend: %s", GetBackendName(path_tracer.GetBackend()).c_str());

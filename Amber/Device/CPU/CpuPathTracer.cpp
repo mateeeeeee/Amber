@@ -1,5 +1,5 @@
 #include "CpuPathTracer.h"
-#include "MedianSplitBuilder.h"
+#include "SAHBuilder.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Core/Log.h"
@@ -16,7 +16,7 @@ namespace amber
 		AMBER_INFO_LOG("Building scene geometry...");
 		BuildSceneGeometry();
 		AMBER_INFO_LOG("Built %zu triangles, building BVH...", triangles.size());
-		MedianSplitBuilder builder;
+		SAHBuilder builder;
 		builder.Build(bvh, triangles);
 		AMBER_INFO_LOG("CPU PathTracer initialized with %zu triangles", triangles.size());
 	}
@@ -72,6 +72,8 @@ namespace amber
 		{
 			frame_index = 0;
 		}
+
+		Timer<std::chrono::microseconds> timer;
 
 		Vector3 origin = camera.GetPosition();
 		Vector3 U, V, W;
@@ -136,6 +138,9 @@ namespace amber
 		{
 			f.get();
 		}
+
+		render_time_ms = timer.ElapsedInSeconds() * 1000.0f;
+		AMBER_INFO_LOG("Frame %u: %.2f ms", frame_index, render_time_ms);
 		++frame_index;
 	}
 

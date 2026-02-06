@@ -33,7 +33,7 @@ int main(Int argc, Char* argv[])
 #if defined(AMBER_DEBUG)
 	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Debug);
 #else
-	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Error);
+	g_Log.Initialize(CommandLineOptions::GetLogFile().c_str(), LogLevel::Info); //tmp
 #endif
 
 	PathTracerBackend backend;

@@ -76,6 +76,7 @@ set(UTILITY_FILES
     Utilities/Delegate.h
     Utilities/Singleton.h
     Utilities/ThreadPool.h
+    Utilities/Timer.h
     Utilities/ConcurrentQueue.h
     Utilities/StringUtil.h
     Utilities/StringUtil.cpp
@@ -157,6 +158,8 @@ set(DEVICE_CPU_FILES
     Device/CPU/BVH.cpp
     Device/CPU/MedianSplitBuilder.h
     Device/CPU/MedianSplitBuilder.cpp
+    Device/CPU/SAHBuilder.h
+    Device/CPU/SAHBuilder.cpp
 )
 
 if(APPLE)

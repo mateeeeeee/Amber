@@ -7,6 +7,7 @@ namespace amber
 		Vector3 origin;
 		Vector3 direction;
 		Vector3 inv_direction;
+		Float t = 1e30f;
 
 		Ray() = default;
 		Ray(Vector3 const& origin, Vector3 const& direction)

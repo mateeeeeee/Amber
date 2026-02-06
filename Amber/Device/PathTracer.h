@@ -52,12 +52,11 @@ namespace amber
 		virtual PathTracerBackend GetBackend() const = 0;
 		virtual Scene const& GetScene() const = 0;
 
-		// Data accessors for Editor
+		virtual Float  GetRenderTime() const { return 0.0f; }
 		virtual Uint   GetFrameIndex() const = 0;
 		virtual Uint   GetTriangleCount() const { return 0; }
 		virtual Uint64 GetMemoryUsage() const { return 0; }
 
-		// Adjustable parameters (return false / no-op if not supported)
 		virtual Bool  SupportsAccumulation() const { return false; }
 		virtual Bool  GetAccumulate() const { return false; }
 		virtual void  SetAccumulate(Bool) {}
@@ -68,7 +67,6 @@ namespace amber
 		virtual Int   GetDepthCount() const { return 1; }
 		virtual void  SetDepthCount(Int) {}
 
-		// Backend-specific GUI sections (only overridden where meaningful)
 		virtual Bool HasLightEditor() const { return false; }
 		virtual void LightEditorGUI() {}
 

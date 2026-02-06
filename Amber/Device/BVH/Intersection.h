@@ -34,8 +34,8 @@ namespace amber
 		}
 	};
 
-	// Slab test for ray-AABB intersection
-	inline Bool IntersectAABB(Ray const& ray, Vector3 const& bmin, Vector3 const& bmax, Float t_max)
+	// Slab test for ray-AABB intersection, returns distance (1e30f if miss)
+	inline Float IntersectAABB(Ray const& ray, Vector3 const& bmin, Vector3 const& bmax)
 	{
 		Float tx1 = (bmin.x - ray.origin.x) * ray.inv_direction.x;
 		Float tx2 = (bmax.x - ray.origin.x) * ray.inv_direction.x;
@@ -52,7 +52,14 @@ namespace amber
 		tmin = std::max(tmin, std::min(tz1, tz2));
 		tmax = std::min(tmax, std::max(tz1, tz2));
 
-		return tmax >= tmin && tmin < t_max && tmax > 0;
+		if (tmax >= tmin && tmin < ray.t && tmax > 0)
+		{
+			return tmin;
+		} 
+		else 
+		{
+			return 1e30f;
+		}
 	}
 
 	struct HitInfo

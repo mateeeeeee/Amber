@@ -3,6 +3,7 @@
 #include "Device/PathTracer.h"
 #include "BVH.h"
 #include "Utilities/ThreadPool.h"
+#include "Utilities/Timer.h"
 
 namespace amber
 {
@@ -33,6 +34,7 @@ namespace amber
 		PathTracerBackend GetBackend() const override { return PathTracerBackend::CPU; }
 		Scene const& GetScene() const override { return *scene; }
 
+		Float  GetRenderTime() const override { return render_time_ms; }
 		Uint   GetFrameIndex() const override { return frame_index; }
 		Uint   GetTriangleCount() const override { return static_cast<Uint>(triangles.size()); }
 		Uint64 GetMemoryUsage() const override
@@ -50,6 +52,7 @@ namespace amber
 		BVH bvh;
 
 		Uint frame_index = 0;
+		Float render_time_ms = 0.0f;
 		PathTracerOutput output = PathTracerOutput::Final;
 
 	private:
