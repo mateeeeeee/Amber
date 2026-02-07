@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include "Device/PathTracer.h"
-#include "TLAS.h"
+#include "Device/CPU/AccelerationStructure.h"
 #include "Utilities/ThreadPool.h"
 #include "Utilities/Timer.h"
 

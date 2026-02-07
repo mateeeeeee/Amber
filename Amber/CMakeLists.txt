@@ -150,18 +150,20 @@ set(EXTERNAL_FILES
 set(DEVICE_CPU_FILES
     Device/CPU/CpuPathTracer.h
     Device/CPU/CpuPathTracer.cpp
-    Device/CPU/BVH.h
-    Device/CPU/BVH.cpp
-    Device/CPU/BVH/Primitives.h
-    Device/CPU/BVH/Intersection.h
-    Device/CPU/MedianSplitBuilder.h
-    Device/CPU/MedianSplitBuilder.cpp
-    Device/CPU/SAHBuilder.h
-    Device/CPU/SAHBuilder.cpp
+    Device/CPU/AccelerationStructure.h
+    Device/CPU/AccelerationStructure.cpp
     Device/CPU/BLAS.h
     Device/CPU/BLAS.cpp
     Device/CPU/TLAS.h
     Device/CPU/TLAS.cpp
+    Device/CPU/BVH/BVH.h
+    Device/CPU/BVH/BVH.cpp
+    Device/CPU/BVH/Primitives.h
+    Device/CPU/BVH/Intersection.h
+    Device/CPU/BVH/SAHBuilder.h
+    Device/CPU/BVH/SAHBuilder.cpp
+    Device/CPU/BVH/MedianSplitBuilder.h
+    Device/CPU/BVH/MedianSplitBuilder.cpp
 )
 
 if(APPLE)

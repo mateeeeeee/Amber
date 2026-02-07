@@ -23,44 +23,63 @@ namespace amber
 
 	void CpuPathTracer::BuildAccelerationStructures()
 	{
+		std::vector<BLAS> flat_blas;
 		std::vector<Uint32> blas_by_geom_id;
 		triangle_count = 0;
+
 		for (Mesh const& mesh : scene->meshes)
 		{
 			for (Geometry const& geom : mesh.geometries)
 			{
-				Uint32 blas_idx = static_cast<Uint32>(blas_list.size());
+				Uint32 blas_idx = static_cast<Uint32>(flat_blas.size());
 				blas_by_geom_id.push_back(blas_idx);
 
+				GeometryDesc geom_desc{};
+				geom_desc.vertices    = geom.vertices.data();
+				geom_desc.vertex_count = static_cast<Uint32>(geom.vertices.size());
+				geom_desc.indices     = geom.indices.data();
+				geom_desc.index_count = static_cast<Uint32>(geom.indices.size());
+
+				BLASBuildInput build_input{};
+				build_input.geometries     = &geom_desc;
+				build_input.geometry_count = 1;
+				build_input.flags          = BuildFlags::PreferFastTrace;
+
 				BLAS blas{};
-				for (Vector3u const& idx : geom.indices)
-				{
-					Triangle tri;
-					tri.v0 = geom.vertices[idx.x];
-					tri.v1 = geom.vertices[idx.y];
-					tri.v2 = geom.vertices[idx.z];
-					tri.centroid = (tri.v0 + tri.v1 + tri.v2) * (1.0f / 3.0f);
-					blas.triangles.push_back(tri);
-				}
-				triangle_count += static_cast<Uint>(blas.triangles.size());
-				AMBER_INFO_LOG("Building BLAS %u (%zu triangles)...", blas_idx, blas.triangles.size());
-				Build(blas);
-				blas_list.push_back(std::move(blas));
+				AMBER_INFO_LOG("Building BLAS %u...", blas_idx);
+				BuildBLAS(blas, build_input);
+				triangle_count += static_cast<Uint32>(blas.triangles.size());
+				flat_blas.push_back(std::move(blas));
 			}
 		}
 
-		std::vector<BLAS> instance_blas_list;
-		for (Instance const& instance : scene->instances)
+		std::vector<InstanceDesc> instance_descs;
+		instance_descs.reserve(scene->instances.size());
+		for (Uint32 i = 0; i < static_cast<Uint32>(scene->instances.size()); i++)
 		{
-			Uint32 src_blas_idx = blas_by_geom_id[instance.mesh_id];
-			BLAS blas_copy = blas_list[src_blas_idx];
-			SetTransform(blas_copy, instance.transform);
-			instance_blas_list.push_back(std::move(blas_copy));
+			Instance const& instance = scene->instances[i];
+			InstanceDesc desc{};
+			desc.transform   = instance.transform;
+			desc.blas_index  = blas_by_geom_id[instance.mesh_id];
+			desc.instance_id = i;
+			instance_descs.push_back(desc);
 		}
-		blas_list = std::move(instance_blas_list);
+
+		blas_list.reserve(instance_descs.size());
+		for (InstanceDesc const& desc : instance_descs)
+		{
+			BLAS blas_copy = flat_blas[desc.blas_index];
+			blas_copy.SetTransform(desc.transform);
+			blas_list.push_back(std::move(blas_copy));
+		}
+
+		TLASBuildInput tlas_input{};
+		tlas_input.instances      = instance_descs.data();
+		tlas_input.instance_count = static_cast<Uint32>(instance_descs.size());
+		tlas_input.flags          = BuildFlags::PreferFastTrace;
 
 		AMBER_INFO_LOG("Building TLAS over %zu BLAS instances...", blas_list.size());
-		Build(tlas, blas_list.data(), static_cast<Uint32>(blas_list.size()));
+		BuildTLAS(tlas, blas_list.data(), tlas_input);
 	}
 
 	void CpuPathTracer::Update(Float dt)

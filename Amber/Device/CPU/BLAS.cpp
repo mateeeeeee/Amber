@@ -1,5 +1,5 @@
 #include "BLAS.h"
-#include "SAHBuilder.h"
+#include "BVH/SAHBuilder.h"
 
 namespace amber
 {

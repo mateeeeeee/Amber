@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "BVH.h"
+#include "BVH/BVH.h"
 
 namespace amber
 {
