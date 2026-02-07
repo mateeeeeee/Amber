@@ -5,7 +5,7 @@ namespace amber
 {
 	void Build(BLAS& blas)
 	{
-		SAHBuilder builder;
+		BinnedSAHBuilder builder;
 		builder.Build(blas.bvh, blas.triangles);
 	}
 

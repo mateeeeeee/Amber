@@ -160,10 +160,9 @@ set(DEVICE_CPU_FILES
     Device/CPU/BVH/BVH.cpp
     Device/CPU/BVH/Primitives.h
     Device/CPU/BVH/Intersection.h
+    Device/CPU/BVH/TopDownBuilder.h
     Device/CPU/BVH/SAHBuilder.h
-    Device/CPU/BVH/SAHBuilder.cpp
     Device/CPU/BVH/MedianSplitBuilder.h
-    Device/CPU/BVH/MedianSplitBuilder.cpp
 )
 
 if(APPLE)

@@ -28,7 +28,7 @@ namespace amber
 		}
 		else
 		{
-			SAHBuilder builder;
+			BinnedSAHBuilder builder;
 			builder.Build(blas.bvh, blas.triangles);
 		}
 	}
