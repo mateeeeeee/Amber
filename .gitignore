@@ -6,6 +6,8 @@
 # macOS
 .DS_Store
 
+Notes/
+
 *.obj
 # User-specific files
 *.rsuser

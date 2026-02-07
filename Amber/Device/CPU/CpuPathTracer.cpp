@@ -1,5 +1,4 @@
 #include "CpuPathTracer.h"
-#include "SAHBuilder.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Core/Log.h"
@@ -13,12 +12,8 @@ namespace amber
 	{
 		g_ThreadPool.Initialize();
 		framebuffer.Clear(RGBA8(0, 0, 0, 255));
-		AMBER_INFO_LOG("Building scene geometry...");
-		BuildSceneGeometry();
-		AMBER_INFO_LOG("Built %zu triangles, building BVH...", triangles.size());
-		SAHBuilder builder;
-		builder.Build(bvh, triangles);
-		AMBER_INFO_LOG("CPU PathTracer initialized with %zu triangles", triangles.size());
+		BuildAccelerationStructures();
+		AMBER_INFO_LOG("CPU PathTracer initialized with %u triangles, %zu BLAS instances", triangle_count, blas_list.size());
 	}
 
 	CpuPathTracer::~CpuPathTracer()
@@ -26,40 +21,46 @@ namespace amber
 		g_ThreadPool.Destroy();
 	}
 
-	void CpuPathTracer::BuildSceneGeometry()
+	void CpuPathTracer::BuildAccelerationStructures()
 	{
-		triangles.clear();
-
-		struct FlatGeometry
-		{
-			Geometry const* geometry;
-		};
-		std::vector<FlatGeometry> flat_geometries;
-		
+		std::vector<Uint32> blas_by_geom_id;
+		triangle_count = 0;
 		for (Mesh const& mesh : scene->meshes)
 		{
 			for (Geometry const& geom : mesh.geometries)
 			{
-				flat_geometries.push_back({ &geom });
+				Uint32 blas_idx = static_cast<Uint32>(blas_list.size());
+				blas_by_geom_id.push_back(blas_idx);
+
+				BLAS blas{};
+				for (Vector3u const& idx : geom.indices)
+				{
+					Triangle tri;
+					tri.v0 = geom.vertices[idx.x];
+					tri.v1 = geom.vertices[idx.y];
+					tri.v2 = geom.vertices[idx.z];
+					tri.centroid = (tri.v0 + tri.v1 + tri.v2) * (1.0f / 3.0f);
+					blas.triangles.push_back(tri);
+				}
+				triangle_count += static_cast<Uint>(blas.triangles.size());
+				AMBER_INFO_LOG("Building BLAS %u (%zu triangles)...", blas_idx, blas.triangles.size());
+				Build(blas);
+				blas_list.push_back(std::move(blas));
 			}
 		}
 
+		std::vector<BLAS> instance_blas_list;
 		for (Instance const& instance : scene->instances)
 		{
-			FlatGeometry const& fg = flat_geometries[instance.mesh_id];
-			Geometry const& geom = *fg.geometry;
-			Matrix const& transform = instance.transform;
-
-			for (Vector3u const& idx : geom.indices)
-			{
-				Triangle tri;
-				tri.v0 = Vector3::Transform(geom.vertices[idx.x], transform);
-				tri.v1 = Vector3::Transform(geom.vertices[idx.y], transform);
-				tri.v2 = Vector3::Transform(geom.vertices[idx.z], transform);
-				tri.centroid = (tri.v0 + tri.v1 + tri.v2) * (1.0f / 3.0f);
-				triangles.push_back(tri);
-			}
+			Uint32 src_blas_idx = blas_by_geom_id[instance.mesh_id];
+			BLAS blas_copy = blas_list[src_blas_idx];
+			SetTransform(blas_copy, instance.transform);
+			instance_blas_list.push_back(std::move(blas_copy));
 		}
+		blas_list = std::move(instance_blas_list);
+
+		AMBER_INFO_LOG("Building TLAS over %zu BLAS instances...", blas_list.size());
+		Build(tlas, blas_list.data(), static_cast<Uint32>(blas_list.size()));
 	}
 
 	void CpuPathTracer::Update(Float dt)
@@ -110,12 +111,14 @@ namespace amber
 							Ray ray(origin, direction);
 
 							HitInfo hit;
-							if (Intersect(bvh, ray, hit))
+							if (Intersect(tlas, ray, hit))
 							{
-								Triangle const& tri = triangles[hit.tri_idx];
+								BLAS const& hit_blas = blas_list[hit.blas_idx];
+								Triangle const& tri = hit_blas.triangles[hit.tri_idx];
 								Vector3 e1 = tri.v1 - tri.v0;
 								Vector3 e2 = tri.v2 - tri.v0;
-								Vector3 normal = Vector3::Cross(e1, e2).Normalized();
+								Vector3 local_normal = Vector3::Cross(e1, e2).Normalized();
+								Vector3 normal = TransformDirection(local_normal, hit_blas.inv_transform).Normalized();
 
 								RGBA8 color = RGBA8::FromFloat(
 									normal.x * 0.5f + 0.5f,

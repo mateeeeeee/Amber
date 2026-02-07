@@ -4,7 +4,6 @@
 namespace amber
 {
 	// RGBA8: 8-bit per channel color type for framebuffers
-	// Compatible across CPU and GPU code
 	struct RGBA8
 	{
 		Uint8 r, g, b, a;
@@ -75,25 +74,18 @@ namespace amber
 			);
 		}
 
-		// Transform vector by quaternion
 		static Vector3 Transform(Vector3 const& v, struct Quaternion const& q);
-
-		// Transform vector by matrix (4x4 transformation) - defined after Matrix
 		static Vector3 Transform(Vector3 const& v, struct Matrix const& m);
-
-		// Lerp and smoothstep
 		static Vector3 Lerp(Vector3 const& a, Vector3 const& b, Float t)
 		{
 			return a + (b - a) * t;
 		}
-
 		static Vector3 SmoothStep(Vector3 const& a, Vector3 const& b, Float t)
 		{
-			t = t * t * (3.0f - 2.0f * t); // Smoothstep formula
+			t = t * t * (3.0f - 2.0f * t); 
 			return Lerp(a, b, t);
 		}
 
-		// Common direction vectors as static const members
 		static const Vector3 Zero;
 		static const Vector3 One;
 		static const Vector3 UnitX;
@@ -137,7 +129,7 @@ namespace amber
 					m[i][j] = (i == j) ? 1.0f : 0.0f;
 		}
 
-		// Constructor from 4 Vector4s (rows)
+		
 		Matrix(Vector4 const& r0, Vector4 const& r1, Vector4 const& r2, Vector4 const& r3)
 		{
 			m[0][0] = r0.x; m[0][1] = r0.y; m[0][2] = r0.z; m[0][3] = r0.w;
@@ -179,6 +171,45 @@ namespace amber
 					result.m[i][j] = m[j][i];
 				}
 			}
+			return result;
+		}
+
+		Matrix Inverse() const
+		{
+			Float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2], a03 = m[0][3];
+			Float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2], a13 = m[1][3];
+			Float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2], a23 = m[2][3];
+			Float a30 = m[3][0], a31 = m[3][1], a32 = m[3][2], a33 = m[3][3];
+
+			Float c00 =  a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
+			Float c01 = -(a10 * (a22 * a33 - a23 * a32) - a12 * (a20 * a33 - a23 * a30) + a13 * (a20 * a32 - a22 * a30));
+			Float c02 =  a10 * (a21 * a33 - a23 * a31) - a11 * (a20 * a33 - a23 * a30) + a13 * (a20 * a31 - a21 * a30);
+			Float c03 = -(a10 * (a21 * a32 - a22 * a31) - a11 * (a20 * a32 - a22 * a30) + a12 * (a20 * a31 - a21 * a30));
+
+			Float det = a00 * c00 + a01 * c01 + a02 * c02 + a03 * c03;
+			Float inv_det = 1.0f / det;
+
+			Matrix result;
+			result.m[0][0] = c00 * inv_det;
+			result.m[1][0] = c01 * inv_det;
+			result.m[2][0] = c02 * inv_det;
+			result.m[3][0] = c03 * inv_det;
+
+			result.m[0][1] = -(a01 * (a22 * a33 - a23 * a32) - a02 * (a21 * a33 - a23 * a31) + a03 * (a21 * a32 - a22 * a31)) * inv_det;
+			result.m[1][1] =  (a00 * (a22 * a33 - a23 * a32) - a02 * (a20 * a33 - a23 * a30) + a03 * (a20 * a32 - a22 * a30)) * inv_det;
+			result.m[2][1] = -(a00 * (a21 * a33 - a23 * a31) - a01 * (a20 * a33 - a23 * a30) + a03 * (a20 * a31 - a21 * a30)) * inv_det;
+			result.m[3][1] =  (a00 * (a21 * a32 - a22 * a31) - a01 * (a20 * a32 - a22 * a30) + a02 * (a20 * a31 - a21 * a30)) * inv_det;
+
+			result.m[0][2] =  (a01 * (a12 * a33 - a13 * a32) - a02 * (a11 * a33 - a13 * a31) + a03 * (a11 * a32 - a12 * a31)) * inv_det;
+			result.m[1][2] = -(a00 * (a12 * a33 - a13 * a32) - a02 * (a10 * a33 - a13 * a30) + a03 * (a10 * a32 - a12 * a30)) * inv_det;
+			result.m[2][2] =  (a00 * (a11 * a33 - a13 * a31) - a01 * (a10 * a33 - a13 * a30) + a03 * (a10 * a31 - a11 * a30)) * inv_det;
+			result.m[3][2] = -(a00 * (a11 * a32 - a12 * a31) - a01 * (a10 * a32 - a12 * a30) + a02 * (a10 * a31 - a11 * a30)) * inv_det;
+
+			result.m[0][3] = -(a01 * (a12 * a23 - a13 * a22) - a02 * (a11 * a23 - a13 * a21) + a03 * (a11 * a22 - a12 * a21)) * inv_det;
+			result.m[1][3] =  (a00 * (a12 * a23 - a13 * a22) - a02 * (a10 * a23 - a13 * a20) + a03 * (a10 * a22 - a12 * a20)) * inv_det;
+			result.m[2][3] = -(a00 * (a11 * a23 - a13 * a21) - a01 * (a10 * a23 - a13 * a20) + a03 * (a10 * a21 - a11 * a20)) * inv_det;
+			result.m[3][3] =  (a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20) + a02 * (a10 * a21 - a11 * a20)) * inv_det;
+
 			return result;
 		}
 
@@ -286,7 +317,6 @@ namespace amber
 			);
 		}
 
-		// Create a rotation from one vector to another
 		static Quaternion FromToRotation(Vector3 const& from, Vector3 const& to)
 		{
 			Vector3 f = from.Normalized();
@@ -320,7 +350,6 @@ namespace amber
 			);
 		}
 
-		// Create a rotation that looks in the forward direction with the given up vector
 		static Quaternion LookRotation(Vector3 const& forward, Vector3 const& up)
 		{
 			Quaternion q1 = FromToRotation(Vector3::Forward, forward);
@@ -340,7 +369,6 @@ namespace amber
 		static Quaternion Identity() { return Quaternion(0.0f, 0.0f, 0.0f, 1.0f); }
 	};
 
-	// Implement Vector3::Transform after Quaternion is defined
 	inline Vector3 Vector3::Transform(Vector3 const& v, Quaternion const& q)
 	{
 		// v' = q * v * q^-1
@@ -357,6 +385,14 @@ namespace amber
 		Float x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0] + m.m[3][0];
 		Float y = v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1] + m.m[3][1];
 		Float z = v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2] + m.m[3][2];
+		return Vector3(x, y, z);
+	}
+
+	inline Vector3 TransformDirection(Vector3 const& v, Matrix const& m)
+	{
+		Float x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0];
+		Float y = v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1];
+		Float z = v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2];
 		return Vector3(x, y, z);
 	}
 

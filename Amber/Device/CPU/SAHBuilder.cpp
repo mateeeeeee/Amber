@@ -70,13 +70,11 @@ namespace amber
 			return;
 		}
 
-		// Find best split using binned SAH
 		Int best_axis = -1;
 		Float best_pos = 0, best_cost = BVH_INFINITY;
 
 		for (Int axis = 0; axis < 3; axis++)
 		{
-			// Compute centroid bounds for this axis
 			Float cmin = BVH_INFINITY, cmax = -BVH_INFINITY;
 			for (Uint32 i = 0; i < node.tri_count; i++)
 			{
@@ -91,13 +89,11 @@ namespace amber
 
 			if (cmin == cmax) continue;
 
-			// Initialize bins
 			struct Bin { AABB bounds; Uint32 count = 0; };
 			Bin bins[NUM_BINS];
 
 			Float scale = NUM_BINS / (cmax - cmin);
 
-			// Populate bins
 			for (Uint32 i = 0; i < node.tri_count; i++)
 			{
 				Triangle const& tri = triangles[bvh.tri_indices[node.left_first + i]];
@@ -113,7 +109,6 @@ namespace amber
 				bins[bin_idx].bounds.Grow(tri.v2);
 			}
 
-			// Gather data for the planes between bins using prefix/suffix sweep
 			Float left_area[NUM_BINS - 1], right_area[NUM_BINS - 1];
 			Uint32 left_count[NUM_BINS - 1], right_count[NUM_BINS - 1];
 			AABB left_box, right_box;
@@ -131,7 +126,6 @@ namespace amber
 				right_area[NUM_BINS - 2 - i] = right_box.Area();
 			}
 
-			// Evaluate SAH cost for each plane
 			Float plane_scale = (cmax - cmin) / NUM_BINS;
 			for (Int i = 0; i < NUM_BINS - 1; i++)
 			{
@@ -145,7 +139,6 @@ namespace amber
 			}
 		}
 
-		// SAH termination: don't split if it's not worthwhile
 		Vector3 extent = node.aabb_max - node.aabb_min;
 		Float parent_area = extent.x * extent.y + extent.y * extent.z + extent.z * extent.x;
 		Float parent_cost = node.tri_count * parent_area;
@@ -157,7 +150,6 @@ namespace amber
 		Int axis = best_axis;
 		Float split_pos = best_pos;
 
-		// In-place partition
 		Uint32 first_tri_idx = node.left_first;
 		Int i = static_cast<Int>(first_tri_idx);
 		Int j = i + static_cast<Int>(node.tri_count) - 1;

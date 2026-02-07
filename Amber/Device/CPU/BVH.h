@@ -24,4 +24,5 @@ namespace amber
 
 	Bool Intersect(BVH const& bvh, Ray const& ray, HitInfo& hit);
 	Bool IntersectRecursive(BVH const& bvh, Ray const& ray, HitInfo& hit);
+	void Refit(BVH& bvh);
 }

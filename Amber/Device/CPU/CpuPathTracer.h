@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include "Device/PathTracer.h"
-#include "BVH.h"
+#include "TLAS.h"
 #include "Utilities/ThreadPool.h"
 #include "Utilities/Timer.h"
 
@@ -14,7 +14,7 @@ namespace amber
 	{
 		static constexpr Uint32 MAX_DEPTH = 3;
 		static constexpr Uint32 TILE_SIZE = 16;
-		
+
 	public:
 		CpuPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& scene);
 		~CpuPathTracer() override;
@@ -36,11 +36,8 @@ namespace amber
 
 		Float  GetRenderTime() const override { return render_time_ms; }
 		Uint   GetFrameIndex() const override { return frame_index; }
-		Uint   GetTriangleCount() const override { return static_cast<Uint>(triangles.size()); }
-		Uint64 GetMemoryUsage() const override
-		{
-			return static_cast<Uint64>(width) * height * sizeof(RGBA8) + triangles.size() * sizeof(Triangle);
-		}
+		Uint   GetTriangleCount() const override { return triangle_count; }
+		Uint64 GetMemoryUsage() const override { return 0; }
 
 	private:
 		Uint32 width;
@@ -48,14 +45,15 @@ namespace amber
 		std::unique_ptr<Scene> scene;
 		CpuBuffer2D<RGBA8> framebuffer;
 
-		std::vector<Triangle> triangles;
-		BVH bvh;
+		std::vector<BLAS> blas_list;
+		TLAS tlas;
+		Uint triangle_count = 0;
 
 		Uint frame_index = 0;
 		Float render_time_ms = 0.0f;
 		PathTracerOutput output = PathTracerOutput::Final;
 
 	private:
-		void BuildSceneGeometry();
+		void BuildAccelerationStructures();
 	};
 }

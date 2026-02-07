@@ -158,6 +158,10 @@ set(DEVICE_CPU_FILES
     Device/CPU/MedianSplitBuilder.cpp
     Device/CPU/SAHBuilder.h
     Device/CPU/SAHBuilder.cpp
+    Device/CPU/BLAS.h
+    Device/CPU/BLAS.cpp
+    Device/CPU/TLAS.h
+    Device/CPU/TLAS.cpp
 )
 
 if(APPLE)

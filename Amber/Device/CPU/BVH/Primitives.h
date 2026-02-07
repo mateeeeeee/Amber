@@ -5,7 +5,7 @@ namespace amber
 	inline constexpr Float BVH_INFINITY = 1e30f;
 	inline constexpr Float BVH_EPSILON = 1e-8f;
 
-	struct alignas(64) Ray
+	struct alignas(16) Ray
 	{
 		Vector3 origin;
 		Vector3 direction;
