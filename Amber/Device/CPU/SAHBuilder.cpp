@@ -32,8 +32,8 @@ namespace amber
 	void SAHBuilder::UpdateNodeBounds(BVH& bvh, Triangle const* triangles, Uint32 node_idx)
 	{
 		BVHNode& node = bvh.nodes[node_idx];
-		node.aabb_min = Vector3(1e30f, 1e30f, 1e30f);
-		node.aabb_max = Vector3(-1e30f, -1e30f, -1e30f);
+		node.aabb_min = Vector3(BVH_INFINITY, BVH_INFINITY, BVH_INFINITY);
+		node.aabb_max = Vector3(-BVH_INFINITY, -BVH_INFINITY, -BVH_INFINITY);
 		for (Uint32 i = 0; i < node.tri_count; i++)
 		{
 			Uint32 tri_idx = bvh.tri_indices[node.left_first + i];
@@ -72,12 +72,12 @@ namespace amber
 
 		// Find best split using binned SAH
 		Int best_axis = -1;
-		Float best_pos = 0, best_cost = 1e30f;
+		Float best_pos = 0, best_cost = BVH_INFINITY;
 
 		for (Int axis = 0; axis < 3; axis++)
 		{
 			// Compute centroid bounds for this axis
-			Float cmin = 1e30f, cmax = -1e30f;
+			Float cmin = BVH_INFINITY, cmax = -BVH_INFINITY;
 			for (Uint32 i = 0; i < node.tri_count; i++)
 			{
 				Triangle const& tri = triangles[bvh.tri_indices[node.left_first + i]];

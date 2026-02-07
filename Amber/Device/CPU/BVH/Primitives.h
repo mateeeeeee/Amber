@@ -2,12 +2,15 @@
 
 namespace amber
 {
+	inline constexpr Float BVH_INFINITY = 1e30f;
+	inline constexpr Float BVH_EPSILON = 1e-8f;
+
 	struct alignas(64) Ray
 	{
 		Vector3 origin;
 		Vector3 direction;
 		Vector3 inv_direction;
-		Float t = 1e30f;
+		Float t = BVH_INFINITY;
 
 		Ray() = default;
 		Ray(Vector3 const& origin, Vector3 const& direction)

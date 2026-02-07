@@ -1,5 +1,5 @@
 #pragma once
-#include "Device/BVH/Primitives.h"
+#include "Device/CPU/BVH/Primitives.h"
 
 namespace amber
 {
@@ -8,7 +8,7 @@ namespace amber
 		Vector3 min;
 		Vector3 max;
 
-		AABB() : min(1e30f, 1e30f, 1e30f), max(-1e30f, -1e30f, -1e30f) {}
+		AABB() : min(BVH_INFINITY, BVH_INFINITY, BVH_INFINITY), max(-BVH_INFINITY, -BVH_INFINITY, -BVH_INFINITY) {}
 		AABB(Vector3 const& min, Vector3 const& max) : min(min), max(max) {}
 
 		void Grow(Vector3 const& point)
@@ -34,7 +34,7 @@ namespace amber
 		}
 	};
 
-	// Slab test for ray-AABB intersection, returns distance (1e30f if miss)
+	// Slab test for ray-AABB intersection, returns distance (BVH_INFINITY if miss)
 	inline Float IntersectAABB(Ray const& ray, Vector3 const& bmin, Vector3 const& bmax)
 	{
 		Float tx1 = (bmin.x - ray.origin.x) * ray.inv_direction.x;
@@ -55,10 +55,10 @@ namespace amber
 		if (tmax >= tmin && tmin < ray.t && tmax > 0)
 		{
 			return tmin;
-		} 
-		else 
+		}
+		else
 		{
-			return 1e30f;
+			return BVH_INFINITY;
 		}
 	}
 
@@ -72,7 +72,7 @@ namespace amber
 	// https://en.wikipedia.org/wiki/Möller–Trumbore_intersection_algorithm
 	inline Bool IntersectTriangle(Ray const& ray, Triangle const& tri, HitInfo& hit)
 	{
-		static constexpr Float EPSILON = 1e-8f;
+		static constexpr Float EPSILON = BVH_EPSILON;
 
 		Vector3 edge1 = tri.v1 - tri.v0;
 		Vector3 edge2 = tri.v2 - tri.v0;

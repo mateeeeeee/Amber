@@ -34,8 +34,8 @@ namespace amber
 	void MedianSplitBuilder::UpdateNodeBounds(BVH& bvh, Triangle const* triangles, Uint32 node_idx)
 	{
 		BVHNode& node = bvh.nodes[node_idx];
-		node.aabb_min = Vector3(1e30f, 1e30f, 1e30f);
-		node.aabb_max = Vector3(-1e30f, -1e30f, -1e30f);
+		node.aabb_min = Vector3(BVH_INFINITY, BVH_INFINITY, BVH_INFINITY);
+		node.aabb_max = Vector3(-BVH_INFINITY, -BVH_INFINITY, -BVH_INFINITY);
 		for (Uint32 i = 0; i < node.tri_count; i++)
 		{
 			Uint32 tri_idx = bvh.tri_indices[node.left_first + i];

@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "Device/BVH/Intersection.h"
+#include "Device/CPU/BVH/Intersection.h"
 
 namespace amber
 {

@@ -6,7 +6,7 @@ namespace amber
 	static void IntersectRecursiveImpl(BVH const& bvh, Ray const& ray, Uint32 node_idx, HitInfo& hit, Bool& found)
 	{
 		BVHNode const& node = bvh.nodes[node_idx];
-		if (IntersectAABB(ray, node.aabb_min, node.aabb_max) == 1e30f)
+		if (IntersectAABB(ray, node.aabb_min, node.aabb_max) == BVH_INFINITY)
 		{
 			return;
 		}
@@ -90,7 +90,7 @@ namespace amber
 				std::swap(child1, child2);
 			}
 
-			if (dist1 == 1e30f)
+			if (dist1 == BVH_INFINITY)
 			{
 				if (stack_ptr == 0) break;
 				node = stack[--stack_ptr];
@@ -98,7 +98,7 @@ namespace amber
 			else
 			{
 				node = child1;
-				if (dist2 != 1e30f) stack[stack_ptr++] = child2;
+				if (dist2 != BVH_INFINITY) stack[stack_ptr++] = child2;
 			}
 		}
 
