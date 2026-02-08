@@ -1,4 +1,5 @@
 #include "BVH.h"
+#include "Utilities/Stack.h"
 #include <algorithm>
 
 namespace amber
@@ -52,8 +53,7 @@ namespace amber
 		}
 
 		BVHNode const* node = &bvh.nodes[0];
-		BVHNode const* stack[64];
-		Uint32 stack_ptr = 0;
+		SmallStack<BVHNode const*, 64> stack;
 		Bool found = false;
 
 		Ray local_ray = ray;
@@ -74,8 +74,8 @@ namespace amber
 						found = true;
 					}
 				}
-				if (stack_ptr == 0) break;
-				node = stack[--stack_ptr];
+				if (stack.IsEmpty()) break;
+				node = stack.Pop();
 				continue;
 			}
 
@@ -92,13 +92,13 @@ namespace amber
 
 			if (dist1 == BVH_INFINITY)
 			{
-				if (stack_ptr == 0) break;
-				node = stack[--stack_ptr];
+				if (stack.IsEmpty()) break;
+				node = stack.Pop();
 			}
 			else
 			{
 				node = child1;
-				if (dist2 != BVH_INFINITY) stack[stack_ptr++] = child2;
+				if (dist2 != BVH_INFINITY) stack.Push(child2);
 			}
 		}
 

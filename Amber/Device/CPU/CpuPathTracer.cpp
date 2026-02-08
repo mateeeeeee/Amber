@@ -3,6 +3,7 @@
 #include "Scene/Camera.h"
 #include "Core/Log.h"
 #include "Utilities/ImageUtil.h"
+#include "Utilities/Timer.h"
 #include <cmath>
 
 namespace amber
@@ -12,7 +13,9 @@ namespace amber
 	{
 		g_ThreadPool.Initialize();
 		framebuffer.Clear(RGBA8(0, 0, 0, 255));
+		Timer<std::chrono::milliseconds> timer;
 		BuildAccelerationStructures();
+		AMBER_INFO_LOG("Built acceleration structures in %lldms", timer.Elapsed());
 		AMBER_INFO_LOG("CPU PathTracer initialized with %u triangles, %zu BLAS instances", triangle_count, blas_list.size());
 	}
 

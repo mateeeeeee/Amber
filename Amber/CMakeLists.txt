@@ -78,6 +78,7 @@ set(UTILITY_FILES
     Utilities/ThreadPool.h
     Utilities/Timer.h
     Utilities/ConcurrentQueue.h
+    Utilities/Stack.h
     Utilities/StringUtil.h
     Utilities/StringUtil.cpp
     Utilities/ImageUtil.h
