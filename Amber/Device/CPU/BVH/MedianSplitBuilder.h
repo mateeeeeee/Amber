@@ -5,7 +5,8 @@ namespace amber
 {
 	struct MedianSplitPolicy
 	{
-		static std::optional<SplitResult> FindSplit(BVH const& bvh, Triangle const* triangles, BVHNode const& node)
+		template<typename PrimitiveT>
+		static std::optional<SplitResult> FindSplit(BVH const& bvh, PrimitiveT const* prims, BVHNode const& node)
 		{
 			Vector3 extent = node.aabb_max - node.aabb_min;
 			Int axis = 0;
@@ -21,5 +22,5 @@ namespace amber
 		}
 	};
 
-	using MedianSplitBuilder = TopDownBuilder<MedianSplitPolicy>;
+	using MedianSplitBuilder = TopDownBuilder<Triangle, MedianSplitPolicy>;
 }

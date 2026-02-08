@@ -7,8 +7,11 @@ namespace amber
 	{
 		static constexpr Int NUM_BINS = 8;
 
-		static std::optional<SplitResult> FindSplit(BVH const& bvh, Triangle const* triangles, BVHNode const& node)
+		template<typename PrimitiveT>
+		static std::optional<SplitResult> FindSplit(BVH const& bvh, PrimitiveT const* prims, BVHNode const& node)
 		{
+			using Traits = PrimTraits<PrimitiveT>;
+
 			Int   best_axis = -1;
 			Float best_pos  = 0.0f;
 			Float best_cost = BVH_INFINITY;
@@ -18,11 +21,7 @@ namespace amber
 				Float cmin = BVH_INFINITY, cmax = -BVH_INFINITY;
 				for (Uint32 i = 0; i < node.tri_count; i++)
 				{
-					Triangle const& tri = triangles[bvh.tri_indices[node.left_first + i]];
-					Float c;
-					if (axis == 0)      c = tri.centroid.x;
-					else if (axis == 1) c = tri.centroid.y;
-					else                c = tri.centroid.z;
+					Float c = Traits::GetCentroid(prims[bvh.tri_indices[node.left_first + i]], axis);
 					cmin = std::min(cmin, c);
 					cmax = std::max(cmax, c);
 				}
@@ -35,17 +34,11 @@ namespace amber
 				Float scale = NUM_BINS / (cmax - cmin);
 				for (Uint32 i = 0; i < node.tri_count; i++)
 				{
-					Triangle const& tri = triangles[bvh.tri_indices[node.left_first + i]];
-					Float c;
-					if (axis == 0)      c = tri.centroid.x;
-					else if (axis == 1) c = tri.centroid.y;
-					else                c = tri.centroid.z;
-
+					PrimitiveT const& prim = prims[bvh.tri_indices[node.left_first + i]];
+					Float c = Traits::GetCentroid(prim, axis);
 					Int bin_idx = std::min(static_cast<Int>((c - cmin) * scale), NUM_BINS - 1);
 					bins[bin_idx].count++;
-					bins[bin_idx].bounds.Grow(tri.v0);
-					bins[bin_idx].bounds.Grow(tri.v1);
-					bins[bin_idx].bounds.Grow(tri.v2);
+					Traits::GrowBounds(bins[bin_idx].bounds, prim);
 				}
 
 				Float  left_area[NUM_BINS - 1],  right_area[NUM_BINS - 1];
@@ -90,12 +83,15 @@ namespace amber
 		}
 	};
 
-	using BinnedSAHBuilder = TopDownBuilder<BinnedSAHPolicy>;
+	using BinnedSAHBuilder = TopDownBuilder<Triangle, BinnedSAHPolicy>;
 
 	struct SweepSAHPolicy
 	{
-		static std::optional<SplitResult> FindSplit(BVH const& bvh, Triangle const* triangles, BVHNode const& node)
+		template<typename PrimitiveT>
+		static std::optional<SplitResult> FindSplit(BVH const& bvh, PrimitiveT const* prims, BVHNode const& node)
 		{
+			using Traits = PrimTraits<PrimitiveT>;
+
 			Int   best_axis = -1;
 			Float best_pos  = 0.0f;
 			Float best_cost = BVH_INFINITY;
@@ -110,40 +106,28 @@ namespace amber
 				for (Uint32 i = 0; i < count; i++) sorted[i] = bvh.tri_indices[node.left_first + i];
 				std::sort(sorted.begin(), sorted.end(), [&](Uint32 a, Uint32 b)
 				{
-					Float ca, cb;
-					if (axis == 0)      { ca = triangles[a].centroid.x; cb = triangles[b].centroid.x; }
-					else if (axis == 1) { ca = triangles[a].centroid.y; cb = triangles[b].centroid.y; }
-					else                { ca = triangles[a].centroid.z; cb = triangles[b].centroid.z; }
-					return ca < cb;
+					return Traits::GetCentroid(prims[a], axis) < Traits::GetCentroid(prims[b], axis);
 				});
 
 				AABB right_box;
 				for (Int i = static_cast<Int>(count) - 1; i >= 0; i--)
 				{
-					Triangle const& tri = triangles[sorted[i]];
-					right_box.Grow(tri.v0);
-					right_box.Grow(tri.v1);
-					right_box.Grow(tri.v2);
+					Traits::GrowBounds(right_box, prims[sorted[i]]);
 					right_bounds[i] = right_box;
 				}
 
 				AABB left_box;
 				for (Uint32 i = 0; i < count - 1; i++)
 				{
-					Triangle const& tri = triangles[sorted[i]];
-					left_box.Grow(tri.v0);
-					left_box.Grow(tri.v1);
-					left_box.Grow(tri.v2);
+					Traits::GrowBounds(left_box, prims[sorted[i]]);
 
 					Float cost = (i + 1) * left_box.Area() + (count - i - 1) * right_bounds[i + 1].Area();
 					if (cost < best_cost)
 					{
 						best_cost = cost;
 						best_axis = axis;
-						Float ca, cb;
-						if (axis == 0)      { ca = triangles[sorted[i]].centroid.x;     cb = triangles[sorted[i + 1]].centroid.x; }
-						else if (axis == 1) { ca = triangles[sorted[i]].centroid.y;     cb = triangles[sorted[i + 1]].centroid.y; }
-						else                { ca = triangles[sorted[i]].centroid.z;     cb = triangles[sorted[i + 1]].centroid.z; }
+						Float ca = Traits::GetCentroid(prims[sorted[i]],     axis);
+						Float cb = Traits::GetCentroid(prims[sorted[i + 1]], axis);
 						best_pos = (ca + cb) * 0.5f;
 					}
 				}
@@ -161,5 +145,5 @@ namespace amber
 		}
 	};
 
-	using SweepSAHBuilder = TopDownBuilder<SweepSAHPolicy>;
+	using SweepSAHBuilder = TopDownBuilder<Triangle, SweepSAHPolicy>;
 }

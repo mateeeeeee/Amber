@@ -1,4 +1,5 @@
 #include "AccelerationStructure.h"
+#include "BLASPrimTraits.h"
 #include "BVH/SAHBuilder.h"
 #include "BVH/MedianSplitBuilder.h"
 
@@ -33,8 +34,25 @@ namespace amber
 		}
 	}
 
-	void BuildTLAS(TLAS& tlas, BLAS* blas_list, TLASBuildInput const& input)
+	void BuildTLAS(TLAS& tlas, BLAS* blas_list, Uint32 blas_count, TLASBuildInput const& input)
 	{
-		Build(tlas, blas_list, input.instance_count);
+		tlas.blas_list  = blas_list;
+		tlas.blas_count = blas_count;
+		if (blas_count == 0)
+		{
+			return;
+		}
+
+		std::vector<BLAS> blas_vec(blas_list, blas_list + blas_count);
+		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
+		{
+			TopDownBuilder<BLAS, MedianSplitPolicy> builder;
+			builder.Build(tlas.bvh, blas_vec);
+		}
+		else
+		{
+			TopDownBuilder<BLAS, BinnedSAHPolicy> builder;
+			builder.Build(tlas.bvh, blas_vec);
+		}
 	}
 }

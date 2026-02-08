@@ -82,7 +82,7 @@ namespace amber
 		tlas_input.flags          = BuildFlags::PreferFastTrace;
 
 		AMBER_INFO_LOG("Building TLAS over %zu BLAS instances...", blas_list.size());
-		BuildTLAS(tlas, blas_list.data(), tlas_input);
+		BuildTLAS(tlas, blas_list.data(), static_cast<Uint32>(blas_list.size()), tlas_input);
 	}
 
 	void CpuPathTracer::Update(Float dt)

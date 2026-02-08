@@ -55,5 +55,5 @@ namespace amber
 	};
 
 	void BuildBLAS(BLAS& blas, BLASBuildInput const& input);
-	void BuildTLAS(TLAS& tlas, BLAS* blas_list, TLASBuildInput const& input);
+	void BuildTLAS(TLAS& tlas, BLAS* blas_list, Uint32 blas_count, TLASBuildInput const& input);
 }

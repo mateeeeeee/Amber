@@ -1,12 +1,49 @@
 #include "BLAS.h"
-#include "BVH/SAHBuilder.h"
 
 namespace amber
 {
-	void Build(BLAS& blas)
+	BLAS::BLAS(BLAS const& other)
+		: bvh(other.bvh), triangles(other.triangles),
+		  transform(other.transform), inv_transform(other.inv_transform),
+		  world_bounds(other.world_bounds)
 	{
-		BinnedSAHBuilder builder;
-		builder.Build(blas.bvh, blas.triangles);
+		bvh.triangles = &triangles;
+	}
+
+	BLAS::BLAS(BLAS&& other) noexcept
+		: bvh(std::move(other.bvh)), triangles(std::move(other.triangles)),
+		  transform(other.transform), inv_transform(other.inv_transform),
+		  world_bounds(other.world_bounds)
+	{
+		bvh.triangles = &triangles;
+	}
+
+	BLAS& BLAS::operator=(BLAS const& other)
+	{
+		if (this != &other)
+		{
+			bvh = other.bvh;
+			triangles = other.triangles;
+			transform = other.transform;
+			inv_transform = other.inv_transform;
+			world_bounds = other.world_bounds;
+			bvh.triangles = &triangles;
+		}
+		return *this;
+	}
+
+	BLAS& BLAS::operator=(BLAS&& other) noexcept
+	{
+		if (this != &other)
+		{
+			bvh = std::move(other.bvh);
+			triangles = std::move(other.triangles);
+			transform = other.transform;
+			inv_transform = other.inv_transform;
+			world_bounds = other.world_bounds;
+			bvh.triangles = &triangles;
+		}
+		return *this;
 	}
 
 	void BLAS::SetTransform(Matrix const& t)

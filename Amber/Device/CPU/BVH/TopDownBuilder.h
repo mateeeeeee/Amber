@@ -1,6 +1,7 @@
 #pragma once
 #include <optional>
 #include "BVH.h"
+#include "PrimTraits.h"
 
 namespace amber
 {
@@ -10,77 +11,56 @@ namespace amber
 		Float pos;
 	};
 
-	template<typename T>
-	concept TopDownSplitPolicy = requires(BVH const& bvh, Triangle const* triangles, BVHNode const& node)
+	template<typename PrimitiveT, typename SplitPolicyT>
+	concept TopDownSplitPolicy = requires(BVH const& bvh, PrimitiveT const* prims, BVHNode const& node)
 	{
-		{ T::FindSplit(bvh, triangles, node) } -> std::same_as<std::optional<SplitResult>>;
+		{ SplitPolicyT::FindSplit(bvh, prims, node) } -> std::same_as<std::optional<SplitResult>>;
 	};
 
-	template<typename SplitPolicyT> requires TopDownSplitPolicy<SplitPolicyT>
+	template<typename PrimitiveT, typename SplitPolicyT> requires TopDownSplitPolicy<PrimitiveT, SplitPolicyT>
 	class TopDownBuilder
 	{
+		using Traits = PrimTraits<PrimitiveT>;
 	public:
-		void Build(BVH& bvh, std::vector<Triangle> const& triangles)
+		void Build(BVH& bvh, std::vector<PrimitiveT> const& prims)
 		{
-			Uint32 tri_count = static_cast<Uint32>(triangles.size());
-			if (tri_count == 0)
+			Uint32 prim_count = static_cast<Uint32>(prims.size());
+			if (prim_count == 0)
 			{
 				return;
 			}
 
-			bvh.triangles = &triangles;
-
-			bvh.tri_indices.resize(tri_count);
-			for (Uint32 i = 0; i < tri_count; i++)
+			bvh.tri_indices.resize(prim_count);
+			for (Uint32 i = 0; i < prim_count; i++)
 			{
 				bvh.tri_indices[i] = i;
 			}
 
-			bvh.nodes.resize(tri_count * 2 - 1);
+			bvh.nodes.resize(prim_count * 2 - 1);
 			bvh.nodes_used = 1;
 
 			BVHNode& root = bvh.nodes[0];
 			root.left_first = 0;
-			root.tri_count  = tri_count;
-			UpdateNodeBounds(bvh, triangles.data(), 0);
-			Subdivide(bvh, triangles.data(), 0);
+			root.tri_count  = prim_count;
+			UpdateNodeBounds(bvh, prims.data(), 0);
+			Subdivide(bvh, prims.data(), 0);
 		}
 
 	private:
-		void UpdateNodeBounds(BVH& bvh, Triangle const* triangles, Uint32 node_idx)
+		void UpdateNodeBounds(BVH& bvh, PrimitiveT const* prims, Uint32 node_idx)
 		{
 			BVHNode& node = bvh.nodes[node_idx];
-			node.aabb_min = Vector3(BVH_INFINITY, BVH_INFINITY, BVH_INFINITY);
-			node.aabb_max = Vector3(-BVH_INFINITY, -BVH_INFINITY, -BVH_INFINITY);
+			AABB box{};
 			for (Uint32 i = 0; i < node.tri_count; i++)
 			{
-				Uint32 tri_idx = bvh.tri_indices[node.left_first + i];
-				Triangle const& tri = triangles[tri_idx];
-
-				node.aabb_min.x = std::min(node.aabb_min.x, tri.v0.x);
-				node.aabb_min.y = std::min(node.aabb_min.y, tri.v0.y);
-				node.aabb_min.z = std::min(node.aabb_min.z, tri.v0.z);
-				node.aabb_max.x = std::max(node.aabb_max.x, tri.v0.x);
-				node.aabb_max.y = std::max(node.aabb_max.y, tri.v0.y);
-				node.aabb_max.z = std::max(node.aabb_max.z, tri.v0.z);
-
-				node.aabb_min.x = std::min(node.aabb_min.x, tri.v1.x);
-				node.aabb_min.y = std::min(node.aabb_min.y, tri.v1.y);
-				node.aabb_min.z = std::min(node.aabb_min.z, tri.v1.z);
-				node.aabb_max.x = std::max(node.aabb_max.x, tri.v1.x);
-				node.aabb_max.y = std::max(node.aabb_max.y, tri.v1.y);
-				node.aabb_max.z = std::max(node.aabb_max.z, tri.v1.z);
-
-				node.aabb_min.x = std::min(node.aabb_min.x, tri.v2.x);
-				node.aabb_min.y = std::min(node.aabb_min.y, tri.v2.y);
-				node.aabb_min.z = std::min(node.aabb_min.z, tri.v2.z);
-				node.aabb_max.x = std::max(node.aabb_max.x, tri.v2.x);
-				node.aabb_max.y = std::max(node.aabb_max.y, tri.v2.y);
-				node.aabb_max.z = std::max(node.aabb_max.z, tri.v2.z);
+				Uint32 idx = bvh.tri_indices[node.left_first + i];
+				Traits::GrowBounds(box, prims[idx]);
 			}
+			node.aabb_min = box.min;
+			node.aabb_max = box.max;
 		}
 
-		void Subdivide(BVH& bvh, Triangle const* triangles, Uint32 node_idx)
+		void Subdivide(BVH& bvh, PrimitiveT const* prims, Uint32 node_idx)
 		{
 			BVHNode& node = bvh.nodes[node_idx];
 			if (node.tri_count <= 2)
@@ -88,24 +68,19 @@ namespace amber
 				return;
 			}
 
-			std::optional<SplitResult> split = SplitPolicyT::FindSplit(bvh, triangles, node);
+			std::optional<SplitResult> split = SplitPolicyT::FindSplit(bvh, prims, node);
 			if (!split)
 			{
 				return;
 			}
 
-			Uint32 first_tri_idx = node.left_first;
-			Int i = static_cast<Int>(first_tri_idx);
+			Uint32 first_idx = node.left_first;
+			Int i = static_cast<Int>(first_idx);
 			Int j = i + static_cast<Int>(node.tri_count) - 1;
 			while (i <= j)
 			{
-				Triangle const& tri = triangles[bvh.tri_indices[i]];
-				Float centroid_val;
-				if (split->axis == 0)      centroid_val = tri.centroid.x;
-				else if (split->axis == 1) centroid_val = tri.centroid.y;
-				else                       centroid_val = tri.centroid.z;
-
-				if (centroid_val < split->pos)
+				Float centroid = Traits::GetCentroid(prims[bvh.tri_indices[i]], split->axis);
+				if (centroid < split->pos)
 				{
 					i++;
 				}
@@ -116,7 +91,7 @@ namespace amber
 				}
 			}
 
-			Uint32 left_count = static_cast<Uint32>(i) - first_tri_idx;
+			Uint32 left_count = static_cast<Uint32>(i) - first_idx;
 			if (left_count == 0 || left_count == node.tri_count)
 			{
 				return;
@@ -125,7 +100,7 @@ namespace amber
 			Uint32 left_child_idx  = bvh.nodes_used++;
 			Uint32 right_child_idx = bvh.nodes_used++;
 
-			bvh.nodes[left_child_idx].left_first  = first_tri_idx;
+			bvh.nodes[left_child_idx].left_first  = first_idx;
 			bvh.nodes[left_child_idx].tri_count   = left_count;
 			bvh.nodes[right_child_idx].left_first = static_cast<Uint32>(i);
 			bvh.nodes[right_child_idx].tri_count  = node.tri_count - left_count;
@@ -133,11 +108,11 @@ namespace amber
 			node.left_first = left_child_idx;
 			node.tri_count  = 0;
 
-			UpdateNodeBounds(bvh, triangles, left_child_idx);
-			UpdateNodeBounds(bvh, triangles, right_child_idx);
+			UpdateNodeBounds(bvh, prims, left_child_idx);
+			UpdateNodeBounds(bvh, prims, right_child_idx);
 
-			Subdivide(bvh, triangles, left_child_idx);
-			Subdivide(bvh, triangles, right_child_idx);
+			Subdivide(bvh, prims, left_child_idx);
+			Subdivide(bvh, prims, right_child_idx);
 		}
 	};
 }
