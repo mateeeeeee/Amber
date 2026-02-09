@@ -64,10 +64,11 @@ namespace amber
 
 	struct HitInfo
 	{
-		Float t = std::numeric_limits<Float>::max();
-		Float u, v;
+		Float  t           = std::numeric_limits<Float>::max();
+		Float  u, v;
 		Uint32 tri_idx;
-		Uint32 blas_idx = 0;
+		Uint32 instance_idx = 0;
+		Uint32 instance_id  = 0;
 	};
 
 	// https://en.wikipedia.org/wiki/Möller–Trumbore_intersection_algorithm

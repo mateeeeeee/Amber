@@ -7,10 +7,10 @@ namespace amber
 	{
 		static constexpr Int NUM_BINS = 8;
 
-		template<typename PrimitiveT>
-		static std::optional<SplitResult> FindSplit(BVH const& bvh, PrimitiveT const* prims, BVHNode const& node)
+		template<typename NodeT>
+		static std::optional<SplitResult> FindSplit(BVH const& bvh, NodeT const* nodes, BVHNode const& node)
 		{
-			using Traits = PrimTraits<PrimitiveT>;
+			using Traits = SpatialTraits<NodeT>;
 
 			Int   best_axis = -1;
 			Float best_pos  = 0.0f;
@@ -21,7 +21,7 @@ namespace amber
 				Float cmin = BVH_INFINITY, cmax = -BVH_INFINITY;
 				for (Uint32 i = 0; i < node.tri_count; i++)
 				{
-					Float c = Traits::GetCentroid(prims[bvh.tri_indices[node.left_first + i]], axis);
+					Float c = Traits::GetCentroid(nodes[bvh.tri_indices[node.left_first + i]], axis);
 					cmin = std::min(cmin, c);
 					cmax = std::max(cmax, c);
 				}
@@ -34,11 +34,11 @@ namespace amber
 				Float scale = NUM_BINS / (cmax - cmin);
 				for (Uint32 i = 0; i < node.tri_count; i++)
 				{
-					PrimitiveT const& prim = prims[bvh.tri_indices[node.left_first + i]];
-					Float c = Traits::GetCentroid(prim, axis);
+					NodeT const& n = nodes[bvh.tri_indices[node.left_first + i]];
+					Float c = Traits::GetCentroid(n, axis);
 					Int bin_idx = std::min(static_cast<Int>((c - cmin) * scale), NUM_BINS - 1);
 					bins[bin_idx].count++;
-					Traits::GrowBounds(bins[bin_idx].bounds, prim);
+					Traits::GrowBounds(bins[bin_idx].bounds, n);
 				}
 
 				Float  left_area[NUM_BINS - 1],  right_area[NUM_BINS - 1];
@@ -87,10 +87,10 @@ namespace amber
 
 	struct SweepSAHPolicy
 	{
-		template<typename PrimitiveT>
-		static std::optional<SplitResult> FindSplit(BVH const& bvh, PrimitiveT const* prims, BVHNode const& node)
+		template<typename NodeT>
+		static std::optional<SplitResult> FindSplit(BVH const& bvh, NodeT const* nodes, BVHNode const& node)
 		{
-			using Traits = PrimTraits<PrimitiveT>;
+			using Traits = SpatialTraits<NodeT>;
 
 			Int   best_axis = -1;
 			Float best_pos  = 0.0f;
@@ -106,28 +106,28 @@ namespace amber
 				for (Uint32 i = 0; i < count; i++) sorted[i] = bvh.tri_indices[node.left_first + i];
 				std::sort(sorted.begin(), sorted.end(), [&](Uint32 a, Uint32 b)
 				{
-					return Traits::GetCentroid(prims[a], axis) < Traits::GetCentroid(prims[b], axis);
+					return Traits::GetCentroid(nodes[a], axis) < Traits::GetCentroid(nodes[b], axis);
 				});
 
 				AABB right_box;
 				for (Int i = static_cast<Int>(count) - 1; i >= 0; i--)
 				{
-					Traits::GrowBounds(right_box, prims[sorted[i]]);
+					Traits::GrowBounds(right_box, nodes[sorted[i]]);
 					right_bounds[i] = right_box;
 				}
 
 				AABB left_box;
 				for (Uint32 i = 0; i < count - 1; i++)
 				{
-					Traits::GrowBounds(left_box, prims[sorted[i]]);
+					Traits::GrowBounds(left_box, nodes[sorted[i]]);
 
 					Float cost = (i + 1) * left_box.Area() + (count - i - 1) * right_bounds[i + 1].Area();
 					if (cost < best_cost)
 					{
 						best_cost = cost;
 						best_axis = axis;
-						Float ca = Traits::GetCentroid(prims[sorted[i]],     axis);
-						Float cb = Traits::GetCentroid(prims[sorted[i + 1]], axis);
+						Float ca = Traits::GetCentroid(nodes[sorted[i]],     axis);
+						Float cb = Traits::GetCentroid(nodes[sorted[i + 1]], axis);
 						best_pos = (ca + cb) * 0.5f;
 					}
 				}

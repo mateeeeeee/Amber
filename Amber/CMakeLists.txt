@@ -153,9 +153,10 @@ set(DEVICE_CPU_FILES
     Device/CPU/CpuPathTracer.cpp
     Device/CPU/AccelerationStructure.h
     Device/CPU/AccelerationStructure.cpp
+    Device/CPU/RayFlags.h
     Device/CPU/BLAS.h
     Device/CPU/BLAS.cpp
-    Device/CPU/BLASPrimTraits.h
+    Device/CPU/InstanceSpatialTraits.h
     Device/CPU/TLAS.h
     Device/CPU/TLAS.cpp
     Device/CPU/BVH/BVH.h
@@ -165,7 +166,7 @@ set(DEVICE_CPU_FILES
     Device/CPU/BVH/TopDownBuilder.h
     Device/CPU/BVH/SAHBuilder.h
     Device/CPU/BVH/MedianSplitBuilder.h
-    Device/CPU/BVH/PrimTraits.h
+    Device/CPU/BVH/SpatialTraits.h
 )
 
 if(APPLE)

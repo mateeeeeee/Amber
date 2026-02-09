@@ -1,15 +1,27 @@
 #pragma once
+#include <vector>
 #include "BLAS.h"
 #include "BVH/BVH.h"
+#include "RayFlags.h"
 
 namespace amber
 {
-	struct TLAS
+	struct BLASInstance
 	{
-		BVH   bvh;
-		BLAS* blas_list  = nullptr;
-		Uint32 blas_count = 0;
+		BLAS const* blas         = nullptr;
+		Matrix      inv_transform;
+		AABB        world_bounds;
+		Uint32      instance_id  = 0;
+		Uint8       mask         = 0xFF;
+		RayGeometryFlags flags   = RayGeometryFlags::Opaque;
 	};
 
+	struct TLAS
+	{
+		BVH                      bvh;
+		std::vector<BLASInstance> instances;
+	};
+
+	Bool Intersect(BLASInstance const& instance, Uint32 instance_idx, Ray& ray, HitInfo& hit);
 	Bool Intersect(TLAS const& tlas, Ray& ray, HitInfo& hit);
 }

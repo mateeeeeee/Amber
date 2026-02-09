@@ -1,5 +1,5 @@
 #include "AccelerationStructure.h"
-#include "BLASPrimTraits.h"
+#include "InstanceSpatialTraits.h"
 #include "BVH/SAHBuilder.h"
 #include "BVH/MedianSplitBuilder.h"
 
@@ -36,23 +36,47 @@ namespace amber
 
 	void BuildTLAS(TLAS& tlas, BLAS* blas_list, Uint32 blas_count, TLASBuildInput const& input)
 	{
-		tlas.blas_list  = blas_list;
-		tlas.blas_count = blas_count;
-		if (blas_count == 0)
+		if (input.instance_count == 0)
 		{
 			return;
 		}
 
-		std::span<BLAS const> blas_span(blas_list, blas_count);
+		tlas.instances.resize(input.instance_count);
+		for (Uint32 i = 0; i < input.instance_count; i++)
+		{
+			InstanceDesc const& desc = input.instances[i];
+			BLAS const& blas = blas_list[desc.blas_index];
+
+			BLASInstance& inst    = tlas.instances[i];
+			inst.blas         = &blas;
+			inst.inv_transform = desc.transform.Inverse();
+			inst.instance_id  = desc.instance_id;
+			inst.mask         = desc.mask;
+			inst.flags        = desc.flags;
+
+			Vector3 bmin = blas.bvh.nodes[0].aabb_min;
+			Vector3 bmax = blas.bvh.nodes[0].aabb_max;
+			inst.world_bounds = AABB();
+			for (Int j = 0; j < 8; j++)
+			{
+				Vector3 corner(
+					(j & 1) ? bmax.x : bmin.x,
+					(j & 2) ? bmax.y : bmin.y,
+					(j & 4) ? bmax.z : bmin.z
+				);
+				inst.world_bounds.Grow(Vector3::Transform(corner, desc.transform));
+			}
+		}
+
 		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
 		{
-			TopDownBuilder<BLAS, MedianSplitPolicy> builder;
-			builder.Build(tlas.bvh, blas_span);
+			TopDownBuilder<BLASInstance, MedianSplitPolicy> builder;
+			builder.Build(tlas.bvh, tlas.instances);
 		}
 		else
 		{
-			TopDownBuilder<BLAS, BinnedSAHPolicy> builder;
-			builder.Build(tlas.bvh, blas_span);
+			TopDownBuilder<BLASInstance, BinnedSAHPolicy> builder;
+			builder.Build(tlas.bvh, tlas.instances);
 		}
 	}
 }

@@ -16,7 +16,7 @@ namespace amber
 		Timer<std::chrono::milliseconds> timer;
 		BuildAccelerationStructures();
 		AMBER_INFO_LOG("Built acceleration structures in %lldms", timer.Elapsed());
-		AMBER_INFO_LOG("CPU PathTracer initialized with %u triangles, %zu BLAS instances", triangle_count, blas_list.size());
+		AMBER_INFO_LOG("CPU PathTracer initialized with %u triangles, %zu unique BLASes", triangle_count, blas_list.size());
 	}
 
 	CpuPathTracer::~CpuPathTracer()
@@ -60,28 +60,22 @@ namespace amber
 		instance_descs.reserve(scene->instances.size());
 		for (Uint32 i = 0; i < static_cast<Uint32>(scene->instances.size()); i++)
 		{
-			Instance const& instance = scene->instances[i];
+			amber::Instance const& scene_instance = scene->instances[i];
 			InstanceDesc desc{};
-			desc.transform   = instance.transform;
-			desc.blas_index  = blas_by_geom_id[instance.mesh_id];
+			desc.transform   = scene_instance.transform;
+			desc.blas_index  = blas_by_geom_id[scene_instance.mesh_id];
 			desc.instance_id = i;
 			instance_descs.push_back(desc);
 		}
 
-		blas_list.reserve(instance_descs.size());
-		for (InstanceDesc const& desc : instance_descs)
-		{
-			BLAS blas_copy = flat_blas[desc.blas_index];
-			blas_copy.SetTransform(desc.transform);
-			blas_list.push_back(std::move(blas_copy));
-		}
+		blas_list = std::move(flat_blas);
 
 		TLASBuildInput tlas_input{};
 		tlas_input.instances      = instance_descs.data();
 		tlas_input.instance_count = static_cast<Uint32>(instance_descs.size());
 		tlas_input.flags          = BuildFlags::PreferFastTrace;
 
-		AMBER_INFO_LOG("Building TLAS over %zu BLAS instances...", blas_list.size());
+		AMBER_INFO_LOG("Building TLAS over %zu instances...", instance_descs.size());
 		BuildTLAS(tlas, blas_list.data(), static_cast<Uint32>(blas_list.size()), tlas_input);
 	}
 
@@ -135,12 +129,12 @@ namespace amber
 							HitInfo hit;
 							if (Intersect(tlas, ray, hit))
 							{
-								BLAS const& hit_blas = blas_list[hit.blas_idx];
-								Triangle const& tri = hit_blas.triangles[hit.tri_idx];
+								BLASInstance const& hit_instance = tlas.instances[hit.instance_idx];
+								Triangle const& tri = hit_instance.blas->triangles[hit.tri_idx];
 								Vector3 e1 = tri.v1 - tri.v0;
 								Vector3 e2 = tri.v2 - tri.v0;
 								Vector3 local_normal = Vector3::Cross(e1, e2).Normalized();
-								Vector3 normal = TransformDirection(local_normal, hit_blas.inv_transform).Normalized();
+								Vector3 normal = TransformDirection(local_normal, hit_instance.inv_transform).Normalized();
 
 								RGBA8 color = RGBA8::FromFloat(
 									normal.x * 0.5f + 0.5f,

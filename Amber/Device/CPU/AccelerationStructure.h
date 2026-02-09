@@ -1,18 +1,10 @@
 #pragma once
 #include "BLAS.h"
 #include "TLAS.h"
-#include "Utilities/EnumUtil.h"
+#include "RayFlags.h"
 
 namespace amber
 {
-	enum class RayGeometryFlags : Uint8
-	{
-		None              = 0,
-		Opaque            = 1 << 0,
-		NoDuplicateAnyHit = 1 << 1,
-	};
-	ENABLE_ENUM_BIT_OPERATORS(RayGeometryFlags);
-
 	enum class BuildFlags : Uint8
 	{
 		None            = 0,
