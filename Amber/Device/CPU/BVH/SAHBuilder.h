@@ -21,7 +21,7 @@ namespace amber
 				Float cmin = BVH_INFINITY, cmax = -BVH_INFINITY;
 				for (Uint32 i = 0; i < node.tri_count; i++)
 				{
-					Float c = Traits::GetCentroid(nodes[bvh.tri_indices[node.left_first + i]], axis);
+					Float c = Traits::GetCentroid(nodes[bvh.prim_indices[node.left_first + i]], axis);
 					cmin = std::min(cmin, c);
 					cmax = std::max(cmax, c);
 				}
@@ -34,7 +34,7 @@ namespace amber
 				Float scale = NUM_BINS / (cmax - cmin);
 				for (Uint32 i = 0; i < node.tri_count; i++)
 				{
-					NodeT const& n = nodes[bvh.tri_indices[node.left_first + i]];
+					NodeT const& n = nodes[bvh.prim_indices[node.left_first + i]];
 					Float c = Traits::GetCentroid(n, axis);
 					Int bin_idx = std::min(static_cast<Int>((c - cmin) * scale), NUM_BINS - 1);
 					bins[bin_idx].count++;
@@ -103,7 +103,7 @@ namespace amber
 
 			for (Int axis = 0; axis < 3; axis++)
 			{
-				for (Uint32 i = 0; i < count; i++) sorted[i] = bvh.tri_indices[node.left_first + i];
+				for (Uint32 i = 0; i < count; i++) sorted[i] = bvh.prim_indices[node.left_first + i];
 				std::sort(sorted.begin(), sorted.end(), [&](Uint32 a, Uint32 b)
 				{
 					return Traits::GetCentroid(nodes[a], axis) < Traits::GetCentroid(nodes[b], axis);

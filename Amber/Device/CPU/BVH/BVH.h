@@ -17,12 +17,7 @@ namespace amber
 	struct BVH
 	{
 		std::vector<BVHNode> nodes;
-		std::vector<Uint32> tri_indices;
-		Uint32 nodes_used = 0;
-		std::vector<Triangle> const* triangles = nullptr;
+		std::vector<Uint32>  prim_indices;
+		Uint32               nodes_used = 0;
 	};
-
-	Bool Intersect(BVH const& bvh, Ray const& ray, HitInfo& hit);
-	Bool IntersectRecursive(BVH const& bvh, Ray const& ray, HitInfo& hit);
-	void Refit(BVH& bvh);
 }

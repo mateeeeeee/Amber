@@ -8,11 +8,9 @@ namespace amber
 	{
 		BVH bvh;
 		std::vector<Triangle> triangles;
-
-		BLAS() = default;
-		BLAS(BLAS const& other);
-		BLAS(BLAS&& other) noexcept;
-		BLAS& operator=(BLAS const& other);
-		BLAS& operator=(BLAS&& other) noexcept;
 	};
+
+	Bool Intersect(BLAS const& blas, Ray& ray, HitInfo& hit);
+	Bool IntersectRecursive(BLAS const& blas, Ray const& ray, HitInfo& hit);
+	void Refit(BLAS& blas);
 }

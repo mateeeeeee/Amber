@@ -31,10 +31,10 @@ namespace amber
 				return;
 			}
 
-			bvh.tri_indices.resize(node_count);
+			bvh.prim_indices.resize(node_count);
 			for (Uint32 i = 0; i < node_count; i++)
 			{
-				bvh.tri_indices[i] = i;
+				bvh.prim_indices[i] = i;
 			}
 
 			bvh.nodes.resize(node_count * 2 - 1);
@@ -54,7 +54,7 @@ namespace amber
 			AABB box{};
 			for (Uint32 i = 0; i < node.tri_count; i++)
 			{
-				Uint32 idx = bvh.tri_indices[node.left_first + i];
+				Uint32 idx = bvh.prim_indices[node.left_first + i];
 				Traits::GrowBounds(box, nodes[idx]);
 			}
 			node.aabb_min = box.min;
@@ -80,14 +80,14 @@ namespace amber
 			Int j = i + static_cast<Int>(node.tri_count) - 1;
 			while (i <= j)
 			{
-				Float centroid = Traits::GetCentroid(nodes[bvh.tri_indices[i]], split->axis);
+				Float centroid = Traits::GetCentroid(nodes[bvh.prim_indices[i]], split->axis);
 				if (centroid < split->pos)
 				{
 					i++;
 				}
 				else
 				{
-					std::swap(bvh.tri_indices[i], bvh.tri_indices[j]);
+					std::swap(bvh.prim_indices[i], bvh.prim_indices[j]);
 					j--;
 				}
 			}

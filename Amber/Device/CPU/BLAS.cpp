@@ -1,38 +1,146 @@
 #include "BLAS.h"
+#include "Utilities/Stack.h"
+#include <algorithm>
 
 namespace amber
 {
-	BLAS::BLAS(BLAS const& other)
-		: bvh(other.bvh), triangles(other.triangles)
+	static void IntersectRecursiveImpl(BVH const& bvh, std::vector<Triangle> const& triangles, Ray const& ray, Uint32 node_idx, HitInfo& hit, Bool& found)
 	{
-		bvh.triangles = &triangles;
-	}
-
-	BLAS::BLAS(BLAS&& other) noexcept
-		: bvh(std::move(other.bvh)), triangles(std::move(other.triangles))
-	{
-		bvh.triangles = &triangles;
-	}
-
-	BLAS& BLAS::operator=(BLAS const& other)
-	{
-		if (this != &other)
+		BVHNode const& node = bvh.nodes[node_idx];
+		if (IntersectAABB(ray, node.aabb_min, node.aabb_max) == BVH_INFINITY)
 		{
-			bvh = other.bvh;
-			triangles = other.triangles;
-			bvh.triangles = &triangles;
+			return;
 		}
-		return *this;
+
+		if (node.IsLeaf())
+		{
+			for (Uint32 i = 0; i < node.tri_count; i++)
+			{
+				Uint32 tri_idx = bvh.prim_indices[node.left_first + i];
+				Triangle const& tri = triangles[tri_idx];
+				HitInfo temp_hit;
+				if (IntersectTriangle(ray, tri, temp_hit) && temp_hit.t < hit.t)
+				{
+					hit         = temp_hit;
+					hit.tri_idx = tri_idx;
+					found       = true;
+				}
+			}
+		}
+		else
+		{
+			IntersectRecursiveImpl(bvh, triangles, ray, node.left_first,     hit, found);
+			IntersectRecursiveImpl(bvh, triangles, ray, node.left_first + 1, hit, found);
+		}
 	}
 
-	BLAS& BLAS::operator=(BLAS&& other) noexcept
+	Bool IntersectRecursive(BLAS const& blas, Ray const& ray, HitInfo& hit)
 	{
-		if (this != &other)
+		if (blas.bvh.nodes.empty())
 		{
-			bvh = std::move(other.bvh);
-			triangles = std::move(other.triangles);
-			bvh.triangles = &triangles;
+			return false;
 		}
-		return *this;
+		Bool found = false;
+		IntersectRecursiveImpl(blas.bvh, blas.triangles, ray, 0, hit, found);
+		return found;
+	}
+
+	Bool Intersect(BLAS const& blas, Ray& ray, HitInfo& hit)
+	{
+		if (blas.bvh.nodes.empty())
+		{
+			return false;
+		}
+
+		BVHNode const* node = &blas.bvh.nodes[0];
+		SmallStack<BVHNode const*, 64> stack;
+		Bool found = false;
+
+		while (true)
+		{
+			if (node->IsLeaf())
+			{
+				for (Uint32 i = 0; i < node->tri_count; i++)
+				{
+					Uint32 tri_idx = blas.bvh.prim_indices[node->left_first + i];
+					Triangle const& tri = blas.triangles[tri_idx];
+					HitInfo temp_hit;
+					if (IntersectTriangle(ray, tri, temp_hit) && temp_hit.t < hit.t)
+					{
+						hit         = temp_hit;
+						hit.tri_idx = tri_idx;
+						ray.t       = hit.t;
+						found       = true;
+					}
+				}
+				if (stack.IsEmpty()) break;
+				node = stack.Pop();
+				continue;
+			}
+
+			BVHNode const* child1 = &blas.bvh.nodes[node->left_first];
+			BVHNode const* child2 = &blas.bvh.nodes[node->left_first + 1];
+			Float dist1 = IntersectAABB(ray, child1->aabb_min, child1->aabb_max);
+			Float dist2 = IntersectAABB(ray, child2->aabb_min, child2->aabb_max);
+
+			if (dist1 > dist2)
+			{
+				std::swap(dist1, dist2);
+				std::swap(child1, child2);
+			}
+
+			if (dist1 == BVH_INFINITY)
+			{
+				if (stack.IsEmpty()) break;
+				node = stack.Pop();
+			}
+			else
+			{
+				node = child1;
+				if (dist2 != BVH_INFINITY) stack.Push(child2);
+			}
+		}
+
+		return found;
+	}
+
+	void Refit(BLAS& blas)
+	{
+		for (Int i = static_cast<Int>(blas.bvh.nodes_used) - 1; i >= 0; i--)
+		{
+			if (i == 1)
+			{
+				continue;
+			}
+
+			BVHNode& node = blas.bvh.nodes[i];
+			if (node.IsLeaf())
+			{
+				node.aabb_min = Vector3(BVH_INFINITY, BVH_INFINITY, BVH_INFINITY);
+				node.aabb_max = Vector3(-BVH_INFINITY, -BVH_INFINITY, -BVH_INFINITY);
+				for (Uint32 j = 0; j < node.tri_count; j++)
+				{
+					Uint32 tri_idx = blas.bvh.prim_indices[node.left_first + j];
+					Triangle const& tri = blas.triangles[tri_idx];
+					node.aabb_min.x = std::min(node.aabb_min.x, std::min(tri.v0.x, std::min(tri.v1.x, tri.v2.x)));
+					node.aabb_min.y = std::min(node.aabb_min.y, std::min(tri.v0.y, std::min(tri.v1.y, tri.v2.y)));
+					node.aabb_min.z = std::min(node.aabb_min.z, std::min(tri.v0.z, std::min(tri.v1.z, tri.v2.z)));
+					node.aabb_max.x = std::max(node.aabb_max.x, std::max(tri.v0.x, std::max(tri.v1.x, tri.v2.x)));
+					node.aabb_max.y = std::max(node.aabb_max.y, std::max(tri.v0.y, std::max(tri.v1.y, tri.v2.y)));
+					node.aabb_max.z = std::max(node.aabb_max.z, std::max(tri.v0.z, std::max(tri.v1.z, tri.v2.z)));
+				}
+			}
+			else
+			{
+				BVHNode const& left  = blas.bvh.nodes[node.left_first];
+				BVHNode const& right = blas.bvh.nodes[node.left_first + 1];
+				node.aabb_min.x = std::min(left.aabb_min.x, right.aabb_min.x);
+				node.aabb_min.y = std::min(left.aabb_min.y, right.aabb_min.y);
+				node.aabb_min.z = std::min(left.aabb_min.z, right.aabb_min.z);
+				node.aabb_max.x = std::max(left.aabb_max.x, right.aabb_max.x);
+				node.aabb_max.y = std::max(left.aabb_max.y, right.aabb_max.y);
+				node.aabb_max.z = std::max(left.aabb_max.z, right.aabb_max.z);
+			}
+		}
 	}
 }

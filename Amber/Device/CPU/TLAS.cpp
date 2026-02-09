@@ -18,7 +18,7 @@ namespace amber
 		local_ray.inv_direction.z = 1.0f / local_ray.direction.z;
 		local_ray.t = ray.t;
 
-		Bool found = amber::Intersect(instance.blas->bvh, local_ray, hit);
+		Bool found = amber::Intersect(*instance.blas, local_ray, hit);
 		if (found)
 		{
 			ray.t            = hit.t;
@@ -45,7 +45,7 @@ namespace amber
 			{
 				for (Uint32 i = 0; i < node->tri_count; i++)
 				{
-					Uint32 instance_idx = tlas.bvh.tri_indices[node->left_first + i];
+					Uint32 instance_idx = tlas.bvh.prim_indices[node->left_first + i];
 					if (amber::Intersect(tlas.instances[instance_idx], instance_idx, ray, hit))
 					{
 						found = true;
