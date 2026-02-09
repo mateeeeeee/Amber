@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <span>
 #include "BVH.h"
 #include "PrimTraits.h"
 
@@ -22,7 +23,7 @@ namespace amber
 	{
 		using Traits = PrimTraits<PrimitiveT>;
 	public:
-		void Build(BVH& bvh, std::vector<PrimitiveT> const& prims)
+		void Build(BVH& bvh, std::span<PrimitiveT const> prims)
 		{
 			Uint32 prim_count = static_cast<Uint32>(prims.size());
 			if (prim_count == 0)

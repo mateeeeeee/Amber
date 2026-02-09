@@ -43,16 +43,16 @@ namespace amber
 			return;
 		}
 
-		std::vector<BLAS> blas_vec(blas_list, blas_list + blas_count);
+		std::span<BLAS const> blas_span(blas_list, blas_count);
 		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
 		{
 			TopDownBuilder<BLAS, MedianSplitPolicy> builder;
-			builder.Build(tlas.bvh, blas_vec);
+			builder.Build(tlas.bvh, blas_span);
 		}
 		else
 		{
 			TopDownBuilder<BLAS, BinnedSAHPolicy> builder;
-			builder.Build(tlas.bvh, blas_vec);
+			builder.Build(tlas.bvh, blas_span);
 		}
 	}
 }
