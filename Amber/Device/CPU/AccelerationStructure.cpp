@@ -75,7 +75,7 @@ namespace amber
 		}
 		else
 		{
-			TopDownBuilder<BLASInstance, BinnedSAHPolicy> builder;
+			TopDownBuilder<BLASInstance, SweepSAHPolicy> builder;
 			builder.Build(tlas.bvh, tlas.instances);
 		}
 	}

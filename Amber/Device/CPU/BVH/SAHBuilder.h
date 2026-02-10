@@ -19,7 +19,7 @@ namespace amber
 			for (Int axis = 0; axis < 3; axis++)
 			{
 				Float cmin = BVH_INFINITY, cmax = -BVH_INFINITY;
-				for (Uint32 i = 0; i < node.tri_count; i++)
+				for (Uint32 i = 0; i < node.prim_count; i++)
 				{
 					Float c = Traits::GetCentroid(nodes[bvh.prim_indices[node.left_first + i]], axis);
 					cmin = std::min(cmin, c);
@@ -32,7 +32,7 @@ namespace amber
 				Bin bins[NUM_BINS];
 
 				Float scale = NUM_BINS / (cmax - cmin);
-				for (Uint32 i = 0; i < node.tri_count; i++)
+				for (Uint32 i = 0; i < node.prim_count; i++)
 				{
 					NodeT const& n = nodes[bvh.prim_indices[node.left_first + i]];
 					Float c = Traits::GetCentroid(n, axis);
@@ -73,7 +73,7 @@ namespace amber
 
 			Vector3 extent      = node.aabb_max - node.aabb_min;
 			Float   parent_area = extent.x * extent.y + extent.y * extent.z + extent.z * extent.x;
-			Float   parent_cost = node.tri_count * parent_area;
+			Float   parent_cost = node.prim_count * parent_area;
 			if (best_axis == -1 || best_cost >= parent_cost)
 			{
 				return std::nullopt;
@@ -96,7 +96,7 @@ namespace amber
 			Float best_pos  = 0.0f;
 			Float best_cost = BVH_INFINITY;
 
-			Uint32 count = node.tri_count;
+			Uint32 count = node.prim_count;
 
 			std::vector<Uint32> sorted(count);
 			std::vector<AABB>   right_bounds(count);
@@ -135,7 +135,7 @@ namespace amber
 
 			Vector3 extent      = node.aabb_max - node.aabb_min;
 			Float   parent_area = extent.x * extent.y + extent.y * extent.z + extent.z * extent.x;
-			Float   parent_cost = node.tri_count * parent_area;
+			Float   parent_cost = node.prim_count * parent_area;
 			if (best_axis == -1 || best_cost >= parent_cost)
 			{
 				return std::nullopt;

@@ -14,7 +14,7 @@ namespace amber
 
 		if (node.IsLeaf())
 		{
-			for (Uint32 i = 0; i < node.tri_count; i++)
+			for (Uint32 i = 0; i < node.prim_count; i++)
 			{
 				Uint32 tri_idx = bvh.prim_indices[node.left_first + i];
 				Triangle const& tri = triangles[tri_idx];
@@ -60,7 +60,7 @@ namespace amber
 		{
 			if (node->IsLeaf())
 			{
-				for (Uint32 i = 0; i < node->tri_count; i++)
+				for (Uint32 i = 0; i < node->prim_count; i++)
 				{
 					Uint32 tri_idx = blas.bvh.prim_indices[node->left_first + i];
 					Triangle const& tri = blas.triangles[tri_idx];
@@ -118,7 +118,7 @@ namespace amber
 			{
 				node.aabb_min = Vector3(BVH_INFINITY, BVH_INFINITY, BVH_INFINITY);
 				node.aabb_max = Vector3(-BVH_INFINITY, -BVH_INFINITY, -BVH_INFINITY);
-				for (Uint32 j = 0; j < node.tri_count; j++)
+				for (Uint32 j = 0; j < node.prim_count; j++)
 				{
 					Uint32 tri_idx = blas.bvh.prim_indices[node.left_first + j];
 					Triangle const& tri = blas.triangles[tri_idx];

@@ -160,7 +160,6 @@ set(DEVICE_CPU_FILES
     Device/CPU/TLAS.h
     Device/CPU/TLAS.cpp
     Device/CPU/BVH/BVH.h
-    Device/CPU/BVH/BVH.cpp
     Device/CPU/BVH/Primitives.h
     Device/CPU/BVH/Intersection.h
     Device/CPU/BVH/TopDownBuilder.h

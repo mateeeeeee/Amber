@@ -42,7 +42,7 @@ namespace amber
 
 			BVHNode& root = bvh.nodes[0];
 			root.left_first = 0;
-			root.tri_count  = node_count;
+			root.prim_count  = node_count;
 			UpdateNodeBounds(bvh, nodes.data(), 0);
 			Subdivide(bvh, nodes.data(), 0);
 		}
@@ -52,7 +52,7 @@ namespace amber
 		{
 			BVHNode& node = bvh.nodes[node_idx];
 			AABB box{};
-			for (Uint32 i = 0; i < node.tri_count; i++)
+			for (Uint32 i = 0; i < node.prim_count; i++)
 			{
 				Uint32 idx = bvh.prim_indices[node.left_first + i];
 				Traits::GrowBounds(box, nodes[idx]);
@@ -64,7 +64,7 @@ namespace amber
 		void Subdivide(BVH& bvh, NodeT const* nodes, Uint32 node_idx)
 		{
 			BVHNode& node = bvh.nodes[node_idx];
-			if (node.tri_count <= 2)
+			if (node.prim_count <= 2)
 			{
 				return;
 			}
@@ -77,7 +77,7 @@ namespace amber
 
 			Uint32 first_idx = node.left_first;
 			Int i = static_cast<Int>(first_idx);
-			Int j = i + static_cast<Int>(node.tri_count) - 1;
+			Int j = i + static_cast<Int>(node.prim_count) - 1;
 			while (i <= j)
 			{
 				Float centroid = Traits::GetCentroid(nodes[bvh.prim_indices[i]], split->axis);
@@ -93,7 +93,7 @@ namespace amber
 			}
 
 			Uint32 left_count = static_cast<Uint32>(i) - first_idx;
-			if (left_count == 0 || left_count == node.tri_count)
+			if (left_count == 0 || left_count == node.prim_count)
 			{
 				return;
 			}
@@ -102,12 +102,12 @@ namespace amber
 			Uint32 right_child_idx = bvh.nodes_used++;
 
 			bvh.nodes[left_child_idx].left_first  = first_idx;
-			bvh.nodes[left_child_idx].tri_count   = left_count;
+			bvh.nodes[left_child_idx].prim_count   = left_count;
 			bvh.nodes[right_child_idx].left_first = static_cast<Uint32>(i);
-			bvh.nodes[right_child_idx].tri_count  = node.tri_count - left_count;
+			bvh.nodes[right_child_idx].prim_count  = node.prim_count - left_count;
 
 			node.left_first = left_child_idx;
-			node.tri_count  = 0;
+			node.prim_count  = 0;
 
 			UpdateNodeBounds(bvh, nodes, left_child_idx);
 			UpdateNodeBounds(bvh, nodes, right_child_idx);

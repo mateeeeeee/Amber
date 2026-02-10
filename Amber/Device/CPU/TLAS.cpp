@@ -43,7 +43,7 @@ namespace amber
 		{
 			if (node->IsLeaf())
 			{
-				for (Uint32 i = 0; i < node->tri_count; i++)
+				for (Uint32 i = 0; i < node->prim_count; i++)
 				{
 					Uint32 instance_idx = tlas.bvh.prim_indices[node->left_first + i];
 					if (amber::Intersect(tlas.instances[instance_idx], instance_idx, ray, hit))

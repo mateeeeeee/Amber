@@ -9,9 +9,9 @@ namespace amber
 		Vector3 aabb_min;
 		Vector3 aabb_max;
 		Uint32 left_first;
-		Uint32 tri_count;
+		Uint32 prim_count;
 
-		Bool IsLeaf() const { return tri_count > 0; }
+		Bool IsLeaf() const { return prim_count > 0; }
 	};
 
 	struct BVH
