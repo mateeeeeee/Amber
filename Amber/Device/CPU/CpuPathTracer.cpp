@@ -1,4 +1,5 @@
 #include "CpuPathTracer.h"
+#include "Sampler.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Core/Log.h"
@@ -32,8 +33,9 @@ namespace amber
 
 		for (Mesh const& mesh : scene->meshes)
 		{
-			for (Geometry const& geom : mesh.geometries)
+			for (Uint32 g = 0; g < static_cast<Uint32>(mesh.geometries.size()); g++)
 			{
+				Geometry const& geom = mesh.geometries[g];
 				Uint32 blas_idx = static_cast<Uint32>(flat_blas.size());
 				blas_by_geom_id.push_back(blas_idx);
 
@@ -53,6 +55,8 @@ namespace amber
 				BuildBLAS(blas, build_input);
 				triangle_count += static_cast<Uint32>(blas.triangles.size());
 				flat_blas.push_back(std::move(blas));
+				blas_geometries.push_back(&geom);
+				blas_material_ids.push_back(mesh.material_ids.empty() ? 0 : mesh.material_ids[g]);
 			}
 		}
 
@@ -129,19 +133,57 @@ namespace amber
 							HitInfo hit;
 							if (Intersect(tlas, ray, hit))
 							{
-								BLASInstance const& hit_instance = tlas.instances[hit.instance_idx];
-								Triangle const& tri = hit_instance.blas->triangles[hit.tri_idx];
-								Vector3 e1 = tri.v1 - tri.v0;
-								Vector3 e2 = tri.v2 - tri.v0;
-								Vector3 local_normal = Vector3::Cross(e1, e2).Normalized();
-								Vector3 normal = TransformDirection(local_normal, hit_instance.inv_transform).Normalized();
+								BLASInstance const& inst = tlas.instances[hit.instance_idx];
+								Uint32 blas_idx = static_cast<Uint32>(inst.blas - blas_list.data());
+								Geometry const& geom = *blas_geometries[blas_idx];
 
-								RGBA8 color = RGBA8::FromFloat(
-									normal.x * 0.5f + 0.5f,
-									normal.y * 0.5f + 0.5f,
-									normal.z * 0.5f + 0.5f
-								);
-								framebuffer(y, x) = color;
+								Uint32 face = inst.blas->face_indices[hit.tri_idx];
+								Vector3u const& vidx = geom.indices[face];
+
+								Float bw = 1.0f - hit.u - hit.v;
+
+								// Normal
+								Vector3 normal;
+								if (!geom.normals.empty())
+								{
+									Vector3 local_normal = (geom.normals[vidx.x] * bw + geom.normals[vidx.y] * hit.u + geom.normals[vidx.z] * hit.v).Normalized();
+									normal = TransformDirection(local_normal, inst.inv_transform).Normalized();
+								}
+								else
+								{
+									Triangle const& tri = inst.blas->triangles[hit.tri_idx];
+									Vector3 local_normal = Vector3::Cross(tri.v1 - tri.v0, tri.v2 - tri.v0).Normalized();
+									normal = TransformDirection(local_normal, inst.inv_transform).Normalized();
+								}
+
+								// UV
+								Vector2 uv(0.0f, 0.0f);
+								if (!geom.uvs.empty())
+								{
+									uv = geom.uvs[vidx.x] * bw + geom.uvs[vidx.y] * hit.u + geom.uvs[vidx.z] * hit.v;
+								}
+
+								// Material + diffuse texture
+								Uint32 mat_id = blas_material_ids[blas_idx];
+								Vector3 albedo(0.9f, 0.9f, 0.9f);
+								if (mat_id < static_cast<Uint32>(scene->materials.size()))
+								{
+									Material const& mat = scene->materials[mat_id];
+									albedo = mat.base_color;
+									if (mat.diffuse_tex_id >= 0 && !geom.uvs.empty())
+									{
+										static const Sampler sampler{};
+										Vector4 texel = sampler.Sample(scene->textures[mat.diffuse_tex_id], uv);
+										albedo = Vector3(texel.x, texel.y, texel.z) * mat.base_color;
+									}
+								}
+
+								// Simple N·L shading with fixed light direction
+								static const Vector3 light_dir = Vector3(0.5f, 1.0f, 0.5f).Normalized();
+								Float ndotl = std::max(0.0f, normal.Dot(light_dir));
+								Vector3 shaded = albedo * (ndotl * 0.8f + 0.2f); // 0.2 ambient
+
+								framebuffer(y, x) = RGBA8::FromFloat(shaded.x, shaded.y, shaded.z);
 							}
 							else
 							{

@@ -49,12 +49,14 @@ namespace amber
 
 		Vector3 operator+(Vector3 const& v) const { return Vector3(x + v.x, y + v.y, z + v.z); }
 		Vector3 operator-(Vector3 const& v) const { return Vector3(x - v.x, y - v.y, z - v.z); }
+		Vector3 operator*(Vector3 const& v) const { return Vector3(x * v.x, y * v.y, z * v.z); }
 		Vector3 operator*(Float s) const { return Vector3(x * s, y * s, z * s); }
 		Vector3 operator/(Float s) const { return Vector3(x / s, y / s, z / s); }
 		Vector3 operator-() const { return Vector3(-x, -y, -z); }
 
 		Vector3& operator+=(Vector3 const& v) { x += v.x; y += v.y; z += v.z; return *this; }
 		Vector3& operator-=(Vector3 const& v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
+		Vector3& operator*=(Vector3 const& v) { x *= v.x; y *= v.y; z *= v.z; return *this; }
 		Vector3& operator*=(Float s) { x *= s; y *= s; z *= s; return *this; }
 		Vector3& operator/=(Float s) { x /= s; y /= s; z /= s; return *this; }
 

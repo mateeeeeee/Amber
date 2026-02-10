@@ -8,6 +8,7 @@ namespace amber
 	void BuildBLAS(BLAS& blas, BLASBuildInput const& input)
 	{
 		blas.triangles.clear();
+		blas.face_indices.clear();
 		for (Uint32 g = 0; g < input.geometry_count; g++)
 		{
 			GeometryDesc const& geom = input.geometries[g];
@@ -19,6 +20,7 @@ namespace amber
 				tri.v1 = geom.vertices[idx.y];
 				tri.v2 = geom.vertices[idx.z];
 				tri.centroid = (tri.v0 + tri.v1 + tri.v2) * (1.0f / 3.0f);
+				blas.face_indices.push_back(i);
 			}
 		}
 

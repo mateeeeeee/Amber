@@ -7,7 +7,8 @@ namespace amber
 	struct BLAS
 	{
 		BVH bvh;
-		std::vector<Triangle> triangles;
+		std::vector<Triangle>  triangles;
+		std::vector<Uint32>    face_indices;
 	};
 
 	Bool Intersect(BLAS const& blas, Ray& ray, HitInfo& hit);

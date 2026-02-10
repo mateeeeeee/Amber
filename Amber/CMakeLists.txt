@@ -151,6 +151,8 @@ set(EXTERNAL_FILES
 set(DEVICE_CPU_FILES
     Device/CPU/CpuPathTracer.h
     Device/CPU/CpuPathTracer.cpp
+    Device/CPU/Sampler.h
+    Device/CPU/Sampler.cpp
     Device/CPU/AccelerationStructure.h
     Device/CPU/AccelerationStructure.cpp
     Device/CPU/RayFlags.h
