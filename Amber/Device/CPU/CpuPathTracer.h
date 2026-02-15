@@ -51,7 +51,8 @@ namespace amber
 		std::vector<BLAS>              blas_list;
 		std::vector<Geometry const*>   blas_geometries;  
 		std::vector<Uint32>            blas_material_ids; 
-		std::vector<Texture>           textures;       
+		std::vector<Texture>           textures;
+		Texture                        env_texture;
 		TLAS tlas;
 		Uint triangle_count = 0;
 

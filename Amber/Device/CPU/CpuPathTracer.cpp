@@ -9,6 +9,28 @@
 
 namespace amber
 {
+	static Vector3 SampleEnvironment(Texture const& env, Vector3 const& dir)
+	{
+		if (!env.data)
+		{
+			return Vector3(25.0f / 255.0f, 25.0f / 255.0f, 25.0f / 255.0f);
+		}
+		Float u = std::atan2(dir.z, dir.x) / (2.0f * M_PI) + 0.5f;
+		Float v = 1.0f - (std::asin(std::clamp(dir.y, -1.0f, 1.0f)) / M_PI + 0.5f);
+		return BilinearClamp.Sample<Vector3>(env, Vector2(u, v));
+	}
+
+	static RGBA8 ToDisplay(Vector3 c)
+	{
+		c.x = c.x / (1.0f + c.x);
+		c.y = c.y / (1.0f + c.y);
+		c.z = c.z / (1.0f + c.z);
+		c.x = std::pow(c.x, 1.0f / 2.2f);
+		c.y = std::pow(c.y, 1.0f / 2.2f);
+		c.z = std::pow(c.z, 1.0f / 2.2f);
+		return RGBA8::FromFloat(c.x, c.y, c.z);
+	}
+
 	CpuPathTracer::CpuPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& _scene)
 		: width(width), height(height), scene(std::move(_scene)), framebuffer(height, width)
 	{
@@ -91,6 +113,15 @@ namespace amber
 			tex.height = static_cast<Uint32>(img.GetHeight());
 			tex.format = img.IsSRGB() ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
 			textures.push_back(tex);
+		}
+
+		if (scene->environment)
+		{
+			Image const& env = *scene->environment;
+			env_texture.data   = env.GetData();
+			env_texture.width  = static_cast<Uint32>(env.GetWidth());
+			env_texture.height = static_cast<Uint32>(env.GetHeight());
+			env_texture.format = env.IsSRGB() ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
 		}
 	}
 
@@ -192,11 +223,12 @@ namespace amber
 								Float ndotl = std::max(0.0f, normal.Dot(light_dir));
 								Vector3 shaded = albedo * (ndotl * 0.6f + 0.4f); // 0.4 ambient
 
-								framebuffer(y, x) = RGBA8::FromFloat(shaded.x, shaded.y, shaded.z);
+								framebuffer(y, x) = ToDisplay(shaded);
 							}
 							else
 							{
-								framebuffer(y, x) = RGBA8(25, 25, 25, 255);
+								Vector3 env = SampleEnvironment(env_texture, direction);
+								framebuffer(y, x) = ToDisplay(env);
 							}
 						}
 					}
