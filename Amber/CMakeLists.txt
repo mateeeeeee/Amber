@@ -153,6 +153,7 @@ set(DEVICE_CPU_FILES
     Device/CPU/CpuPathTracer.cpp
     Device/CPU/Sampler.h
     Device/CPU/Sampler.cpp
+    Device/CPU/Texture.h
     Device/CPU/AccelerationStructure.h
     Device/CPU/AccelerationStructure.cpp
     Device/CPU/RayFlags.h

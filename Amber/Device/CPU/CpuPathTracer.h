@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include "Device/PathTracer.h"
 #include "Device/CPU/AccelerationStructure.h"
+#include "Device/CPU/Texture.h"
 #include "Utilities/ThreadPool.h"
 #include "Utilities/Timer.h"
 #include "Scene/Mesh.h"
@@ -48,8 +49,9 @@ namespace amber
 		CpuBuffer2D<RGBA8> framebuffer;
 
 		std::vector<BLAS>              blas_list;
-		std::vector<Geometry const*>   blas_geometries;  // parallel to blas_list
-		std::vector<Uint32>            blas_material_ids; // parallel to blas_list
+		std::vector<Geometry const*>   blas_geometries;  
+		std::vector<Uint32>            blas_material_ids; 
+		std::vector<Texture>           textures;       
 		TLAS tlas;
 		Uint triangle_count = 0;
 

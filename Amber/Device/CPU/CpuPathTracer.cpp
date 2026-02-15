@@ -81,6 +81,17 @@ namespace amber
 
 		AMBER_INFO_LOG("Building TLAS over %zu instances...", instance_descs.size());
 		BuildTLAS(tlas, blas_list.data(), static_cast<Uint32>(blas_list.size()), tlas_input);
+
+		textures.reserve(scene->textures.size());
+		for (Image const& img : scene->textures)
+		{
+			Texture tex{};
+			tex.data   = img.GetData();
+			tex.width  = static_cast<Uint32>(img.GetWidth());
+			tex.height = static_cast<Uint32>(img.GetHeight());
+			tex.format = img.IsSRGB() ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
+			textures.push_back(tex);
+		}
 	}
 
 	void CpuPathTracer::Update(Float dt)
@@ -172,16 +183,14 @@ namespace amber
 									albedo = mat.base_color;
 									if (mat.diffuse_tex_id >= 0 && !geom.uvs.empty())
 									{
-										static const Sampler sampler{};
-										Vector4 texel = sampler.Sample(scene->textures[mat.diffuse_tex_id], uv);
-										albedo = Vector3(texel.x, texel.y, texel.z) * mat.base_color;
+										Vector3 texel = BilinearRepeat.Sample<Vector3>(textures[mat.diffuse_tex_id], uv);
+										albedo = texel * mat.base_color;
 									}
 								}
 
-								// Simple N·L shading with fixed light direction
-								static const Vector3 light_dir = Vector3(0.5f, 1.0f, 0.5f).Normalized();
+								static const Vector3 light_dir = Vector3(0.5f, 0.3f, 0.5f).Normalized();
 								Float ndotl = std::max(0.0f, normal.Dot(light_dir));
-								Vector3 shaded = albedo * (ndotl * 0.8f + 0.2f); // 0.2 ambient
+								Vector3 shaded = albedo * (ndotl * 0.6f + 0.4f); // 0.4 ambient
 
 								framebuffer(y, x) = RGBA8::FromFloat(shaded.x, shaded.y, shaded.z);
 							}
