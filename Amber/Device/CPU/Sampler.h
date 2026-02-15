@@ -23,17 +23,12 @@ namespace amber
 	struct Sampler
 	{
 		template<typename T>
-		T Sample(Texture const& texture, Vector2 uv) const
-		{
-			Vector4 v = SampleRaw(texture, uv);
-			if constexpr (std::is_same_v<T, Float>)   return v.x;
-			if constexpr (std::is_same_v<T, Vector2>) return Vector2(v.x, v.y);
-			if constexpr (std::is_same_v<T, Vector3>) return Vector3(v.x, v.y, v.z);
-			if constexpr (std::is_same_v<T, Vector4>) return v;
-		}
+		T Sample(Texture const& texture, Vector2 uv) const;
 
 	private:
-		Vector4 SampleRaw(Texture const& texture, Vector2 uv) const;
+		Vector4  SampleRaw(Texture const& texture, Vector2 uv) const;
+		Vector4u SampleRawUInt(Texture const& texture, Vector2 uv) const;
+		Vector4i SampleRawInt(Texture const& texture, Vector2 uv) const;
 	};
 
 	using SamplerBilinearRepeat  = Sampler<FilterMode::Bilinear,  WrapMode::Repeat>;
