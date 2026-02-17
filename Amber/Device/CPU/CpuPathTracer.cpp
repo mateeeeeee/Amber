@@ -1,5 +1,5 @@
 #include "CpuPathTracer.h"
-#include "Sampler.h"
+#include "PathTracingUtils.h"
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Core/Log.h"
@@ -9,27 +9,6 @@
 
 namespace amber
 {
-	static Vector3 SampleEnvironment(Texture const& env, Vector3 const& dir)
-	{
-		if (!env.data)
-		{
-			return Vector3(25.0f / 255.0f, 25.0f / 255.0f, 25.0f / 255.0f);
-		}
-		Float u = std::atan2(dir.z, dir.x) / (2.0f * M_PI) + 0.5f;
-		Float v = 1.0f - (std::asin(std::clamp(dir.y, -1.0f, 1.0f)) / M_PI + 0.5f);
-		return BilinearClamp.Sample<Vector3>(env, Vector2(u, v));
-	}
-
-	static RGBA8 ToDisplay(Vector3 c)
-	{
-		c.x = c.x / (1.0f + c.x);
-		c.y = c.y / (1.0f + c.y);
-		c.z = c.z / (1.0f + c.z);
-		c.x = std::pow(c.x, 1.0f / 2.2f);
-		c.y = std::pow(c.y, 1.0f / 2.2f);
-		c.z = std::pow(c.z, 1.0f / 2.2f);
-		return RGBA8::FromFloat(c.x, c.y, c.z);
-	}
 
 	CpuPathTracer::CpuPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& _scene)
 		: width(width), height(height), scene(std::move(_scene)), framebuffer(height, width)
@@ -86,7 +65,7 @@ namespace amber
 		instance_descs.reserve(scene->instances.size());
 		for (Uint32 i = 0; i < static_cast<Uint32>(scene->instances.size()); i++)
 		{
-			amber::Instance const& scene_instance = scene->instances[i];
+			Instance const& scene_instance = scene->instances[i];
 			InstanceDesc desc{};
 			desc.transform   = scene_instance.transform;
 			desc.blas_index  = blas_by_geom_id[scene_instance.mesh_id];
@@ -169,22 +148,29 @@ namespace amber
 							Float ndc_x = (2.0f * (x + 0.5f) / width - 1.0f) * aspect * tan_half_fov;
 							Float ndc_y = (1.0f - 2.0f * (y + 0.5f) / height) * tan_half_fov;
 
-							Vector3 direction = (W + U * ndc_x + V * ndc_y).Normalized();
-							Ray ray(origin, direction);
+							Uint32 rng = PcgHash(x + PcgHash(y + PcgHash(frame_index)));
 
-							HitInfo hit;
-							if (Intersect(tlas, ray, hit))
+							Ray ray(origin, (W + U * ndc_x + V * ndc_y).Normalized());
+							Vector3 throughput(1.0f, 1.0f, 1.0f);
+							Vector3 radiance(0.0f, 0.0f, 0.0f);
+
+							for (Uint32 depth = 0; depth < MAX_DEPTH; ++depth)
 							{
+								HitInfo hit;
+								if (!Intersect(tlas, ray, hit))
+								{
+									radiance += throughput * SampleEnvironment(env_texture, ray.direction);
+									break;
+								}
+
 								BLASInstance const& inst = tlas.instances[hit.instance_idx];
 								Uint32 blas_idx = static_cast<Uint32>(inst.blas - blas_list.data());
 								Geometry const& geom = *blas_geometries[blas_idx];
 
 								Uint32 face = inst.blas->face_indices[hit.tri_idx];
 								Vector3u const& vidx = geom.indices[face];
-
 								Float bw = 1.0f - hit.u - hit.v;
 
-								// Normal
 								Vector3 normal;
 								if (!geom.normals.empty())
 								{
@@ -198,14 +184,15 @@ namespace amber
 									normal = TransformDirection(local_normal, inst.inv_transform).Normalized();
 								}
 
-								// UV
-								Vector2 uv(0.0f, 0.0f);
-								if (!geom.uvs.empty())
+								if (normal.Dot(-ray.direction) < 0.0f)
 								{
-									uv = geom.uvs[vidx.x] * bw + geom.uvs[vidx.y] * hit.u + geom.uvs[vidx.z] * hit.v;
+									normal = -normal;
 								}
 
-								// Material + diffuse texture
+								Vector2 uv(0.0f, 0.0f);
+								if (!geom.uvs.empty())
+									uv = geom.uvs[vidx.x] * bw + geom.uvs[vidx.y] * hit.u + geom.uvs[vidx.z] * hit.v;
+
 								Uint32 mat_id = blas_material_ids[blas_idx];
 								Vector3 albedo(0.9f, 0.9f, 0.9f);
 								if (mat_id < static_cast<Uint32>(scene->materials.size()))
@@ -219,17 +206,12 @@ namespace amber
 									}
 								}
 
-								static const Vector3 light_dir = Vector3(0.5f, 0.3f, 0.5f).Normalized();
-								Float ndotl = std::max(0.0f, normal.Dot(light_dir));
-								Vector3 shaded = albedo * (ndotl * 0.6f + 0.4f); // 0.4 ambient
+								throughput = throughput * albedo;
+								Vector3 hit_pos = ray.origin + ray.direction * hit.t + normal * 1e-4f;
+								ray = Ray(hit_pos, CosineSampleHemisphere(normal, RandFloat(rng), RandFloat(rng)));
+							}
 
-								framebuffer(y, x) = ToDisplay(shaded);
-							}
-							else
-							{
-								Vector3 env = SampleEnvironment(env_texture, direction);
-								framebuffer(y, x) = ToDisplay(env);
-							}
+							framebuffer(y, x) = ToDisplay(radiance);
 						}
 					}
 				}));
