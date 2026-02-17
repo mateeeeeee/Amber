@@ -1,5 +1,7 @@
 #pragma once
 #include "TopDownBuilder.h"
+#include "Device/CPU/BVH/Primitives.h"
+#include "Device/CPU/TLAS.h"
 
 namespace amber
 {
@@ -83,8 +85,6 @@ namespace amber
 		}
 	};
 
-	using BinnedSAHBuilder = TopDownBuilder<Triangle, BinnedSAHPolicy>;
-
 	struct SweepSAHPolicy
 	{
 		template<typename NodeT>
@@ -145,5 +145,8 @@ namespace amber
 		}
 	};
 
-	using SweepSAHBuilder = TopDownBuilder<Triangle, SweepSAHPolicy>;
+	using BinnedSAHBuilderBLAS = TopDownBuilder<Triangle,     BinnedSAHPolicy>;
+	using BinnedSAHBuilderTLAS = TopDownBuilder<BLASInstance, BinnedSAHPolicy>;
+	using SweepSAHBuilderBLAS  = TopDownBuilder<Triangle,     SweepSAHPolicy>;
+	using SweepSAHBuilderTLAS  = TopDownBuilder<BLASInstance, SweepSAHPolicy>;
 }

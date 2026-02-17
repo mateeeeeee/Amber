@@ -159,15 +159,17 @@ set(DEVICE_CPU_FILES
     Device/CPU/RayFlags.h
     Device/CPU/BLAS.h
     Device/CPU/BLAS.cpp
-    Device/CPU/InstanceSpatialTraits.h
     Device/CPU/TLAS.h
     Device/CPU/TLAS.cpp
     Device/CPU/BVH/BVH.h
     Device/CPU/BVH/Primitives.h
     Device/CPU/BVH/Intersection.h
     Device/CPU/BVH/TopDownBuilder.h
+    Device/CPU/BVH/TopDownBuilder.cpp
     Device/CPU/BVH/SAHBuilder.h
     Device/CPU/BVH/MedianSplitBuilder.h
+    Device/CPU/BVH/PLOCBuilder.h
+    Device/CPU/BVH/PLOCBuilder.cpp
     Device/CPU/BVH/SpatialTraits.h
 )
 

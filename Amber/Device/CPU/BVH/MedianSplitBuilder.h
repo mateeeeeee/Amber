@@ -1,5 +1,7 @@
 #pragma once
 #include "TopDownBuilder.h"
+#include "Device/CPU/BVH/Primitives.h"
+#include "Device/CPU/TLAS.h"
 
 namespace amber
 {
@@ -22,5 +24,6 @@ namespace amber
 		}
 	};
 
-	using MedianSplitBuilder = TopDownBuilder<Triangle, MedianSplitPolicy>;
+	using MedianSplitBuilderBLAS = TopDownBuilder<Triangle,     MedianSplitPolicy>;
+	using MedianSplitBuilderTLAS = TopDownBuilder<BLASInstance, MedianSplitPolicy>;
 }

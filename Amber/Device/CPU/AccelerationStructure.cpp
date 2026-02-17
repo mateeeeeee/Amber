@@ -1,7 +1,7 @@
 #include "AccelerationStructure.h"
-#include "InstanceSpatialTraits.h"
 #include "BVH/SAHBuilder.h"
 #include "BVH/MedianSplitBuilder.h"
+#include "BVH/PLOCBuilder.h"
 
 namespace amber
 {
@@ -26,12 +26,12 @@ namespace amber
 
 		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
 		{
-			MedianSplitBuilder builder;
+			MedianSplitBuilderBLAS builder;
 			builder.Build(blas.bvh, blas.triangles);
 		}
 		else
 		{
-			SweepSAHBuilder builder;
+			PLOCBuilderBLAS builder;
 			builder.Build(blas.bvh, blas.triangles);
 		}
 	}
@@ -72,12 +72,12 @@ namespace amber
 
 		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
 		{
-			TopDownBuilder<BLASInstance, MedianSplitPolicy> builder;
+			MedianSplitBuilderTLAS builder;
 			builder.Build(tlas.bvh, tlas.instances);
 		}
 		else
 		{
-			TopDownBuilder<BLASInstance, SweepSAHPolicy> builder;
+			PLOCBuilderTLAS builder;
 			builder.Build(tlas.bvh, tlas.instances);
 		}
 	}
