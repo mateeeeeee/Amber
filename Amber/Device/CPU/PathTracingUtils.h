@@ -34,10 +34,6 @@ namespace amber
 		return (tangent * x + bitangent * y + normal * z).Normalized();
 	}
 
-	// -------------------------------------------------------------------------
-	// Environment map — equirectangular (lat-long)
-	// -------------------------------------------------------------------------
-
 	inline Vector3 SampleEnvironment(Texture const& env, Vector3 const& dir)
 	{
 		if (!env.data)
@@ -45,7 +41,7 @@ namespace amber
 			return Vector3(25.0f / 255.0f, 25.0f / 255.0f, 25.0f / 255.0f);
 		}
 		Float u = std::atan2(dir.z, dir.x) / (2.0f * PT_PI) + 0.5f;
-		Float v = 1.0f - (std::asin(std::clamp(dir.y, -1.0f, 1.0f)) / PT_PI + 0.5f);
+		Float v = (std::asin(std::clamp(dir.y, -1.0f, 1.0f)) / PT_PI + 0.5f);
 		return BilinearClamp.Sample<Vector3>(env, Vector2(u, v));
 	}
 

@@ -17,13 +17,13 @@ namespace amber
 
 		void Push(T const& t)
 		{
-			assert(!IsFull());
+			AMBER_ASSERT(!IsFull());
 			elems[size++] = t;
 		}
 
 		T Pop()
 		{
-			assert(!IsEmpty());
+			AMBER_ASSERT(!IsEmpty());
 			return elems[--size];
 		}
 	};
@@ -38,7 +38,7 @@ namespace amber
 
 		T Pop()
 		{
-			assert(!IsEmpty());
+			AMBER_ASSERT(!IsEmpty());
 			T top = std::move(elems.back());
 			elems.pop_back();
 			return top;

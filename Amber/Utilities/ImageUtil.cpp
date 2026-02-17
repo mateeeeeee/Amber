@@ -23,14 +23,29 @@ namespace amber
 	}
 
 
-	Image::Image(Char const* file, Bool srgb) : srgb(srgb)
+	Image::Image(Char const* file, Bool srgb) : srgb(srgb), hdr(false)
 	{
-		stbi_set_flip_vertically_on_load(1);
-		Uint8* image_data = stbi_load(file, &width, &height, &channels, 4);
-		channels = 4;
-		AMBER_ASSERT_MSG(image_data, "Could not load image");
-		data = std::vector<Uint8>(image_data, image_data + width * height * channels);
-		stbi_image_free(image_data);
-		stbi_set_flip_vertically_on_load(0);
+		if (stbi_is_hdr(file))
+		{
+			Float* image_data = stbi_loadf(file, &width, &height, &channels, 4);
+			channels = 4;
+			AMBER_ASSERT_MSG(image_data, "Could not load HDR image");
+			hdr_data = std::vector<Float>(
+				image_data,
+				image_data + width * height * channels
+			);
+			stbi_image_free(image_data);
+			hdr = true;
+		}
+		else
+		{
+			stbi_set_flip_vertically_on_load(1);
+			Uint8* image_data = stbi_load(file, &width, &height, &channels, 4);
+			channels = 4;
+			AMBER_ASSERT_MSG(image_data, "Could not load image");
+			data = std::vector<Uint8>(image_data, image_data + width * height * channels);
+			stbi_image_free(image_data);
+			stbi_set_flip_vertically_on_load(0);
+		}
 	}
 }

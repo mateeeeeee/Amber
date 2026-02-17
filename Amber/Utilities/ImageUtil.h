@@ -24,16 +24,27 @@ namespace amber
 		template<typename T = Uint8>
 		T const* GetData() const
 		{
-			return reinterpret_cast<T const*>(data.data());
+			if constexpr(std::is_same_v<T, Float>)
+			{
+				AMBER_ASSERT(hdr);
+				return hdr_data.data();
+			}
+			else
+			{
+				return reinterpret_cast<T const*>(data.data());
+			}
 		}
 		Bool IsSRGB() const { return srgb; }
+		Bool IsHDR() const { return hdr; }
 
 	private:
 		Int32 width;
 		Int32 height;
 		Int32 channels;
 		std::vector<Uint8> data;
+		std::vector<Float> hdr_data;
 		Bool srgb;
+		Bool hdr;
 	};
 
 }

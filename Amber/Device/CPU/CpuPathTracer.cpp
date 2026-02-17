@@ -97,10 +97,18 @@ namespace amber
 		if (scene->environment)
 		{
 			Image const& env = *scene->environment;
-			env_texture.data   = env.GetData();
 			env_texture.width  = static_cast<Uint32>(env.GetWidth());
 			env_texture.height = static_cast<Uint32>(env.GetHeight());
-			env_texture.format = env.IsSRGB() ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
+			if (env.IsHDR())
+			{
+				env_texture.data   = env.GetData<Float>();
+				env_texture.format = TextureFormat::RGBA32F;
+			}
+			else
+			{
+				env_texture.data   = env.GetData();
+				env_texture.format = env.IsSRGB() ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
+			}
 		}
 	}
 
