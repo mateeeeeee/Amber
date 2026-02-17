@@ -71,6 +71,10 @@ namespace amber
 						hit.tri_idx = tri_idx;
 						ray.t       = hit.t;
 						found       = true;
+						if (bool(ray.flags & RayFlags::AcceptFirstHit))
+						{
+							return true;
+						}
 					}
 				}
 				if (stack.IsEmpty()) break;

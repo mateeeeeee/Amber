@@ -49,6 +49,10 @@ namespace amber
 					if (amber::Intersect(tlas.instances[instance_idx], instance_idx, ray, hit))
 					{
 						found = true;
+						if (Bool(ray.flags & RayFlags::AcceptFirstHit))
+						{
+							return true;
+						}
 					}
 				}
 				if (stack.IsEmpty()) break;

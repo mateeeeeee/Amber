@@ -1,6 +1,9 @@
 #pragma once
 #include "Sampler.h"
+#include "TLAS.h"
+#include "Scene/Light.h"
 #include <cmath>
+#include <vector>
 
 namespace amber
 {
@@ -60,5 +63,56 @@ namespace amber
 		c.y = std::pow(c.y, 1.0f / 2.2f);
 		c.z = std::pow(c.z, 1.0f / 2.2f);
 		return RGBA8::FromFloat(c.x, c.y, c.z);
+	}
+
+	inline Vector3 SampleDirectLight(TLAS const& tlas, std::vector<Light> const& lights, Vector3 const& hit_pos, Vector3 const& normal, Uint32& rng)
+	{
+		if (lights.empty()) 
+		{
+			return Vector3(0.0f, 0.0f, 0.0f);
+		}
+
+		Uint32 light_idx = static_cast<Uint32>(RandFloat(rng) * lights.size()) % static_cast<Uint32>(lights.size());
+		Light const& light = lights[light_idx];
+		Float light_count = static_cast<Float>(lights.size());
+
+		Vector3 to_light;
+		Float   max_t;
+		if (light.type == LightType::Directional)
+		{
+			to_light = (-light.direction).Normalized();
+			max_t    = BVH_INFINITY;
+		}
+		else if (light.type == LightType::Point)
+		{
+			Vector3 diff = light.position - hit_pos;
+			Float   dist = std::sqrt(diff.Dot(diff));
+			to_light = diff * (1.0f / dist);
+			max_t    = dist - 1e-3f;
+		}
+		else
+		{
+			return Vector3(0.0f, 0.0f, 0.0f);
+		}
+
+		Float n_dot_l = normal.Dot(to_light);
+		if (n_dot_l <= 0.0f) return Vector3(0.0f, 0.0f, 0.0f);
+
+		Ray shadow_ray(hit_pos, to_light, RayFlags::AcceptFirstHit);
+		shadow_ray.t = max_t;
+		HitInfo shadow_hit;
+		if (Intersect(tlas, shadow_ray, shadow_hit))
+		{
+			return Vector3(0.0f, 0.0f, 0.0f);
+		}
+
+		Vector3 radiance = light.color;
+		if (light.type == LightType::Point)
+		{
+			Vector3 diff = light.position - hit_pos;
+			Float dist2 = diff.Dot(diff);
+			radiance = radiance * (1.0f / std::max(dist2, 1e-4f));
+		}
+		return radiance * (n_dot_l * light_count);
 	}
 }

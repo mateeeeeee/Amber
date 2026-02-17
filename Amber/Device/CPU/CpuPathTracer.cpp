@@ -3,8 +3,10 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Core/Log.h"
+#include "Math/MathCommon.h"
 #include "Utilities/ImageUtil.h"
 #include "Utilities/Timer.h"
+#include "ImGui/imgui.h"
 #include <cmath>
 
 namespace amber
@@ -110,6 +112,22 @@ namespace amber
 				env_texture.format = env.IsSRGB() ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
 			}
 		}
+
+		lights = scene->lights;
+
+		Uint32 directional_light_count = 0;
+		for (Light const& l : lights)
+		{
+			if (l.type == LightType::Directional) ++directional_light_count;
+		}
+
+		if (directional_light_count == 0)
+		{
+			Light& default_light    = lights.emplace_back();
+			default_light.type      = LightType::Directional;
+			default_light.color     = Vector3(8.0f, 8.0f, 8.0f);
+			default_light.direction = Vector3(0.0f, -1.0f, 0.1f).Normalized();
+		}
 	}
 
 	void CpuPathTracer::Update(Float dt)
@@ -124,8 +142,7 @@ namespace amber
 			accumulation_buffer.Clear(Vector3(0.0f, 0.0f, 0.0f));
 		}
 
-		Timer<std::chrono::microseconds> timer;
-
+		Timer<std::chrono::microseconds> render_timer;
 		Vector3 origin = camera.GetPosition();
 		Vector3 U, V, W;
 		camera.GetFrame(U, V, W);
@@ -204,6 +221,7 @@ namespace amber
 
 								Uint32 mat_id = blas_material_ids[blas_idx];
 								Vector3 albedo(0.9f, 0.9f, 0.9f);
+								Vector3 emissive(0.0f, 0.0f, 0.0f);
 								if (mat_id < static_cast<Uint32>(scene->materials.size()))
 								{
 									Material const& mat = scene->materials[mat_id];
@@ -213,10 +231,15 @@ namespace amber
 										Vector3 texel = BilinearRepeat.Sample<Vector3>(textures[mat.diffuse_tex_id], uv);
 										albedo = texel * mat.base_color;
 									}
+									emissive = mat.emissive_color;
 								}
 
-								throughput = throughput * albedo;
 								Vector3 hit_pos = ray.origin + ray.direction * hit.t + normal * 1e-4f;
+
+								radiance += throughput * emissive;
+								radiance += throughput * albedo * SampleDirectLight(tlas, lights, hit_pos, normal, rng);
+
+								throughput = throughput * albedo;
 								ray = Ray(hit_pos, CosineSampleHemisphere(normal, RandFloat(rng), RandFloat(rng)));
 							}
 
@@ -233,7 +256,7 @@ namespace amber
 			f.get();
 		}
 
-		render_time_ms = timer.ElapsedInSeconds() * 1000.0f;
+		render_time_ms = render_timer.ElapsedInSeconds() * 1000.0f;
 		AMBER_INFO_LOG("Frame %u: %.2f ms", frame_index, render_time_ms);
 		++frame_index;
 	}
@@ -252,5 +275,64 @@ namespace amber
 	{
 		WriteImageToFile(ImageFormat::PNG, outfile, width, height, framebuffer.Data(), width * 4);
 		AMBER_INFO_LOG("Wrote framebuffer to %s", outfile);
+	}
+
+	void CpuPathTracer::LightEditorGUI()
+	{
+		Bool changed = false;
+		Int light_index = 0;
+		for (Light& light : lights)
+		{
+			std::string light_label = "Light " + std::to_string(light_index++);
+
+			ImGui::PushID(light_index);
+			ImGui::BeginChild(light_label.c_str(), ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
+			ImGui::Columns(2, nullptr, false);
+
+			ImGui::Text("Light %d", light_index);
+			ImGui::NextColumn();
+			const Char* light_types[] = { "Directional", "Point" };
+			ImGui::Combo("Type", (int*)&light.type, light_types, IM_ARRAYSIZE(light_types));
+			ImGui::NextColumn();
+
+			ImGui::Text("Color");
+			ImGui::NextColumn();
+			changed |= ImGui::ColorEdit3("##Color", &light.color.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+			ImGui::NextColumn();
+
+			if (light.type == LightType::Directional)
+			{
+				ImGui::Text("Sun Elevation");
+				ImGui::NextColumn();
+				static Float sun_elevation = 75.0f;
+				changed |= ImGui::SliderFloat("##Elevation", &sun_elevation, -90.0f, 90.0f);
+				ImGui::NextColumn();
+
+				ImGui::Text("Sun Azimuth");
+				ImGui::NextColumn();
+				static Float sun_azimuth = 260.0f;
+				changed |= ImGui::SliderFloat("##Azimuth", &sun_azimuth, 0.0f, 360.0f);
+
+				Vector3 dir = ConvertElevationAndAzimuthToDirection(sun_elevation, sun_azimuth);
+				light.direction = Vector3(-dir.x, -dir.y, -dir.z);
+			}
+			else if (light.type == LightType::Point)
+			{
+				ImGui::Text("Position");
+				ImGui::NextColumn();
+				changed |= ImGui::InputFloat3("##Position", &light.position.x);
+			}
+
+			ImGui::Columns(1);
+			ImGui::EndChild();
+			ImGui::PopID();
+			ImGui::Separator();
+		}
+
+		if (changed)
+		{
+			frame_index = 0;
+			accumulation_buffer.Clear(Vector3(0.0f, 0.0f, 0.0f));
+		}
 	}
 }

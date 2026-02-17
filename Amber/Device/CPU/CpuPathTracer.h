@@ -4,6 +4,7 @@
 #include "Device/PathTracer.h"
 #include "Device/CPU/AccelerationStructure.h"
 #include "Device/CPU/Texture.h"
+#include "Scene/Light.h"
 #include "Utilities/ThreadPool.h"
 #include "Utilities/Timer.h"
 #include "Scene/Mesh.h"
@@ -42,6 +43,9 @@ namespace amber
 		Uint   GetTriangleCount() const override { return triangle_count; }
 		Uint64 GetMemoryUsage() const override { return 0; }
 
+		Bool HasLightEditor() const override { return true; }
+		void LightEditorGUI() override;
+
 	private:
 		Uint32 width;
 		Uint32 height;
@@ -50,11 +54,12 @@ namespace amber
 		CpuBuffer2D<Vector3>  accumulation_buffer;
 
 		std::vector<BLAS>              blas_list;
-		std::vector<Geometry const*>   blas_geometries;  
-		std::vector<Uint32>            blas_material_ids; 
+		std::vector<Geometry const*>   blas_geometries;
+		std::vector<Uint32>            blas_material_ids;
 		std::vector<Texture>           textures;
 		Texture                        env_texture;
-		TLAS tlas;
+		TLAS                           tlas;
+		std::vector<Light>             lights;
 		Uint triangle_count = 0;
 
 		Uint frame_index = 0;

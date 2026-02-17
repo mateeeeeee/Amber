@@ -1,4 +1,5 @@
 #pragma once
+#include "Device/CPU/RayFlags.h"
 
 namespace amber
 {
@@ -7,14 +8,15 @@ namespace amber
 
 	struct alignas(16) Ray
 	{
-		Vector3 origin;
-		Vector3 direction;
-		Vector3 inv_direction;
-		Float t = BVH_INFINITY;
+		Vector3  origin;
+		Vector3  direction;
+		Vector3  inv_direction;
+		Float    t     = BVH_INFINITY;
+		RayFlags flags = RayFlags::None;
 
 		Ray() = default;
-		Ray(Vector3 const& origin, Vector3 const& direction)
-			: origin(origin), direction(direction)
+		Ray(Vector3 const& origin, Vector3 const& direction, RayFlags flags = RayFlags::None)
+			: origin(origin), direction(direction), flags(flags)
 		{
 			inv_direction.x = 1.0f / direction.x;
 			inv_direction.y = 1.0f / direction.y;

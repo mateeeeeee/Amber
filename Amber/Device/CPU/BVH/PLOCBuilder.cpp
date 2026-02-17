@@ -39,6 +39,7 @@ namespace amber
 		}
 
 		// Worst case scenario, we have n leaves + up to (n-1) merges * 3 = 4n-3 nodes (each merge = 3 nodes)
+		// This is not ideal, look into improving this
 		bvh.nodes.resize(4 * n);
 		bvh.prim_indices.resize(n);
 		bvh.nodes_used = 0;
