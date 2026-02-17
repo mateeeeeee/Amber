@@ -11,7 +11,7 @@ namespace amber
 {
 
 	CpuPathTracer::CpuPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& _scene)
-		: width(width), height(height), scene(std::move(_scene)), framebuffer(height, width)
+		: width(width), height(height), scene(std::move(_scene)), framebuffer(height, width), accumulation_buffer(height, width)
 	{
 		g_ThreadPool.Initialize();
 		framebuffer.Clear(RGBA8(0, 0, 0, 255));
@@ -121,6 +121,7 @@ namespace amber
 		if (camera.IsChanged())
 		{
 			frame_index = 0;
+			accumulation_buffer.Clear(Vector3(0.0f, 0.0f, 0.0f));
 		}
 
 		Timer<std::chrono::microseconds> timer;
@@ -219,7 +220,8 @@ namespace amber
 								ray = Ray(hit_pos, CosineSampleHemisphere(normal, RandFloat(rng), RandFloat(rng)));
 							}
 
-							framebuffer(y, x) = ToDisplay(radiance);
+							accumulation_buffer(y, x) += radiance;
+							framebuffer(y, x) = ToDisplay(accumulation_buffer(y, x) / Float(frame_index + 1));
 						}
 					}
 				}));
@@ -241,6 +243,8 @@ namespace amber
 		width = w;
 		height = h;
 		framebuffer.Resize(height, width);
+		accumulation_buffer.Resize(height, width);
+		accumulation_buffer.Clear(Vector3(0.0f, 0.0f, 0.0f));
 		frame_index = 0;
 	}
 

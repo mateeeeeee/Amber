@@ -47,25 +47,16 @@ namespace amber
 		AABB centroid_aabb{};
 		for (Uint32 i = 0; i < n; i++)
 		{
-			Vector3 c(Traits::GetCentroid(primitives[i], 0),
-			          Traits::GetCentroid(primitives[i], 1),
-			          Traits::GetCentroid(primitives[i], 2));
+			Vector3 c(Traits::GetCentroid(nodes[i], 0),
+			          Traits::GetCentroid(nodes[i], 1),
+			          Traits::GetCentroid(nodes[i], 2));
 			centroid_aabb.Grow(c);
 		}
 
-		Vector3 const extent = centroid_aabb.max - centroid_aabb.min;
-		if (extent.x == 0.0f) 
-		{
-			extent.x = 1.0f;
-		}
-		if (extent.y == 0.0f) 
-		{
-			extent.y = 1.0f;
-		}
-		if (extent.z == 0.0f) 
-		{
-			extent.z = 1.0f;
-		}
+		Vector3 extent = centroid_aabb.max - centroid_aabb.min;
+		if (extent.x == 0.0f) extent.x = 1.0f;
+		if (extent.y == 0.0f) extent.y = 1.0f;
+		if (extent.z == 0.0f) extent.z = 1.0f;
 
 		std::vector<Uint32> order(n);
 		std::iota(order.begin(), order.end(), 0u);
@@ -75,7 +66,7 @@ namespace amber
 			Float cx = (Traits::GetCentroid(nodes[i], 0) - centroid_aabb.min.x) / extent.x;
 			Float cy = (Traits::GetCentroid(nodes[i], 1) - centroid_aabb.min.y) / extent.y;
 			Float cz = (Traits::GetCentroid(nodes[i], 2) - centroid_aabb.min.z) / extent.z;
-			morton[i] = ploc_detail::MortonCode3D(cx, cy, cz);
+			morton[i] = MortonCode3D(cx, cy, cz);
 		}
 
 		std::sort(order.begin(), order.end(), [&](Uint32 a, Uint32 b)

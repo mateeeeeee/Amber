@@ -46,7 +46,8 @@ namespace amber
 		Uint32 width;
 		Uint32 height;
 		std::unique_ptr<Scene> scene;
-		CpuBuffer2D<RGBA8> framebuffer;
+		CpuBuffer2D<RGBA8>    framebuffer;
+		CpuBuffer2D<Vector3>  accumulation_buffer;
 
 		std::vector<BLAS>              blas_list;
 		std::vector<Geometry const*>   blas_geometries;  
