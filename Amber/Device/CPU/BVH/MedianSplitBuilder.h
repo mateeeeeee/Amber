@@ -24,6 +24,5 @@ namespace amber
 		}
 	};
 
-	using MedianSplitBuilderBLAS = TopDownBuilder<Triangle,     MedianSplitPolicy>;
-	using MedianSplitBuilderTLAS = TopDownBuilder<BLASInstance, MedianSplitPolicy>;
+	using MedianSplitBuilder = TopDownBuilder<MedianSplitPolicy>;
 }

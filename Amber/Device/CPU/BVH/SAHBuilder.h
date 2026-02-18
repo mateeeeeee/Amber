@@ -145,8 +145,6 @@ namespace amber
 		}
 	};
 
-	using BinnedSAHBuilderBLAS = TopDownBuilder<Triangle,     BinnedSAHPolicy>;
-	using BinnedSAHBuilderTLAS = TopDownBuilder<BLASInstance, BinnedSAHPolicy>;
-	using SweepSAHBuilderBLAS  = TopDownBuilder<Triangle,     SweepSAHPolicy>;
-	using SweepSAHBuilderTLAS  = TopDownBuilder<BLASInstance, SweepSAHPolicy>;
+	using BinnedSAHBuilder = TopDownBuilder<BinnedSAHPolicy>;
+	using SweepSAHBuilder  = TopDownBuilder<SweepSAHPolicy>;
 }

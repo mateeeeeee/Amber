@@ -30,8 +30,10 @@ namespace amber
 	}
 
 	template<typename NodeT>
-	void PLOCBuilder<NodeT>::Build(BVH& bvh, std::span<NodeT const> nodes, Int radius)
+	void PLOCBuilder::Build(BVH& bvh, std::span<NodeT> nodes, Int radius)
 	{
+		using Traits = SpatialTraits<NodeT>;
+
 		Uint32 n = static_cast<Uint32>(nodes.size());
 		if (n == 0) 
 		{
@@ -40,6 +42,7 @@ namespace amber
 
 		// Worst case scenario, we have n leaves + up to (n-1) merges * 3 = 4n-3 nodes (each merge = 3 nodes)
 		// This is not ideal, look into improving this
+		// todo check this: https://madmann91.github.io/2020/12/28/bvhs-part-1.html 
 		bvh.nodes.resize(4 * n);
 		bvh.prim_indices.resize(n);
 		bvh.nodes_used = 0;
@@ -200,6 +203,6 @@ namespace amber
 		}
 	}
 
-	template class PLOCBuilder<Triangle>;
-	template class PLOCBuilder<BLASInstance>;
+	template void PLOCBuilder::Build(BVH&, std::span<Triangle>,     Int);
+	template void PLOCBuilder::Build(BVH&, std::span<BLASInstance>, Int);
 }

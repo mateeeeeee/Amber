@@ -232,6 +232,11 @@ namespace amber
 										albedo = texel * mat.base_color;
 									}
 									emissive = mat.emissive_color;
+									if (mat.emissive_tex_id >= 0 && !geom.uvs.empty())
+									{
+										Vector3 tex_emissive = BilinearRepeat.Sample<Vector3>(textures[mat.emissive_tex_id], uv);
+										emissive = emissive * tex_emissive;
+									}
 								}
 
 								Vector3 hit_pos = ray.origin + ray.direction * hit.t + normal * 1e-4f;

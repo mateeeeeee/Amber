@@ -8,19 +8,12 @@
 
 namespace amber
 {
-	template<typename NodeT>
 	class PLOCBuilder
 	{
-		using Traits = SpatialTraits<NodeT>;
 	public:
 		static constexpr Int DEFAULT_RADIUS = 14;
 
-		void Build(BVH& bvh, std::span<NodeT const> primitives, Int radius = DEFAULT_RADIUS);
+		template<typename NodeT>
+		void Build(BVH& bvh, std::span<NodeT> primitives, Int radius = DEFAULT_RADIUS);
 	};
-
-	struct Triangle;
-	struct BLASInstance;
-
-	using PLOCBuilderBLAS = PLOCBuilder<Triangle>;
-	using PLOCBuilderTLAS = PLOCBuilder<BLASInstance>;
 }

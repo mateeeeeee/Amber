@@ -26,13 +26,13 @@ namespace amber
 
 		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
 		{
-			MedianSplitBuilderBLAS builder;
-			builder.Build(blas.bvh, blas.triangles);
+			MedianSplitBuilder builder;
+			builder.Build(blas.bvh, std::span(blas.triangles));
 		}
 		else
 		{
-			PLOCBuilderBLAS builder;
-			builder.Build(blas.bvh, blas.triangles);
+			PLOCBuilder builder;
+			builder.Build(blas.bvh, std::span(blas.triangles));
 		}
 	}
 
@@ -72,13 +72,13 @@ namespace amber
 
 		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
 		{
-			MedianSplitBuilderTLAS builder;
-			builder.Build(tlas.bvh, tlas.instances);
+			MedianSplitBuilder builder;
+			builder.Build(tlas.bvh, std::span(tlas.instances));
 		}
 		else
 		{
-			PLOCBuilderTLAS builder;
-			builder.Build(tlas.bvh, tlas.instances);
+			PLOCBuilder builder;
+			builder.Build(tlas.bvh, std::span(tlas.instances));
 		}
 	}
 }
