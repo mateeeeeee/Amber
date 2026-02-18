@@ -13,7 +13,7 @@ namespace amber
 	};
 
 	template<typename NodeT, typename SplitPolicyT>
-	concept TopDownSplitPolicy = requires(BVH const& bvh, NodeT const* nodes, BVHNode const& node)
+	concept TopDownSplitPolicy = requires(BVH2 const& bvh, NodeT const* nodes, BVH2Node const& node)
 	{
 		{ SplitPolicyT::FindSplit(bvh, nodes, node) } -> std::same_as<std::optional<SplitResult>>;
 	};
@@ -23,7 +23,7 @@ namespace amber
 	{
 	public:
 		template<typename NodeT> requires TopDownSplitPolicy<NodeT, SplitPolicyT>
-		void Build(BVH& bvh, std::span<NodeT> nodes)
+		void Build(BVH2& bvh, std::span<NodeT> nodes)
 		{
 			Uint32 node_count = static_cast<Uint32>(nodes.size());
 			if (node_count == 0)
@@ -40,23 +40,24 @@ namespace amber
 			bvh.nodes.resize(node_count * 2 - 1);
 			bvh.nodes_used = 1;
 
-			BVHNode& root   = bvh.nodes[0];
-			root.left_first = 0;
-			root.prim_count = node_count;
+			BVH2Node& root   = bvh.nodes[0];
+			root.child_count = 0;
+			root.first_prim  = 0;
+			root.prim_count  = node_count;
 			UpdateNodeBounds(bvh, nodes.data(), 0);
 			Subdivide(bvh, nodes.data(), 0);
 		}
 
 	private:
 		template<typename NodeT>
-		void UpdateNodeBounds(BVH& bvh, NodeT const* nodes, Uint32 node_idx)
+		void UpdateNodeBounds(BVH2& bvh, NodeT const* nodes, Uint32 node_idx)
 		{
 			using Traits = SpatialTraits<NodeT>;
-			BVHNode& node = bvh.nodes[node_idx];
+			BVH2Node& node = bvh.nodes[node_idx];
 			AABB box{};
 			for (Uint32 i = 0; i < node.prim_count; i++)
 			{
-				Uint32 idx = bvh.prim_indices[node.left_first + i];
+				Uint32 idx = bvh.prim_indices[node.first_prim + i];
 				Traits::GrowBounds(box, nodes[idx]);
 			}
 			node.aabb_min = box.min;
@@ -64,10 +65,10 @@ namespace amber
 		}
 
 		template<typename NodeT>
-		void Subdivide(BVH& bvh, NodeT const* nodes, Uint32 node_idx)
+		void Subdivide(BVH2& bvh, NodeT const* nodes, Uint32 node_idx)
 		{
 			using Traits = SpatialTraits<NodeT>;
-			BVHNode& node = bvh.nodes[node_idx];
+			BVH2Node& node = bvh.nodes[node_idx];
 			if (node.prim_count <= 2)
 			{
 				return;
@@ -79,7 +80,7 @@ namespace amber
 				return;
 			}
 
-			Uint32 first_idx = node.left_first;
+			Uint32 first_idx = node.first_prim;
 			Int i = static_cast<Int>(first_idx);
 			Int j = i + static_cast<Int>(node.prim_count) - 1;
 			while (i <= j)
@@ -105,13 +106,16 @@ namespace amber
 			Uint32 left_child_idx  = bvh.nodes_used++;
 			Uint32 right_child_idx = bvh.nodes_used++;
 
-			bvh.nodes[left_child_idx].left_first  = first_idx;
-			bvh.nodes[left_child_idx].prim_count  = left_count;
-			bvh.nodes[right_child_idx].left_first = static_cast<Uint32>(i);
-			bvh.nodes[right_child_idx].prim_count = node.prim_count - left_count;
+			bvh.nodes[left_child_idx].child_count  = 0;
+			bvh.nodes[left_child_idx].first_prim   = first_idx;
+			bvh.nodes[left_child_idx].prim_count   = left_count;
+			bvh.nodes[right_child_idx].child_count = 0;
+			bvh.nodes[right_child_idx].first_prim  = static_cast<Uint32>(i);
+			bvh.nodes[right_child_idx].prim_count  = node.prim_count - left_count;
 
-			node.left_first = left_child_idx;
-			node.prim_count = 0;
+			node.child_count = 2;
+			node.children[0] = left_child_idx;
+			node.children[1] = right_child_idx;
 
 			UpdateNodeBounds(bvh, nodes, left_child_idx);
 			UpdateNodeBounds(bvh, nodes, right_child_idx);

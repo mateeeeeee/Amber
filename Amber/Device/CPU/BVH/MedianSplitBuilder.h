@@ -8,7 +8,7 @@ namespace amber
 	struct MedianSplitPolicy
 	{
 		template<typename NodeT>
-		static std::optional<SplitResult> FindSplit(BVH const& bvh, NodeT const* nodes, BVHNode const& node)
+		static std::optional<SplitResult> FindSplit(BVH2 const& bvh, NodeT const* nodes, BVH2Node const& node)
 		{
 			Vector3 extent = node.aabb_max - node.aabb_min;
 			Int axis = 0;

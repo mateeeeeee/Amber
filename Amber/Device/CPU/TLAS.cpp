@@ -35,8 +35,8 @@ namespace amber
 			return false;
 		}
 
-		BVHNode const* node = &tlas.bvh.nodes[0];
-		SmallStack<BVHNode const*, 64> stack;
+		BVH2Node const* node = &tlas.bvh.nodes[0];
+		SmallStack<BVH2Node const*, 64> stack;
 		Bool found = false;
 
 		while (true)
@@ -45,7 +45,7 @@ namespace amber
 			{
 				for (Uint32 i = 0; i < node->prim_count; i++)
 				{
-					Uint32 instance_idx = tlas.bvh.prim_indices[node->left_first + i];
+					Uint32 instance_idx = tlas.bvh.prim_indices[node->first_prim + i];
 					if (amber::Intersect(tlas.instances[instance_idx], instance_idx, ray, hit))
 					{
 						found = true;
@@ -60,8 +60,8 @@ namespace amber
 				continue;
 			}
 
-			BVHNode const* child1 = &tlas.bvh.nodes[node->left_first];
-			BVHNode const* child2 = &tlas.bvh.nodes[node->left_first + 1];
+			BVH2Node const* child1 = &tlas.bvh.nodes[node->children[0]];
+			BVH2Node const* child2 = &tlas.bvh.nodes[node->children[1]];
 			Float dist1 = IntersectAABB(ray, child1->aabb_min, child1->aabb_max);
 			Float dist2 = IntersectAABB(ray, child2->aabb_min, child2->aabb_max);
 

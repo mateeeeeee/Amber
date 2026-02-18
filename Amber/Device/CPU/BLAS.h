@@ -6,7 +6,7 @@ namespace amber
 {
 	struct BLAS
 	{
-		BVH bvh;
+		BVH2 bvh;
 		std::vector<Triangle>  triangles;
 		std::vector<Uint32>    face_indices;
 	};

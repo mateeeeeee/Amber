@@ -19,7 +19,7 @@ namespace amber
 
 	struct TLAS
 	{
-		BVH                      bvh;
+		BVH2                      bvh;
 		std::vector<BLASInstance> instances;
 	};
 

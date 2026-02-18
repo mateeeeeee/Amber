@@ -4,9 +4,9 @@
 
 namespace amber
 {
-	static void IntersectRecursiveImpl(BVH const& bvh, std::vector<Triangle> const& triangles, Ray const& ray, Uint32 node_idx, HitInfo& hit, Bool& found)
+	static void IntersectRecursiveImpl(BVH2 const& bvh, std::vector<Triangle> const& triangles, Ray const& ray, Uint32 node_idx, HitInfo& hit, Bool& found)
 	{
-		BVHNode const& node = bvh.nodes[node_idx];
+		BVH2Node const& node = bvh.nodes[node_idx];
 		if (IntersectAABB(ray, node.aabb_min, node.aabb_max) == BVH_INFINITY)
 		{
 			return;
@@ -16,7 +16,7 @@ namespace amber
 		{
 			for (Uint32 i = 0; i < node.prim_count; i++)
 			{
-				Uint32 tri_idx = bvh.prim_indices[node.left_first + i];
+				Uint32 tri_idx = bvh.prim_indices[node.first_prim + i];
 				Triangle const& tri = triangles[tri_idx];
 				HitInfo temp_hit;
 				if (IntersectTriangle(ray, tri, temp_hit) && temp_hit.t < hit.t)
@@ -29,8 +29,8 @@ namespace amber
 		}
 		else
 		{
-			IntersectRecursiveImpl(bvh, triangles, ray, node.left_first,     hit, found);
-			IntersectRecursiveImpl(bvh, triangles, ray, node.left_first + 1, hit, found);
+			IntersectRecursiveImpl(bvh, triangles, ray, node.children[0], hit, found);
+			IntersectRecursiveImpl(bvh, triangles, ray, node.children[1], hit, found);
 		}
 	}
 
@@ -52,17 +52,16 @@ namespace amber
 			return false;
 		}
 
-		BVHNode const* node = &blas.bvh.nodes[0];
-		SmallStack<BVHNode const*, 64> stack;
+		BVH2Node const* node = &blas.bvh.nodes[0];
+		SmallStack<BVH2Node const*, 64> stack;
 		Bool found = false;
-
 		while (true)
 		{
 			if (node->IsLeaf())
 			{
 				for (Uint32 i = 0; i < node->prim_count; i++)
 				{
-					Uint32 tri_idx = blas.bvh.prim_indices[node->left_first + i];
+					Uint32 tri_idx = blas.bvh.prim_indices[node->first_prim + i];
 					Triangle const& tri = blas.triangles[tri_idx];
 					HitInfo temp_hit;
 					if (IntersectTriangle(ray, tri, temp_hit) && temp_hit.t < hit.t)
@@ -82,8 +81,8 @@ namespace amber
 				continue;
 			}
 
-			BVHNode const* child1 = &blas.bvh.nodes[node->left_first];
-			BVHNode const* child2 = &blas.bvh.nodes[node->left_first + 1];
+			BVH2Node const* child1 = &blas.bvh.nodes[node->children[0]];
+			BVH2Node const* child2 = &blas.bvh.nodes[node->children[1]];
 			Float dist1 = IntersectAABB(ray, child1->aabb_min, child1->aabb_max);
 			Float dist2 = IntersectAABB(ray, child2->aabb_min, child2->aabb_max);
 
@@ -117,14 +116,14 @@ namespace amber
 				continue;
 			}
 
-			BVHNode& node = blas.bvh.nodes[i];
+			BVH2Node& node = blas.bvh.nodes[i];
 			if (node.IsLeaf())
 			{
 				node.aabb_min = Vector3(BVH_INFINITY, BVH_INFINITY, BVH_INFINITY);
 				node.aabb_max = Vector3(-BVH_INFINITY, -BVH_INFINITY, -BVH_INFINITY);
 				for (Uint32 j = 0; j < node.prim_count; j++)
 				{
-					Uint32 tri_idx = blas.bvh.prim_indices[node.left_first + j];
+					Uint32 tri_idx = blas.bvh.prim_indices[node.first_prim + j];
 					Triangle const& tri = blas.triangles[tri_idx];
 					node.aabb_min.x = std::min(node.aabb_min.x, std::min(tri.v0.x, std::min(tri.v1.x, tri.v2.x)));
 					node.aabb_min.y = std::min(node.aabb_min.y, std::min(tri.v0.y, std::min(tri.v1.y, tri.v2.y)));
@@ -136,8 +135,8 @@ namespace amber
 			}
 			else
 			{
-				BVHNode const& left  = blas.bvh.nodes[node.left_first];
-				BVHNode const& right = blas.bvh.nodes[node.left_first + 1];
+				BVH2Node const& left  = blas.bvh.nodes[node.children[0]];
+				BVH2Node const& right = blas.bvh.nodes[node.children[1]];
 				node.aabb_min.x = std::min(left.aabb_min.x, right.aabb_min.x);
 				node.aabb_min.y = std::min(left.aabb_min.y, right.aabb_min.y);
 				node.aabb_min.z = std::min(left.aabb_min.z, right.aabb_min.z);

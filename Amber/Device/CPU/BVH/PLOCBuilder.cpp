@@ -4,9 +4,14 @@
 #include <numeric>
 #include <vector>
 
+
+// Parallel Locally-Ordered Clustering (PLOC) BVH builder
+// Meister & Bittner, "Parallel Locally-Ordered Clustering for Bounding Volume Hierarchy Construction"
+
+
 namespace amber
 {
-	namespace 
+	namespace
 	{
 		inline constexpr Uint32 ExpandBits(Uint32 v)
 		{
@@ -30,19 +35,19 @@ namespace amber
 	}
 
 	template<typename NodeT>
-	void PLOCBuilder::Build(BVH& bvh, std::span<NodeT> nodes, Int radius)
+	void PLOCBuilder::Build(BVH2& bvh, std::span<NodeT> nodes, Int radius)
 	{
 		using Traits = SpatialTraits<NodeT>;
 
 		Uint32 n = static_cast<Uint32>(nodes.size());
-		if (n == 0) 
+		if (n == 0)
 		{
 			return;
 		}
 
 		// Worst case scenario, we have n leaves + up to (n-1) merges * 3 = 4n-3 nodes (each merge = 3 nodes)
 		// This is not ideal, look into improving this
-		// todo check this: https://madmann91.github.io/2020/12/28/bvhs-part-1.html 
+		// todo check this: https://madmann91.github.io/2020/12/28/bvhs-part-1.html
 		bvh.nodes.resize(4 * n);
 		bvh.prim_indices.resize(n);
 		bvh.nodes_used = 0;
@@ -78,7 +83,7 @@ namespace amber
 			return morton[a] < morton[b];
 		});
 
-		for (Uint32 i = 0; i < n; i++) 
+		for (Uint32 i = 0; i < n; i++)
 		{
 			bvh.prim_indices[i] = order[i];
 		}
@@ -86,12 +91,13 @@ namespace amber
 		std::vector<Uint32> clusters(n);
 		for (Uint32 i = 0; i < n; i++)
 		{
-			Uint32 idx      = bvh.nodes_used++;
-			clusters[i]     = idx;
+			Uint32 idx       = bvh.nodes_used++;
+			clusters[i]      = idx;
 
-			BVHNode& leaf   = bvh.nodes[idx];
-			leaf.left_first = i;
-			leaf.prim_count = 1;
+			BVH2Node& leaf   = bvh.nodes[idx];
+			leaf.first_prim  = i;
+			leaf.prim_count  = 1;
+			leaf.child_count = 0;
 
 			AABB box{};
 			Traits::GrowBounds(box, nodes[order[i]]);
@@ -112,7 +118,7 @@ namespace amber
 
 			for (Uint32 i = 0; i < cluster_count; i++)
 			{
-				BVHNode const& ni = bvh.nodes[clusters[i]];
+				BVH2Node const& ni = bvh.nodes[clusters[i]];
 				AABB box_i(ni.aabb_min, ni.aabb_max);
 
 				Float best_area = BVH_INFINITY;
@@ -124,16 +130,16 @@ namespace amber
 				// Search interval [i - r, i + r] for the nearest neighbour using distance function d
 				/*From paper: "We define a distance function d between two clusters C1
 				and C2 as the surface area A of an axis aligned bounding
-				box tightly enclosing C1 and C2" 
+				box tightly enclosing C1 and C2"
 				*/
 				for (Int j = lo; j <= hi; j++)
 				{
-					if (static_cast<Uint32>(j) == i) 
+					if (static_cast<Uint32>(j) == i)
 					{
 						continue;
 					}
 
-					BVHNode const& nj = bvh.nodes[clusters[j]];
+					BVH2Node const& nj = bvh.nodes[clusters[j]];
 					AABB merged = box_i;
 					merged.Grow(AABB(nj.aabb_min, nj.aabb_max));
 					Float area = merged.Area();
@@ -153,7 +159,7 @@ namespace amber
 			for (Uint32 i = 0; i < cluster_count; i++)
 			{
 				Int j = nearest[i];
-				if (j < 0) 
+				if (j < 0)
 				{
 					continue;
 				}
@@ -171,13 +177,14 @@ namespace amber
 					bvh.nodes[left_dst]  = bvh.nodes[left_node];
 					bvh.nodes[right_dst] = bvh.nodes[right_node];
 
-					BVHNode& parent = bvh.nodes[parent_idx];
+					BVH2Node& parent = bvh.nodes[parent_idx];
 					AABB merged(bvh.nodes[left_dst].aabb_min,  bvh.nodes[left_dst].aabb_max);
 					merged.Grow(AABB(bvh.nodes[right_dst].aabb_min, bvh.nodes[right_dst].aabb_max));
-					parent.aabb_min   = merged.min;
-					parent.aabb_max   = merged.max;
-					parent.left_first = left_dst;
-					parent.prim_count = 0;
+					parent.aabb_min    = merged.min;
+					parent.aabb_max    = merged.max;
+					parent.children[0] = left_dst;
+					parent.children[1] = right_dst;
+					parent.child_count = 2;
 
 					clusters[i] = parent_idx;
 					valid[j]    = false;
@@ -186,7 +193,7 @@ namespace amber
 
 			for (Uint32 i = 0; i < cluster_count; i++)
 			{
-				if (valid[i]) 
+				if (valid[i])
 				{
 					next_clusters.push_back(clusters[i]);
 				}
@@ -203,6 +210,6 @@ namespace amber
 		}
 	}
 
-	template void PLOCBuilder::Build(BVH&, std::span<Triangle>,     Int);
-	template void PLOCBuilder::Build(BVH&, std::span<BLASInstance>, Int);
+	template void PLOCBuilder::Build(BVH2&, std::span<Triangle>,     Int);
+	template void PLOCBuilder::Build(BVH2&, std::span<BLASInstance>, Int);
 }
