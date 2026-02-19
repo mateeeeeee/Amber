@@ -170,6 +170,8 @@ set(DEVICE_CPU_FILES
     Device/CPU/BVH/PLOCBuilder.h
     Device/CPU/BVH/PLOCBuilder.cpp
     Device/CPU/BVH/SpatialTraits.h
+    Device/CPU/BVH/Collapse.h
+    Device/CPU/BVH/Traversal.h
 )
 
 if(APPLE)

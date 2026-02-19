@@ -19,7 +19,7 @@ namespace amber
 
 	struct TLAS
 	{
-		BVH2                      bvh;
+		BVH8                      bvh;
 		std::vector<BLASInstance> instances;
 	};
 
@@ -39,7 +39,6 @@ namespace amber
 		}
 	};
 
-	Bool Intersect(BLASInstance const& instance, Uint32 instance_idx, Ray& ray, HitInfo& hit);
 	Bool Intersect(TLAS const& tlas, Ray& ray, HitInfo& hit);
 }
 

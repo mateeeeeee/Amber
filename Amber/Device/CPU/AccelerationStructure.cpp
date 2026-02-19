@@ -2,6 +2,7 @@
 #include "BVH/SAHBuilder.h"
 #include "BVH/MedianSplitBuilder.h"
 #include "BVH/PLOCBuilder.h"
+#include "BVH/Collapse.h"
 
 namespace amber
 {
@@ -26,13 +27,17 @@ namespace amber
 
 		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
 		{
+			BVH2 bvh2;
 			MedianSplitBuilder builder;
-			builder.Build(blas.bvh, std::span(blas.triangles));
+			builder.Build(bvh2, std::span(blas.triangles));
+			Collapse(bvh2, blas.bvh);
 		}
 		else
 		{
+			BVH2 bvh2;
 			PLOCBuilder builder;
-			builder.Build(blas.bvh, std::span(blas.triangles));
+			builder.Build(bvh2, std::span(blas.triangles));
+			Collapse(bvh2, blas.bvh);
 		}
 	}
 
@@ -72,13 +77,17 @@ namespace amber
 
 		if (HasAnyFlag(input.flags, BuildFlags::PreferFastBuild))
 		{
+			BVH2 bvh2;
 			MedianSplitBuilder builder;
-			builder.Build(tlas.bvh, std::span(tlas.instances));
+			builder.Build(bvh2, std::span(tlas.instances));
+			Collapse(bvh2, tlas.bvh);
 		}
 		else
 		{
+			BVH2 bvh2;
 			PLOCBuilder builder;
-			builder.Build(tlas.bvh, std::span(tlas.instances));
+			builder.Build(bvh2, std::span(tlas.instances));
+			Collapse(bvh2, tlas.bvh);
 		}
 	}
 }
