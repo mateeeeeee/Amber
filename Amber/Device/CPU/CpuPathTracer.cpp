@@ -7,6 +7,7 @@
 #include "Utilities/ImageUtil.h"
 #include "Utilities/Timer.h"
 #include "ImGui/imgui.h"
+#include "BVH/Traversal.h"
 #include <cmath>
 
 namespace amber
@@ -128,6 +129,13 @@ namespace amber
 			default_light.color     = Vector3(8.0f, 8.0f, 8.0f);
 			default_light.direction = Vector3(0.0f, -1.0f, 0.1f).Normalized();
 		}
+
+		bvh_tlas_stats = ComputeStats(tlas.bvh);
+		bvh_blas_stats.clear();
+		for (BLAS const& blas : blas_list)
+		{
+			bvh_blas_stats.push_back(ComputeStats(blas.bvh));
+		}
 	}
 
 	void CpuPathTracer::Update(Float dt)
@@ -177,6 +185,51 @@ namespace amber
 							Uint32 rng = PcgHash(x + PcgHash(y + PcgHash(frame_index)));
 
 							Ray ray(origin, (W + U * ndc_x + V * ndc_y).Normalized());
+
+						if (bvh_heatmap_enabled)
+						{
+							Uint32 count = 0;
+							if (bvh_heatmap_mode == 0)
+							{
+								count = CountTraversalSteps(tlas.bvh, ray);
+							}
+							else if (bvh_heatmap_mode == 1)
+							{
+								count = CountPrimTests(tlas.bvh, ray);
+							}
+							else
+							{
+								HitInfo hit{};
+								Ray r = ray;
+								Bool found = Intersect(tlas, r, hit);
+								Float t = found ? (hit.t / 100.0f) : 1.0f;
+								t = std::min(t, 1.0f);
+								Vector3 color(t * t, t * (1.0f - t) * 2.0f, (1.0f - t) * (1.0f - t));
+								if (bvh_heatmap_blend)
+								{
+									accumulation_buffer(y, x) += Vector3(color.x, color.y, color.z);
+									framebuffer(y, x) = ToDisplay(accumulation_buffer(y, x) / Float(frame_index + 1));
+								}
+								else
+								{
+									framebuffer(y, x) = RGBA8(
+										static_cast<Uint8>(std::min(color.x * 255.0f, 255.0f)),
+										static_cast<Uint8>(std::min(color.y * 255.0f, 255.0f)),
+										static_cast<Uint8>(std::min(color.z * 255.0f, 255.0f)),
+										255);
+								}
+								continue;
+							}
+
+							Float  t = std::min(static_cast<Float>(count) / static_cast<Float>(bvh_heatmap_max_steps), 1.0f);
+							Vector3 color(t * t, t * (1.0f - t) * 2.0f, (1.0f - t) * (1.0f - t));
+							framebuffer(y, x) = RGBA8(
+								static_cast<Uint8>(std::min(color.x * 255.0f, 255.0f)),
+								static_cast<Uint8>(std::min(color.y * 255.0f, 255.0f)),
+								static_cast<Uint8>(std::min(color.z * 255.0f, 255.0f)),
+								255);
+							continue;
+						}
 							Vector3 throughput(1.0f, 1.0f, 1.0f);
 							Vector3 radiance(0.0f, 0.0f, 0.0f);
 
@@ -338,6 +391,74 @@ namespace amber
 		{
 			frame_index = 0;
 			accumulation_buffer.Clear(Vector3(0.0f, 0.0f, 0.0f));
+		}
+	}
+
+	void CpuPathTracer::BVHDebugGUI()
+	{
+		ImGui::Checkbox("BVH Heatmap", &bvh_heatmap_enabled);
+		if (bvh_heatmap_enabled)
+		{
+			Char const* heatmap_modes[] = { "Traversal Steps", "Prim Tests", "First Hit Distance" };
+			ImGui::SetNextItemWidth(160.0f);
+			ImGui::Combo("Mode", &bvh_heatmap_mode, heatmap_modes, IM_ARRAYSIZE(heatmap_modes));
+			if (bvh_heatmap_mode != 2)
+			{
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(120.0f);
+				ImGui::SliderInt("Max Steps", &bvh_heatmap_max_steps, 1, 256);
+			}
+			ImGui::Checkbox("Blend", &bvh_heatmap_blend);
+			ImGui::TextDisabled("blue = few, green = mid, red = many");
+		}
+
+		ImGui::Separator();
+
+		auto ShowStats = [](BVHStats const& s, Char const* label)
+		{
+			if (ImGui::TreeNode(label))
+			{
+				ImGui::Columns(2, nullptr, false);
+				auto Row = [](Char const* name, auto val)
+				{
+					ImGui::TextUnformatted(name); ImGui::NextColumn();
+					ImGui::Text("%s", std::to_string(val).c_str()); ImGui::NextColumn();
+				};
+				auto RowF = [](Char const* name, Float val)
+				{
+					ImGui::TextUnformatted(name); ImGui::NextColumn();
+					ImGui::Text("%.4f", val); ImGui::NextColumn();
+				};
+				Row("Nodes",              s.node_count);
+				Row("Leaves",             s.leaf_count);
+				Row("Internal",           s.internal_count);
+				Row("Max depth",          s.max_depth);
+				Row("Only-leaf internals",s.nodes_only_leaves);
+				Row("Only-int internals", s.nodes_only_internal);
+				Row("Min leaf prims",     s.min_leaf_prims);
+				Row("Max leaf prims",     s.max_leaf_prims);
+				RowF("Avg leaf prims",    s.avg_leaf_prims);
+				RowF("SAH cost",          s.sah_cost);
+				RowF("Total SA",          s.total_sa);
+				RowF("Leaf SA total",     s.leaf_sa_total);
+				RowF("Leaf SA avg",       s.leaf_sa_avg);
+				RowF("Leaf SA min",       s.leaf_sa_min);
+				RowF("Leaf SA max",       s.leaf_sa_max);
+				RowF("Total volume",      s.total_volume);
+				RowF("Leaf vol total",    s.leaf_volume_total);
+				RowF("Leaf vol avg",      s.leaf_volume_avg);
+				RowF("Leaf vol min",      s.leaf_volume_min);
+				RowF("Leaf vol max",      s.leaf_volume_max);
+				ImGui::Columns(1);
+				ImGui::TreePop();
+			}
+		};
+
+		ShowStats(bvh_tlas_stats, "TLAS");
+		for (Uint32 i = 0; i < static_cast<Uint32>(bvh_blas_stats.size()); i++)
+		{
+			std::string label = "BLAS " + std::to_string(i);
+			ShowStats(bvh_blas_stats[i], label.c_str());
 		}
 	}
 }

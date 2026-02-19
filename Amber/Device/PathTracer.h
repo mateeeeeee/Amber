@@ -70,6 +70,9 @@ namespace amber
 		virtual Bool HasLightEditor() const { return false; }
 		virtual void LightEditorGUI() {}
 
+		virtual Bool HasBVHDebug() const { return false; }
+		virtual void BVHDebugGUI() {}
+
 		virtual Bool HasDenoiser() const { return false; }
 		virtual void DenoiserGUI() {}
 	};

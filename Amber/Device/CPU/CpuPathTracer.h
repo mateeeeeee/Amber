@@ -8,6 +8,7 @@
 #include "Utilities/ThreadPool.h"
 #include "Utilities/Timer.h"
 #include "Scene/Mesh.h"
+#include "Device/CPU/BVH/Stats.h"
 
 namespace amber
 {
@@ -46,6 +47,9 @@ namespace amber
 		Bool HasLightEditor() const override { return true; }
 		void LightEditorGUI() override;
 
+		Bool HasBVHDebug() const override { return true; }
+		void BVHDebugGUI() override;
+
 	private:
 		Uint32 width;
 		Uint32 height;
@@ -65,6 +69,14 @@ namespace amber
 		Uint frame_index = 0;
 		Float render_time_ms = 0.0f;
 		PathTracerOutput output = PathTracerOutput::Final;
+
+		Bool  bvh_heatmap_enabled    = false;
+		Int   bvh_heatmap_max_steps  = 64;
+		Int   bvh_heatmap_mode       = 0; // add enum for this later
+		Float bvh_heatmap_blend_alpha = 0.5f;
+		Int   bvh_selected_blas      = -1;  
+		BVHStats bvh_tlas_stats{};
+		std::vector<BVHStats> bvh_blas_stats;
 
 	private:
 		void BuildAccelerationStructures();

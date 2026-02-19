@@ -173,6 +173,7 @@ set(DEVICE_CPU_FILES
     Device/CPU/BVH/Collapse.h
     Device/CPU/BVH/Traversal.h
     Device/CPU/BVH/Refit.h
+    Device/CPU/BVH/Stats.h
 )
 
 if(APPLE)

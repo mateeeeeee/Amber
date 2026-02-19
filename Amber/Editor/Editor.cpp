@@ -386,6 +386,16 @@ namespace amber
 
 		if (ImGui::CollapsingHeader("Debug"))
 		{
+			if (path_tracer.HasBVHDebug())
+			{
+				if (ImGui::TreeNode("BVH"))
+				{
+					path_tracer.BVHDebugGUI();
+					ImGui::TreePop();
+				}
+				ImGui::Separator();
+			}
+
 			static Char ss_name[32] = {};
 			ImGui::InputText("Screenshot Name", ss_name, sizeof(ss_name) - 1);
 			if (ImGui::Button("Take Screenshot"))
