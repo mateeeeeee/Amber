@@ -172,6 +172,7 @@ set(DEVICE_CPU_FILES
     Device/CPU/BVH/SpatialTraits.h
     Device/CPU/BVH/Collapse.h
     Device/CPU/BVH/Traversal.h
+    Device/CPU/BVH/Refit.h
 )
 
 if(APPLE)
