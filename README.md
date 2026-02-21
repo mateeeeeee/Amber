@@ -1,5 +1,6 @@
-<img align="left" src="Amber/Resources/Icons/amberlogo.png" width="140px"/>
-<br/><br/>
+<p align="center">
+  <img src="DAmber/Resources/Icons/amberlogo_wide.png" alt="Amber Logo" style="width:60%;" />
+</p>
 
 Path tracer with CPU, OptiX, and Metal backends.
 
