@@ -597,7 +597,9 @@ __device__ __forceinline__ Float3 TransformNormal(Float const matrix[12], Float3
 __device__ __forceinline__ void WriteToDenoiserBuffers(Uint32 idx, Float3 const& albedo, Float3 const& normal)
 {
 	if (params.denoiser_albedo != NULL)
+	{
 		params.denoiser_albedo[idx] = albedo;
+	}
 
 	if (params.denoiser_normals != NULL)
 	{
@@ -674,7 +676,7 @@ extern "C" __global__ void RG_NAME(rg)()
 			{
 				Float2 sky_uv = MakeFloat2(
 					(1.0f + atan2(ray_direction.x, -ray_direction.z) * INV_PI) * 0.5f,
-					1.0f - acos(ray_direction.y) * INV_PI);
+					 acos(ray_direction.y) * INV_PI);
 				Float3 sky_color = MakeFloat3(0.0f);
 				if (params.sky)
 				{
@@ -725,7 +727,9 @@ extern "C" __global__ void RG_NAME(rg)()
 			BxDFSample bsdf_sample = SampleBSDF(mat, V, prng, sampledComponent);
 
 			if (bsdf_sample.PDF < EPSILON || length(bsdf_sample.BxDF) < EPSILON)
+			{
 				break;
+			}
 
 			Float3 w_i = TangentToWorld(bsdf_sample.L, T, B, Ns);
 			throughput = throughput * bsdf_sample.BxDF * fabs(bsdf_sample.L.z) / bsdf_sample.PDF;
@@ -738,7 +742,9 @@ extern "C" __global__ void RG_NAME(rg)()
 			{
 				Float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001f, 0.95f);
 				if (prng.RandomFloat() > q)
+				{
 					break;
+				}
 				throughput = throughput / q;
 			}
 		}
@@ -748,7 +754,9 @@ extern "C" __global__ void RG_NAME(rg)()
 
 	Float luminance = dot(radiance, MakeFloat3(0.2126f, 0.7152f, 0.0722f));
 	if (luminance > 50.0f)
+	{
 		radiance = radiance * 50.0f / luminance;
+	}
 
 	Float3 accumulated;
 	if (params.frame_index > 0)
@@ -780,7 +788,9 @@ extern "C" __global__ void AH_NAME(ah)()
 		HitVertex vtx = LoadHitVertex(mesh, primitive_idx, optixGetTriangleBarycentrics());
 		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], vtx.texcoord.x, vtx.texcoord.y);
 		if (sampled.w < material.alpha_cutoff)
+		{
 			optixIgnoreIntersection();
+		}
 	}
 }
 

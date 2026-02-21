@@ -295,13 +295,13 @@ namespace amber::optix
 		tex_desc.addressMode[0] = cudaAddressModeWrap;
 		tex_desc.addressMode[1] = cudaAddressModeWrap;
 		tex_desc.filterMode = cudaFilterModeLinear;
-		tex_desc.readMode = cudaReadModeNormalizedFloat;
 		tex_desc.sRGB = srgb;
 		tex_desc.normalizedCoords = 1;
 		tex_desc.maxAnisotropy = 1;
 		tex_desc.maxMipmapLevelClamp = 1;
 		tex_desc.minMipmapLevelClamp = 1;
 		tex_desc.mipmapFilterMode = cudaFilterModePoint;
+		tex_desc.readMode = format.f == cudaChannelFormatKindFloat ? cudaReadModeElementType : cudaReadModeNormalizedFloat;
 
 		cudaCreateTextureObject(&texture_handle, &res_desc, &tex_desc, nullptr);
 	}

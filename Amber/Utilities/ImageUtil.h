@@ -24,13 +24,14 @@ namespace amber
 		template<typename T = Uint8>
 		T const* GetData() const
 		{
-			if constexpr(std::is_same_v<T, Float>)
+			if (hdr)
 			{
-				AMBER_ASSERT(hdr);
-				return hdr_data.data();
+				AMBER_ASSERT(!hdr_data.empty());
+				return reinterpret_cast<T const*>(hdr_data.data());
 			}
 			else
 			{
+				AMBER_ASSERT(!data.empty());
 				return reinterpret_cast<T const*>(data.data());
 			}
 		}

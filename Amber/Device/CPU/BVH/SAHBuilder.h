@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include "TopDownBuilder.h"
 #include "Device/CPU/BVH/Primitives.h"
 #include "Device/CPU/TLAS.h"

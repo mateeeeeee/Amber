@@ -71,6 +71,7 @@ namespace amber
 		PathTracerOutput output = PathTracerOutput::Final;
 
 		Bool  bvh_heatmap_enabled    = false;
+		Bool  bvh_heatmap_blend		 = false;
 		Int   bvh_heatmap_max_steps  = 64;
 		Int   bvh_heatmap_mode       = 0; // add enum for this later
 		Float bvh_heatmap_blend_alpha = 0.5f;

@@ -250,7 +250,14 @@ namespace amber
 		CudaSyncCheck();
 		as_outputs.push_back(std::move(as_output));
 
-		sky_texture = MakeTexture2D<uchar4>(scene->environment->GetWidth(), scene->environment->GetHeight());
+		if (scene->environment->IsHDR())
+		{
+			sky_texture = MakeTexture2D<float4>(scene->environment->GetWidth(), scene->environment->GetHeight(), false);
+		}
+		else
+		{
+			sky_texture = MakeTexture2D<uchar4>(scene->environment->GetWidth(), scene->environment->GetHeight(), scene->environment->IsSRGB());
+		}
 		sky_texture->Update(scene->environment->GetData());
 
 		std::vector<cudaTextureObject_t> texture_handles;
