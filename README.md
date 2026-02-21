@@ -1,14 +1,21 @@
-<img align="left" src="Amber/Resources/Icons/amberlogo.png" width="120px"/>
+<img align="left" src="Amber/Resources/Icons/amberlogo.png" width="140px"/>
 <br/><br/>
 
-# Amber
-
-Path tracer with OptiX and Metal backends.
+Path tracer with CPU, OptiX, and Metal backends.
 
 ## Features
-- OptiX backend (Windows/Linux) with OptiX Denoiser
-- Metal backend (macOS) with Metal ray tracing
-- Unified GGX microfacet BSDF implementation across both backends
+- **CPU backend** (all platforms)
+  - Custom BVH implementation: binned SAH, sweep SAH, median split, and PLOC bottom-up builders
+  - BVH widening via greedy collapse
+  - Two-level acceleration structure (BLAS/TLAS) with per-instance transforms
+  - Lambert diffuse BRDF with direct lighting and shadow rays
+  - HDR environment map sampling with Reinhard tonemapping
+  - Diffuse and emissive texture support with bilinear sampling
+  - BVH debug visualization: traversal step heatmap, primitive test heatmap, first-hit distance
+  - BVH statistics (SAH cost, surface area, volume, depth, leaf prim distribution)
+- **OptiX backend** (Windows/Linux, NVIDIA GPUs) with OptiX Denoiser
+- **Metal backend** (macOS) with Metal ray tracing
+- Unified GGX microfacet BSDF implementation across GPU backends
 - Supported scene formats: OBJ, GLTF
 
 ## Screenshots
