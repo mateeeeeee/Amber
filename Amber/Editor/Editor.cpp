@@ -237,14 +237,16 @@ namespace amber
 		{
 			if (ImGui::BeginMenu(ICON_FA_WINDOW_MAXIMIZE" Windows"))
 			{
-				if (ImGui::MenuItem(ICON_FA_GLOBE" Scene", 0, visibility_flags[Visibility_Scene]))
-					visibility_flags[Visibility_Scene] = !visibility_flags[Visibility_Scene];
+				if (ImGui::MenuItem(ICON_FA_GLOBE" Scene",       0, visibility_flags[Visibility_Scene]))
+					visibility_flags[Visibility_Scene]      = !visibility_flags[Visibility_Scene];
 				if (ImGui::MenuItem(ICON_FA_SLIDERS" Properties", 0, visibility_flags[Visibility_Properties]))
 					visibility_flags[Visibility_Properties] = !visibility_flags[Visibility_Properties];
-				if (ImGui::MenuItem(ICON_FA_CLOCK" Stats", 0, visibility_flags[Visibility_Stats]))
-					visibility_flags[Visibility_Stats] = !visibility_flags[Visibility_Stats];
-				if (ImGui::MenuItem(ICON_FA_TERMINAL" Console", 0, visibility_flags[Visibility_Console]))
-					visibility_flags[Visibility_Console] = !visibility_flags[Visibility_Console];
+				if (ImGui::MenuItem(ICON_FA_CLOCK" Stats",        0, visibility_flags[Visibility_Stats]))
+					visibility_flags[Visibility_Stats]      = !visibility_flags[Visibility_Stats];
+				if (ImGui::MenuItem(ICON_FA_BUG" Debug",          0, visibility_flags[Visibility_Debug]))
+					visibility_flags[Visibility_Debug]      = !visibility_flags[Visibility_Debug];
+				if (ImGui::MenuItem(ICON_FA_TERMINAL" Console",   0, visibility_flags[Visibility_Console]))
+					visibility_flags[Visibility_Console]    = !visibility_flags[Visibility_Console];
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu(" Help"))
@@ -259,6 +261,7 @@ namespace amber
 		SceneWindow();
 		PropertiesWindow();
 		StatsWindow();
+		DebugWindow();
 		ConsoleWindow();
 	}
 
@@ -319,62 +322,51 @@ namespace amber
 			return;
 		}
 
-		if (ImGui::CollapsingHeader("Renderer", ImGuiTreeNodeFlags_DefaultOpen))
+		if (ImGui::CollapsingHeader(ICON_FA_MICROCHIP" Renderer", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::Text("Backend: %s", GetBackendName(path_tracer.GetBackend()).c_str());
-			ImGui::Text("Frame: %u", path_tracer.GetFrameIndex());
 
 			Uint tri_count = path_tracer.GetTriangleCount();
-			if (tri_count > 0)
-			{
-				ImGui::Text("Triangles: %u", tri_count);
-			}
+			if (tri_count > 0) ImGui::Text("Triangles: %u", tri_count);
 
 			if (path_tracer.SupportsAccumulation())
 			{
 				Bool acc = path_tracer.GetAccumulate();
 				if (ImGui::Checkbox("Accumulate", &acc))
-				{
 					path_tracer.SetAccumulate(acc);
-				}
-
-				Int samples = path_tracer.GetSampleCount();
-				if (ImGui::SliderInt("Samples Per Pixel", &samples, 1, 128))
-				{
-					path_tracer.SetSampleCount(samples);
-				}
-
-				Int depth = path_tracer.GetDepthCount();
-				if (ImGui::SliderInt("Max Depth", &depth, 1, path_tracer.GetMaxDepth()))
-				{
-					path_tracer.SetDepthCount(depth);
-				}
 			}
 
-			if (path_tracer.HasDenoiser())
+			if (path_tracer.GetSampleCount() > 0)
 			{
-				ImGui::Separator();
-				path_tracer.DenoiserGUI();
+				Int samples = path_tracer.GetSampleCount();
+				if (ImGui::SliderInt("Samples Per Pixel", &samples, 1, 128))
+					path_tracer.SetSampleCount(samples);
+			}
+
+			{
+				Int depth = path_tracer.GetDepthCount();
+				if (ImGui::SliderInt("Max Depth", &depth, 1, path_tracer.GetMaxDepth()))
+					path_tracer.SetDepthCount(depth);
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Camera"))
+		if (path_tracer.HasDenoiser() && ImGui::CollapsingHeader(ICON_FA_WAND_MAGIC_SPARKLES" Denoiser"))
+		{
+			path_tracer.DenoiserGUI();
+		}
+
+		if (ImGui::CollapsingHeader(ICON_FA_VIDEO" Camera"))
 		{
 			Vector3 camera_eye = camera.GetPosition();
 			if (ImGui::InputFloat3("Position", &camera_eye.x))
-			{
 				camera.SetPosition(camera_eye);
-			}
 
 			Vector3 look_dir = camera.GetLookDir();
 			ImGui::Text("Look Dir: (%.2f, %.2f, %.2f)", look_dir.x, look_dir.y, look_dir.z);
-
-			Float fov = camera.GetFovY();
-			ImGui::Text("FoV: %.1f", fov);
+			ImGui::Text("FoV: %.1f", camera.GetFovY());
 		}
 
-		// --- Lights ---
-		if (ImGui::CollapsingHeader("Lights"))
+		if (ImGui::CollapsingHeader(ICON_FA_LIGHTBULB" Lights"))
 		{
 			ImGui::Text("Light count: %zu", path_tracer.GetScene().lights.size());
 			if (path_tracer.HasLightEditor())
@@ -384,34 +376,44 @@ namespace amber
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Debug"))
+		if (ImGui::CollapsingHeader(ICON_FA_CLOUD_SUN" Environment"))
 		{
-			if (path_tracer.HasBVHDebug())
+			Scene const& scene = path_tracer.GetScene();
+			if (scene.environment)
 			{
-				if (ImGui::TreeNode("BVH"))
-				{
-					path_tracer.BVHDebugGUI();
-					ImGui::TreePop();
-				}
-				ImGui::Separator();
+				ImGui::Text("Resolution: %d x %d", scene.environment->GetWidth(), scene.environment->GetHeight());
+				ImGui::Text("Format: %s", scene.environment->IsHDR() ? "HDR (RGBA32F)" : (scene.environment->IsSRGB() ? "LDR sRGB" : "LDR"));
 			}
-
-			static Char ss_name[32] = {};
-			ImGui::InputText("Screenshot Name", ss_name, sizeof(ss_name) - 1);
-			if (ImGui::Button("Take Screenshot"))
+			else
 			{
+				ImGui::TextDisabled("No environment map loaded");
+			}
+		}
+
+		ImGui::End();
+	}
+
+	void Editor::DebugWindow()
+	{
+		if (!visibility_flags[Visibility_Debug]) return;
+		if (!ImGui::Begin(ICON_FA_BUG" Debug", &visibility_flags[Visibility_Debug]))
+		{
+			ImGui::End();
+			return;
+		}
+
+		if (ImGui::CollapsingHeader("Screenshot", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			static Char ss_name[64] = "screenshot";
+			ImGui::SetNextItemWidth(-1);
+			ImGui::InputText("##ScreenshotName", ss_name, sizeof(ss_name) - 1);
+			if (ImGui::Button(ICON_FA_CAMERA" Take Screenshot", ImVec2(-1, 0)))
 				path_tracer.WriteFramebuffer(ss_name);
-			}
 		}
 
-		if (ImGui::CollapsingHeader("Environment"))
+		if (path_tracer.HasBVHDebug() && ImGui::CollapsingHeader("BVH", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::TextDisabled("Environment map settings coming soon");
-		}
-
-		if (ImGui::CollapsingHeader("Post Processing"))
-		{
-			ImGui::TextDisabled("Tone mapping, exposure coming soon");
+			path_tracer.BVHDebugGUI();
 		}
 
 		ImGui::End();
@@ -427,32 +429,30 @@ namespace amber
 		}
 
 		ImGuiIO& io = ImGui::GetIO();
-		ImGui::Text("FPS: %.1f", io.Framerate);
-		ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
-		ImGui::Text("Frame: %u", path_tracer.GetFrameIndex());
+		ImGui::Text("FPS:         %.1f", io.Framerate);
+		ImGui::Text("Frame time:  %.2f ms", 1000.0f / io.Framerate);
+		ImGui::Text("Frame:       %u", path_tracer.GetFrameIndex());
 
 		Float render_time = path_tracer.GetRenderTime();
 		if (render_time > 0.0f)
-		{
 			ImGui::Text("Render time: %.2f ms", render_time);
-		}
 
 		auto const& fb = path_tracer.GetFramebuffer();
-		ImGui::Text("Resolution: %llu x %llu", static_cast<unsigned long long>(fb.Cols()), static_cast<unsigned long long>(fb.Rows()));
-		ImGui::Text("Backend: %s", GetBackendName(path_tracer.GetBackend()).c_str());
+		ImGui::Text("Resolution:  %llu x %llu",
+			static_cast<unsigned long long>(fb.Cols()),
+			static_cast<unsigned long long>(fb.Rows()));
+
+		Uint tri_count = path_tracer.GetTriangleCount();
+		if (tri_count > 0)
+			ImGui::Text("Triangles:   %u", tri_count);
 
 		ImGui::Separator();
-		ImGui::Text("Memory:");
 
 		Uint64 mem = path_tracer.GetMemoryUsage();
 		if (mem > 0)
-		{
-			ImGui::Text("  Total: %.2f MB", mem / (1024.0 * 1024.0));
-		}
+			ImGui::Text("Memory:      %.2f MB", mem / (1024.0 * 1024.0));
 		else
-		{
-			ImGui::TextDisabled("  Not available");
-		}
+			ImGui::TextDisabled("Memory:      N/A");
 
 		ImGui::End();
 	}

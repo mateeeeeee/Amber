@@ -19,6 +19,7 @@ namespace amber
 			Visibility_Scene,
 			Visibility_Properties,
 			Visibility_Stats,
+			Visibility_Debug,
 			Visibility_Console,
 			Visibility_Count
 		};
@@ -68,6 +69,7 @@ namespace amber
 		void SceneWindow();
 		void PropertiesWindow();
 		void StatsWindow();
+		void DebugWindow();
 		void ConsoleWindow();
 	};
 }
