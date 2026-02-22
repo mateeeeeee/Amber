@@ -72,6 +72,7 @@ set(CORE_FILES
 
 set(UTILITY_FILES
     Utilities/EnumUtil.h
+    Utilities/EnvVars.h
     Utilities/Random.h
     Utilities/Delegate.h
     Utilities/Singleton.h
@@ -165,6 +166,7 @@ set(DEVICE_CPU_FILES
     Device/CPU/BVH/Primitives.h
     Device/CPU/BVH/Intersection.h
     Device/CPU/BVH/TopDownBuilder.h
+    Device/CPU/BVH/TopDownBuilder.cpp
     Device/CPU/BVH/SAHBuilder.h
     Device/CPU/BVH/MedianSplitBuilder.h
     Device/CPU/BVH/PLOCBuilder.h

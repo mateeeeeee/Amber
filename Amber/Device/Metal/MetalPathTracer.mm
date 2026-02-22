@@ -78,13 +78,15 @@ namespace amber
 		triangle_count = static_cast<Uint>(indices.size());
 		AMBER_INFO_LOG("Loaded geometry: %zu vertices, %zu indices, %zu meshes", vertices.size(), indices.size(), gpu_meshes.size());
 
+		Bool env_hdr = scene->environment->IsHDR();
 		sky_texture = std::make_unique<metal::Texture2D>(
 			device->GetDevice(),
 			scene->environment->GetWidth(),
 			scene->environment->GetHeight(),
-			MTLPixelFormatRGBA8Unorm,
-			true); 
-		sky_texture->Update(scene->environment->GetData(), scene->environment->GetWidth() * 4);
+			env_hdr ? MTLPixelFormatRGBA32Float : MTLPixelFormatRGBA8Unorm,
+			scene->environment->IsSRGB());
+		Uint32 env_bytes_per_row = scene->environment->GetWidth() * 4 * (env_hdr ? sizeof(Float) : sizeof(Uint8));
+		sky_texture->Update(scene->environment->GetData(), env_bytes_per_row);
 
 		textures.reserve(scene->textures.size());
 		for (Image const& texture : scene->textures)

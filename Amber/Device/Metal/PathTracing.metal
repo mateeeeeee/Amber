@@ -688,7 +688,7 @@ kernel void pathtrace_kernel(
             {
                 float2 sky_uv = float2(
                     (1.0f + atan2(ray_direction.x, -ray_direction.z) * INV_PI) * 0.5f,
-                    1.0f - acos(ray_direction.y) * INV_PI);
+                    acos(ray_direction.y) * INV_PI);
                 constexpr sampler sky_sampler(filter::linear, address::repeat);
                 float3 sky_color = sky.sample(sky_sampler, sky_uv).rgb;
                 radiance += throughput * sky_color;

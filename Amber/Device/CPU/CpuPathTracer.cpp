@@ -6,15 +6,21 @@
 #include "Math/MathCommon.h"
 #include "Utilities/ImageUtil.h"
 #include "Utilities/Timer.h"
+#include "Utilities/EnvVars.h"
 #include "ImGui/imgui.h"
 #include "BVH/Traversal.h"
 #include <cmath>
 
 namespace amber
 {
+	static constexpr Uint32 CPU_PT_DEFAULT_max_depth = 3;
+	static constexpr Uint32 CPU_PT_DEFAULT_tile_size = 16;
 
 	CpuPathTracer::CpuPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& _scene)
-		: width(width), height(height), scene(std::move(_scene)), framebuffer(height, width), accumulation_buffer(height, width)
+		: width(width), height(height),
+		  max_depth(GetEnvVar("AMBER_max_depth", (Int)CPU_PT_DEFAULT_max_depth)),
+		  tile_size(GetEnvVar("AMBER_tile_size", (Int)CPU_PT_DEFAULT_tile_size)),
+		  scene(std::move(_scene)), framebuffer(height, width), accumulation_buffer(height, width)
 	{
 		g_ThreadPool.Initialize();
 		framebuffer.Clear(RGBA8(0, 0, 0, 255));
@@ -159,8 +165,8 @@ namespace amber
 		Float tan_half_fov = std::tan(fov_rad * 0.5f);
 		Float aspect = camera.GetAspectRatio();
 
-		Uint32 tiles_x = (width + TILE_SIZE - 1) / TILE_SIZE;
-		Uint32 tiles_y = (height + TILE_SIZE - 1) / TILE_SIZE;
+		Uint32 tiles_x = (width + tile_size - 1) / tile_size;
+		Uint32 tiles_y = (height + tile_size - 1) / tile_size;
 
 		std::vector<std::future<void>> futures;
 		futures.reserve(tiles_x * tiles_y);
@@ -170,10 +176,10 @@ namespace amber
 			{
 				futures.push_back(g_ThreadPool.Submit([this, tx, ty, origin, U, V, W, tan_half_fov, aspect]()
 				{
-					Uint32 x_begin = tx * TILE_SIZE;
-					Uint32 y_begin = ty * TILE_SIZE;
-					Uint32 x_end = std::min(x_begin + TILE_SIZE, width);
-					Uint32 y_end = std::min(y_begin + TILE_SIZE, height);
+					Uint32 x_begin = tx * tile_size;
+					Uint32 y_begin = ty * tile_size;
+					Uint32 x_end = std::min(x_begin + tile_size, width);
+					Uint32 y_end = std::min(y_begin + tile_size, height);
 
 					for (Uint32 y = y_begin; y < y_end; ++y)
 					{
@@ -233,7 +239,7 @@ namespace amber
 							Vector3 throughput(1.0f, 1.0f, 1.0f);
 							Vector3 radiance(0.0f, 0.0f, 0.0f);
 
-							for (Uint32 depth = 0; depth < MAX_DEPTH; ++depth)
+							for (Uint32 depth = 0; depth < max_depth; ++depth)
 							{
 								HitInfo hit;
 								if (!Intersect(tlas, ray, hit))

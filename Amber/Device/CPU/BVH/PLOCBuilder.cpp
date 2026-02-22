@@ -1,5 +1,6 @@
 #include "PLOCBuilder.h"
 #include "Device/CPU/TLAS.h"
+#include "Utilities/EnvVars.h"
 #include <algorithm>
 #include <numeric>
 #include <vector>
@@ -34,8 +35,13 @@ namespace amber
 		}
 	}
 
+	static constexpr Int PLOC_DEFAULT_RADIUS = 14;
+
+	PLOCBuilder::PLOCBuilder() : radius(GetEnvVar("AMBER_PLOC_RADIUS", PLOC_DEFAULT_RADIUS)) {}
+	
+
 	template<typename NodeT>
-	void PLOCBuilder::Build(BVH2& bvh, std::span<NodeT> nodes, Int radius)
+	void PLOCBuilder::Build(BVH2& bvh, std::span<NodeT> nodes)
 	{
 		using Traits = SpatialTraits<NodeT>;
 
@@ -210,6 +216,6 @@ namespace amber
 		}
 	}
 
-	template void PLOCBuilder::Build(BVH2&, std::span<Triangle>,     Int);
-	template void PLOCBuilder::Build(BVH2&, std::span<BLASInstance>, Int);
+	template void PLOCBuilder::Build(BVH2&, std::span<Triangle>);
+	template void PLOCBuilder::Build(BVH2&, std::span<BLASInstance>);
 }

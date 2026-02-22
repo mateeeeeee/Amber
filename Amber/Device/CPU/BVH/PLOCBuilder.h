@@ -8,9 +8,12 @@ namespace amber
 	class PLOCBuilder
 	{
 	public:
-		static constexpr Int DEFAULT_RADIUS = 14;
+		PLOCBuilder();
 
 		template<typename NodeT>
-		void Build(BVH2& bvh, std::span<NodeT> primitives, Int radius = DEFAULT_RADIUS);
+		void Build(BVH2& bvh, std::span<NodeT> primitives);
+
+	private:
+		Int radius;
 	};
 }

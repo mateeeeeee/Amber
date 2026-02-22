@@ -17,8 +17,6 @@ namespace amber
 
 	class CpuPathTracer : public PathTracerBase
 	{
-		static constexpr Uint32 MAX_DEPTH = 3;
-		static constexpr Uint32 TILE_SIZE = 16;
 
 	public:
 		CpuPathTracer(Uint32 width, Uint32 height, PathTracerConfig const& config, std::unique_ptr<Scene>&& scene);
@@ -31,7 +29,7 @@ namespace amber
 		void WriteFramebuffer(Char const* outfile) override;
 
 		CpuBuffer2D<RGBA8> const& GetFramebuffer() const override { return framebuffer; }
-		Uint32 GetMaxDepth() const override { return MAX_DEPTH; }
+		Uint32 GetMaxDepth() const override { return max_depth; }
 
 		void SetOutput(PathTracerOutput pto) override { output = pto; }
 		PathTracerOutput GetOutput() const override { return output; }
@@ -53,6 +51,8 @@ namespace amber
 	private:
 		Uint32 width;
 		Uint32 height;
+		Uint32 max_depth;
+		Uint32 tile_size;
 		std::unique_ptr<Scene> scene;
 		CpuBuffer2D<RGBA8>    framebuffer;
 		CpuBuffer2D<Vector3>  accumulation_buffer;
