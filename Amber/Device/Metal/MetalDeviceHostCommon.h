@@ -105,7 +105,24 @@ namespace amber
 		Float4 transform_row2;
 	};
 
-	struct RenderParams
+	enum OutputTypeGPU : Uint32
+	{
+		OutputTypeGPU_Final      = 0,
+		OutputTypeGPU_Albedo     = 1,
+		OutputTypeGPU_Normal     = 2,
+		OutputTypeGPU_UV         = 3,
+		OutputTypeGPU_MaterialID = 4,
+	};
+
+	struct alignas(16) PostProcessParams
+	{
+		Float	exposure;
+		Uint32	tonemap_mode;   // todo add enum
+		Uint32	frame_index;
+		Uint32	padding;
+	};
+
+	struct alignas(16) RenderParams
 	{
 		Float4		cam_eye;
 		Float4		cam_u;

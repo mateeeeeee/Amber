@@ -27,6 +27,8 @@ namespace amber
 	{
 		if (stbi_is_hdr(file))
 		{
+			hdr = true;
+			stbi_set_flip_vertically_on_load(1);
 			Float* image_data = stbi_loadf(file, &width, &height, &channels, 4);
 			channels = 4;
 			AMBER_ASSERT_MSG(image_data, "Could not load HDR image");
@@ -35,7 +37,7 @@ namespace amber
 				image_data + width * height * channels
 			);
 			stbi_image_free(image_data);
-			hdr = true;
+			stbi_set_flip_vertically_on_load(0);
 		}
 		else
 		{

@@ -35,10 +35,7 @@ namespace amber
 		CpuBuffer2D<RGBA8> const& GetFramebuffer() const override { return framebuffer; }
 		Uint32 GetMaxDepth() const override { return MAX_DEPTH; }
 
-		void SetOutput(PathTracerOutput pto) override
-		{
-			output = pto;
-		}
+		void SetOutput(PathTracerOutput pto) override { output = pto; frame_index = 0; }
 		PathTracerOutput GetOutput() const override { return output; }
 
 		PathTracerBackend GetBackend() const override { return PathTracerBackend::Metal; }
@@ -57,6 +54,9 @@ namespace amber
 
 		Int   GetDepthCount() const override { return depth_count; }
 		void  SetDepthCount(Int v) override { depth_count = v; }
+
+		Bool HasPostProcessing() const override { return true; }
+		void PostProcessingGUI() override;
 
 	private:
 		Uint32 width;
@@ -82,18 +82,24 @@ namespace amber
 
 		std::unique_ptr<metal::Texture2D> accum_texture;
 		std::unique_ptr<metal::Texture2D> output_texture;
+		std::unique_ptr<metal::Texture2D> debug_texture;
 
 		std::vector<std::unique_ptr<metal::AccelerationStructure>> blas_list;
 		std::unique_ptr<metal::AccelerationStructure> tlas;
 
 		std::unique_ptr<metal::ComputePipeline> pathtracer_pipeline;
+		std::unique_ptr<metal::ComputePipeline> postprocess_pipeline;
+		std::unique_ptr<metal::ComputePipeline> debugview_pipeline;
 		std::unique_ptr<metal::Buffer> scene_argument_buffer;
 
-		Bool   accumulate	= true;
-		Uint   frame_index	= 0;
+		Bool   accumulate    = true;
+		Uint   frame_index   = 0;
 		Uint   triangle_count = 0;
-		Int depth_count;
-		Int sample_count;
+		Int    depth_count;
+		Int    sample_count;
 		PathTracerOutput output = PathTracerOutput::Final;
+
+		Float  exposure     = 1.0f;
+		Int    tonemap_mode = 1;
 	};
 }

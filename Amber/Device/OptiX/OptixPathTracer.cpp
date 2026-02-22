@@ -19,6 +19,7 @@ namespace amber
 {
 	extern "C" void LaunchResolveAccumulationKernel(Float3* hdr_output, Float3* accum_input, Int width, Int height, Int frame_index);
 	extern "C" void LaunchTonemapKernel(Uchar4* ldr_output, Float3* hdr_input, Int width, Int height);
+	extern "C" void LaunchDebugViewKernel(Uchar4* ldr_output, Float3* debug_input, Int width, Int height);
 
 	using namespace optix;
 
@@ -399,7 +400,7 @@ namespace amber
 
 		if (output != PathTracerOutput::Final)
 		{
-			LaunchTonemapKernel(ldr_buffer, debug_buffer, width, height);
+			LaunchDebugViewKernel(ldr_buffer, debug_buffer, width, height);
 			CudaSyncCheck();
 			cudaMemcpy(framebuffer, ldr_buffer, width * height * sizeof(RGBA8), cudaMemcpyDeviceToHost);
 			CudaSyncCheck();

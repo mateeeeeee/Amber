@@ -106,7 +106,6 @@ namespace amber
 		OptixImage2D input_albedo;
 		OptixImage2D input_normals;
 		OptixImage2D output_image;
-		OptixImage2D debug_image;
 
 		Bool   accumulate	= true;
 		Uint   frame_index	= 0;

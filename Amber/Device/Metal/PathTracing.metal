@@ -644,28 +644,95 @@ kernel void pathtrace_kernel(
     constant RenderParams& params [[buffer(0)]],
     constant SceneResources& scene [[buffer(1)]],
     instance_acceleration_structure accel_structure [[buffer(2)]],
-    texture2d<float, access::write> output [[texture(0)]],
-    texture2d<float, access::read_write> accum [[texture(1)]],
-    texture2d<float> sky [[texture(2)]])
+    texture2d<float, access::read_write> accum   [[texture(0)]],
+    texture2d<float>                     sky      [[texture(1)]],
+    texture2d<float, access::write>      debug    [[texture(2)]])
 {
     if (gid.x >= params.width || gid.y >= params.height)
         return;
 
     uint pixel_idx = gid.x + gid.y * params.width;
-    float3 radiance = float3(0.0f);
-    for (uint sample_idx = 0; sample_idx < params.sample_count; ++sample_idx)
+
+    bool debug_mode = (params.output_type != OutputTypeGPU_Final);
+
+    float aspect  = params.cam_aspect_ratio;
+    float tan_fov = tan(params.cam_fovy * 0.5f);
+    float3 ray_origin = params.cam_eye.xyz;
+    if (debug_mode)
     {
-        PRNG prng = PRNG::Create(pixel_idx, sample_idx + params.frame_index);
-        float2 pixel_offset = prng.RandomFloat2();
-        float2 uv = (float2(gid) + pixel_offset) / float2(params.width, params.height);
+        float2 uv = (float2(gid) + float2(0.5f)) / float2(params.width, params.height);
         uv = uv * 2.0f - 1.0f;
         uv.y = -uv.y;
 
-        float aspect = params.cam_aspect_ratio;
-        float tan_fov = tan(params.cam_fovy * 0.5f);
-
-        float3 ray_origin = params.cam_eye.xyz;
         float3 ray_direction = normalize(
+            params.cam_u.xyz * uv.x * aspect * tan_fov +
+            params.cam_v.xyz * uv.y * tan_fov +
+            params.cam_w.xyz);
+
+        ray ray_query;
+        ray_query.origin       = ray_origin;
+        ray_query.direction    = ray_direction;
+        ray_query.min_distance = EPSILON;
+        ray_query.max_distance = INFINITY;
+
+        intersector<triangle_data, instancing> isect;
+        isect.accept_any_intersection(false);
+        isect.assume_geometry_type(geometry_type::triangle);
+
+        auto intersection = isect.intersect(ray_query, accel_structure);
+
+        float3 debug_value = float3(0.0f);
+        if (intersection.type != intersection_type::none)
+        {
+            uint primitive_id   = intersection.primitive_id;
+            uint instance_id    = intersection.instance_id;
+            float2 barycentrics = intersection.triangle_barycentric_coord;
+
+            constant InstanceData& instance    = scene.instances[instance_id];
+            constant MeshGPU&      mesh        = scene.meshes[instance.mesh_id];
+            constant MaterialGPU&  material_gpu = scene.materials[mesh.material_idx];
+            HitVertex vtx = LoadHitVertex(scene, mesh, primitive_id, barycentrics);
+            vtx.Ng = TransformNormal(instance, vtx.Ng);
+
+            bool hitFromInside = dot(-ray_direction, vtx.Ns) < 0.0f;
+            EvaluatedMaterial mat = EvaluateMaterial(material_gpu, vtx.texcoord, scene, hitFromInside);
+
+            if (params.output_type == OutputTypeGPU_Albedo)
+            {
+                debug_value = mat.base_color;
+            }
+            else if (params.output_type == OutputTypeGPU_Normal)
+            {
+                debug_value = vtx.Ng * 0.5f + 0.5f;
+            }
+            else if (params.output_type == OutputTypeGPU_UV)
+            {
+                debug_value = float3(vtx.texcoord, 0.0f);
+            }
+            else if (params.output_type == OutputTypeGPU_MaterialID)
+            {
+                uint mid = mesh.material_idx;
+                debug_value = float3(
+                    float((mid * 37u) % 255u) / 255.0f,
+                    float((mid * 59u) % 255u) / 255.0f,
+                    float((mid * 97u) % 255u) / 255.0f);
+            }
+        }
+        debug.write(float4(debug_value, 1.0f), gid);
+        return;
+    }
+
+    float3 radiance = float3(0.0f);
+    for (uint sample_idx = 0; sample_idx < params.sample_count; ++sample_idx)
+    {
+        PRNG sample_prng = PRNG::Create(pixel_idx, sample_idx + params.frame_index);
+        float2 offset = sample_prng.RandomFloat2();
+        float2 uv = (float2(gid) + offset) / float2(params.width, params.height);
+        uv = uv * 2.0f - 1.0f;
+        uv.y = -uv.y;
+
+        float3 ro = params.cam_eye.xyz;
+        float3 rd = normalize(
             params.cam_u.xyz * uv.x * aspect * tan_fov +
             params.cam_v.xyz * uv.y * tan_fov +
             params.cam_w.xyz);
@@ -674,8 +741,8 @@ kernel void pathtrace_kernel(
         for (uint depth = 0; depth < params.max_depth; ++depth)
         {
             ray ray_query;
-            ray_query.origin = ray_origin;
-            ray_query.direction = ray_direction;
+            ray_query.origin = ro;
+            ray_query.direction = rd;
             ray_query.min_distance = EPSILON;
             ray_query.max_distance = INFINITY;
 
@@ -687,8 +754,8 @@ kernel void pathtrace_kernel(
             if (intersection.type == intersection_type::none)
             {
                 float2 sky_uv = float2(
-                    (1.0f + atan2(ray_direction.x, -ray_direction.z) * INV_PI) * 0.5f,
-                    acos(ray_direction.y) * INV_PI);
+                    (1.0f + atan2(rd.x, -rd.z) * INV_PI) * 0.5f,
+                     1.0f - acos(rd.y) * INV_PI);
                 constexpr sampler sky_sampler(filter::linear, address::repeat);
                 float3 sky_color = sky.sample(sky_sampler, sky_uv).rgb;
                 radiance += throughput * sky_color;
@@ -705,8 +772,8 @@ kernel void pathtrace_kernel(
 
             vtx.Ns = TransformNormal(instance, vtx.Ns);
             vtx.Ng = TransformNormal(instance, vtx.Ng);
-            float3 hit_point = ray_origin + ray_direction * intersection.distance;
-            float3 w_o = -ray_direction;
+            float3 hit_point = ro + rd * intersection.distance;
+            float3 w_o = -rd;
 
             bool hitFromInside = dot(w_o, vtx.Ns) < 0.0f;
 
@@ -725,11 +792,11 @@ kernel void pathtrace_kernel(
 
             radiance += throughput * mat.emissive;
 
-            radiance += throughput * SampleDirectLight(mat, hit_point, w_o, T, B, Ns, prng, params, scene, accel_structure);
+            radiance += throughput * SampleDirectLight(mat, hit_point, w_o, T, B, Ns, sample_prng, params, scene, accel_structure);
 
             float3 V = WorldToTangent(w_o, T, B, Ns);
             BSDFComponent sampledComponent;
-            BxDFSample bsdf_sample = SampleBSDF(mat, V, prng, sampledComponent);
+            BxDFSample bsdf_sample = SampleBSDF(mat, V, sample_prng, sampledComponent);
             if (bsdf_sample.PDF < EPSILON || length(bsdf_sample.BxDF) < EPSILON)
             {
                 break;
@@ -740,13 +807,13 @@ kernel void pathtrace_kernel(
             throughput *= bsdf_sample.BxDF * abs(bsdf_sample.L.z) / bsdf_sample.PDF;
 
             float3 offset_normal = (bsdf_sample.L.z > 0.0f) ? Ns : -Ns;
-            ray_origin = hit_point + offset_normal * EPSILON;
-            ray_direction = w_i;
+            ro = hit_point + offset_normal * EPSILON;
+            rd = w_i;
 
             if (depth >= 2)
             {
                 float q = min(max(throughput.r, max(throughput.g, throughput.b)) + 0.001f, 0.95f);
-                if (prng.RandomFloat() > q)
+                if (sample_prng.RandomFloat() > q)
                     break;
                 throughput /= q;
             }
@@ -771,9 +838,4 @@ kernel void pathtrace_kernel(
         accumulated = radiance;
     }
     accum.write(float4(accumulated, 1.0f), gid);
-
-    float3 color = accumulated / float(params.frame_index + 1);
-    color = color / (color + 1.0f); 
-    color = pow(color, float3(1.0f / 2.2f)); 
-    output.write(float4(color, 1.0f), gid);
 }

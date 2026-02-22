@@ -5,6 +5,7 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 #include "Core/Log.h"
+#include "ImGui/imgui.h"
 
 namespace amber
 {
@@ -250,6 +251,7 @@ namespace amber
 
 		accum_texture  = std::make_unique<metal::Texture2D>(device->GetDevice(), width, height, MTLPixelFormatRGBA32Float);
 		output_texture = std::make_unique<metal::Texture2D>(device->GetDevice(), width, height, MTLPixelFormatRGBA8Unorm);
+		debug_texture  = std::make_unique<metal::Texture2D>(device->GetDevice(), width, height, MTLPixelFormatRGBA32Float);
         
         std::string const pipeline_path = std::string(AMBER_PATH) + "/Device/Metal/PathTracing.metal";
 		pathtracer_pipeline = metal::ComputePipeline::CreateFromFile(
@@ -264,6 +266,36 @@ namespace amber
 		else
 		{
 			AMBER_INFO_LOG("Metal pathtracer initialized successfully");
+		}
+
+		std::string const postprocess_path = std::string(AMBER_PATH) + "/Device/Metal/PostProcess.metal";
+		postprocess_pipeline = metal::ComputePipeline::CreateFromFile(
+			device->GetDevice(),
+			postprocess_path.c_str(),
+			"postprocess_kernel");
+
+		if (!postprocess_pipeline)
+		{
+			AMBER_ERROR_LOG("Failed to create Metal post-process pipeline!");
+		}
+		else
+		{
+			AMBER_INFO_LOG("Metal post-process pipeline initialized successfully");
+		}
+
+		std::string const debugview_path = std::string(AMBER_PATH) + "/Device/Metal/DebugView.metal";
+		debugview_pipeline = metal::ComputePipeline::CreateFromFile(
+			device->GetDevice(),
+			debugview_path.c_str(),
+			"debugview_kernel");
+
+		if (!debugview_pipeline)
+		{
+			AMBER_ERROR_LOG("Failed to create Metal debug view pipeline!");
+		}
+		else
+		{
+			AMBER_INFO_LOG("Metal debug view pipeline initialized successfully");
 		}
 
 		scene_argument_buffer = std::make_unique<metal::Buffer>(
@@ -349,9 +381,9 @@ namespace amber
 		[encoder setBuffer:params_buffer.GetBuffer() offset:0 atIndex:0];
 		[encoder setBuffer:scene_argument_buffer->GetBuffer() offset:0 atIndex:1];
 
-		[encoder setTexture:output_texture->GetTexture() atIndex:0];
-		[encoder setTexture:accum_texture->GetTexture() atIndex:1];
-		[encoder setTexture:sky_texture->GetTexture() atIndex:2];
+		[encoder setTexture:accum_texture->GetTexture()  atIndex:0];
+		[encoder setTexture:sky_texture->GetTexture()    atIndex:1];
+		[encoder setTexture:debug_texture->GetTexture()  atIndex:2];
 
 		[encoder setAccelerationStructure:tlas->GetAccelerationStructure() atBufferIndex:2];
 
@@ -382,6 +414,42 @@ namespace amber
 
 		[encoder dispatchThreadgroups:thread_groups threadsPerThreadgroup:thread_group_size];
 		[encoder endEncoding];
+
+		if (output == PathTracerOutput::Final)
+		{
+			if (postprocess_pipeline)
+			{
+				PostProcessParams pp_params{};
+				pp_params.exposure     = exposure;
+				pp_params.tonemap_mode = static_cast<Uint32>(tonemap_mode);
+				pp_params.frame_index  = frame_index;
+
+				metal::Buffer pp_buffer(device->GetDevice(), sizeof(PostProcessParams));
+				pp_buffer.Update(pp_params);
+
+				id<MTLComputeCommandEncoder> pp_encoder = [cmd_buffer computeCommandEncoder];
+				pp_encoder.label = @"Post-Process Compute Encoder";
+				[pp_encoder setComputePipelineState:postprocess_pipeline->GetPipelineState()];
+				[pp_encoder setBuffer:pp_buffer.GetBuffer() offset:0 atIndex:0];
+				[pp_encoder setTexture:accum_texture->GetTexture()  atIndex:0];
+				[pp_encoder setTexture:output_texture->GetTexture() atIndex:1];
+				[pp_encoder dispatchThreadgroups:thread_groups threadsPerThreadgroup:thread_group_size];
+				[pp_encoder endEncoding];
+			}
+		}
+		else
+		{
+			if (debugview_pipeline)
+			{
+				id<MTLComputeCommandEncoder> dv_encoder = [cmd_buffer computeCommandEncoder];
+				dv_encoder.label = @"Debug View Compute Encoder";
+				[dv_encoder setComputePipelineState:debugview_pipeline->GetPipelineState()];
+				[dv_encoder setTexture:debug_texture->GetTexture()  atIndex:0];
+				[dv_encoder setTexture:output_texture->GetTexture() atIndex:1];
+				[dv_encoder dispatchThreadgroups:thread_groups threadsPerThreadgroup:thread_group_size];
+				[dv_encoder endEncoding];
+			}
+		}
 
 		[cmd_buffer addCompletedHandler:^(id<MTLCommandBuffer> buffer) {
 			if (buffer.error) 
@@ -421,6 +489,9 @@ namespace amber
 		output_texture = std::make_unique<metal::Texture2D>(
 			device->GetDevice(), width, height, MTLPixelFormatRGBA8Unorm);
 
+		debug_texture = std::make_unique<metal::Texture2D>(
+			device->GetDevice(), width, height, MTLPixelFormatRGBA32Float);
+
 		frame_index = 0;
 	}
 
@@ -432,5 +503,12 @@ namespace amber
 	Uint MetalPathTracer::GetTriangleCount() const
 	{
 		return triangle_count;
+	}
+
+	void MetalPathTracer::PostProcessingGUI()
+	{
+		static Char const* tonemap_modes[] = { "None", "Reinhard" };
+		ImGui::Combo("Tonemap", &tonemap_mode, tonemap_modes, IM_ARRAYSIZE(tonemap_modes));
+		ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
 	}
 }

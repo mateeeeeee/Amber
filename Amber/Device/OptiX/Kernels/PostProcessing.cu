@@ -213,6 +213,21 @@ __global__ void Tonemap(Uchar4* ldr_output, Float3* hdr_input, Uint width, Uint 
 	ldr_output[idx] = static_cast<Uchar4>(SRGB(color));
 }
 
+__global__ void DebugView(Uchar4* ldr_output, Float3* debug_input, Uint width, Uint height)
+{
+	Uint x = threadIdx.x + blockIdx.x * blockDim.x;
+	Uint y = threadIdx.y + blockIdx.y * blockDim.y;
+	if (x >= width || y >= height) 
+	{
+		return;
+	}
+
+	Uint idx = y * width + x;
+	ColorRGB32F color(debug_input[idx]);
+
+	ldr_output[idx] = static_cast<Uchar4>(SRGB(color));
+}
+
 namespace amber
 {
 	extern "C" void LaunchResolveAccumulationKernel(Float3* hdr_output, Float3* accum_input, Uint width, Uint height, Uint frame_index)
@@ -227,6 +242,13 @@ namespace amber
 		dim3 block_dim(16, 16);
 		dim3 grid_dim((width + block_dim.x - 1) / block_dim.x, (height + block_dim.y - 1) / block_dim.y);
 		LAUNCH_KERNEL(Tonemap, grid_dim, block_dim, ldr_output, hdr_input, width, height);
+	}
+
+	extern "C" void LaunchDebugViewKernel(Uchar4* ldr_output, Float3* debug_input, Uint width, Uint height)
+	{
+		dim3 block_dim(16, 16);
+		dim3 grid_dim((width + block_dim.x - 1) / block_dim.x, (height + block_dim.y - 1) / block_dim.y);
+		LAUNCH_KERNEL(DebugView, grid_dim, block_dim, ldr_output, debug_input, width, height);
 	}
 }
 

@@ -42,6 +42,9 @@ namespace amber
 		Uint   GetTriangleCount() const override { return triangle_count; }
 		Uint64 GetMemoryUsage() const override { return 0; }
 
+		Bool HasPostProcessing() const override { return true; }
+		void PostProcessingGUI() override;
+
 		Bool HasLightEditor() const override { return true; }
 		void LightEditorGUI() override;
 
@@ -69,6 +72,9 @@ namespace amber
 		Uint frame_index = 0;
 		Float render_time_ms = 0.0f;
 		PathTracerOutput output = PathTracerOutput::Final;
+
+		Float exposure     = 1.0f;
+		Int   tonemap_mode = 1;
 
 		Bool  bvh_heatmap_enabled    = false;
 		Bool  bvh_heatmap_blend		 = false;

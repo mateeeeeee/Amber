@@ -75,6 +75,9 @@ namespace amber
 
 		virtual Bool HasDenoiser() const { return false; }
 		virtual void DenoiserGUI() {}
+
+		virtual Bool HasPostProcessing() const { return false; }
+		virtual void PostProcessingGUI() {}
 	};
 
 	std::unique_ptr<PathTracerBase> CreatePathTracer(

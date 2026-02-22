@@ -7,8 +7,6 @@
 
 namespace amber
 {
-	static constexpr Float PT_PI = 3.14159265359f;
-
 	inline Uint32 PcgHash(Uint32 v)
 	{
 		v = v * 747796405u + 2891336453u;
@@ -29,7 +27,7 @@ namespace amber
 		Vector3 bitangent = Vector3::Cross(normal, tangent);
 
 		Float r   = std::sqrt(r1);
-		Float phi = 2.0f * PT_PI * r2;
+		Float phi = 2.0f * M_PI * r2;
 		Float x   = r * std::cos(phi);
 		Float y   = r * std::sin(phi);
 		Float z   = std::sqrt(std::max(0.0f, 1.0f - r1));
@@ -43,8 +41,8 @@ namespace amber
 		{
 			return Vector3(25.0f / 255.0f, 25.0f / 255.0f, 25.0f / 255.0f);
 		}
-		Float u = std::atan2(dir.z, dir.x) / (2.0f * PT_PI) + 0.5f;
-		Float v = (std::asin(std::clamp(dir.y, -1.0f, 1.0f)) / PT_PI + 0.5f);
+		Float u = (1.0f + std::atan2(dir.x, -dir.z) * M_1_PI) * 0.5f;
+		Float v = /*1.0f -*/ std::acos(dir.y) * M_1_PI;
 		return BilinearClamp.Sample<Vector3>(env, Vector2(u, v));
 	}
 
@@ -56,12 +54,13 @@ namespace amber
 		return c;
 	}
 
-	inline RGBA8 ToDisplay(Vector3 c)
+	inline RGBA8 ToDisplay(Vector3 c, Float exposure = 1.0f, Int tonemap_mode = 1)
 	{
-		c = TonemapReinhard(c);
-		c.x = std::pow(c.x, 1.0f / 2.2f);
-		c.y = std::pow(c.y, 1.0f / 2.2f);
-		c.z = std::pow(c.z, 1.0f / 2.2f);
+		c = c * exposure;
+		if (tonemap_mode == 1) c = TonemapReinhard(c);
+		c.x = std::pow(std::clamp(c.x, 0.0f, 1.0f), 1.0f / 2.2f);
+		c.y = std::pow(std::clamp(c.y, 0.0f, 1.0f), 1.0f / 2.2f);
+		c.z = std::pow(std::clamp(c.z, 0.0f, 1.0f), 1.0f / 2.2f);
 		return RGBA8::FromFloat(c.x, c.y, c.z);
 	}
 

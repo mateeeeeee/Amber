@@ -645,6 +645,43 @@ extern "C" __global__ void RG_NAME(rg)()
 	Uint2 screen = MakeUint2(optixGetLaunchDimensions().x, optixGetLaunchDimensions().y);
 	Uint32 pixel_idx = pixel.x + pixel.y * screen.x;
 
+	Bool debug_mode = (params.output_type != PathTracerOutputGPU_Final);
+	if (debug_mode)
+	{
+		Float2 uv = (MakeFloat2(pixel) + MakeFloat2(0.5f)) / MakeFloat2(screen);
+		uv = uv * 2.0f - 1.0f;
+		uv.y = -uv.y;
+
+		Float aspect = params.cam_aspect_ratio;
+		Float tan_fov = tan(params.cam_fovy * 0.5f);
+
+		Float3 ray_origin = params.cam_eye;
+		Float3 ray_direction = normalize(
+			params.cam_u * uv.x * aspect * tan_fov +
+			params.cam_v * uv.y * tan_fov +
+			params.cam_w);
+
+		HitRecord hit_record{};
+		Uint32 p0 = PackPointer0(&hit_record), p1 = PackPointer1(&hit_record);
+		Trace(params.traversable, ray_origin, ray_direction, EPSILON, M_INF, p0, p1);
+
+		if (!hit_record.hit)
+		{
+			WriteToDebugBuffer(pixel_idx, MakeFloat3(0.0f), MakeFloat3(0.0f), MakeFloat2(0.0f), 0);
+		}
+		else
+		{
+			MeshGPU mesh = params.meshes[hit_record.instance_idx];
+			MaterialGPU material_gpu = params.materials[mesh.material_idx];
+			Bool hitFromInside = dot(-ray_direction, hit_record.Ns) < 0.0f;
+			EvaluatedMaterial mat = EvaluateMaterial(material_gpu, hit_record.uv, hitFromInside);
+			Float3 Ng = hit_record.Ng;
+			if (material_gpu.specular_transmission == 0.0f && hitFromInside) Ng = -Ng;
+			WriteToDebugBuffer(pixel_idx, mat.base_color, Ng, hit_record.uv, mesh.material_idx);
+		}
+		return;
+	}
+
 	Float3 radiance = MakeFloat3(0.0f);
 
 	for (Uint32 sample_idx = 0; sample_idx < params.sample_count; ++sample_idx)
@@ -676,7 +713,7 @@ extern "C" __global__ void RG_NAME(rg)()
 			{
 				Float2 sky_uv = MakeFloat2(
 					(1.0f + atan2(ray_direction.x, -ray_direction.z) * INV_PI) * 0.5f,
-					 acos(ray_direction.y) * INV_PI);
+					 1.0f - acos(ray_direction.y) * INV_PI);
 				Float3 sky_color = MakeFloat3(0.0f);
 				if (params.sky)
 				{
@@ -688,7 +725,6 @@ extern "C" __global__ void RG_NAME(rg)()
 				if (depth == 0)
 				{
 					WriteToDenoiserBuffers(pixel_idx, MakeFloat3(0.0f), MakeFloat3(0.0f));
-					WriteToDebugBuffer(pixel_idx, MakeFloat3(0.0f), MakeFloat3(0.0f), MakeFloat2(0.0f), 0);
 				}
 				break;
 			}
@@ -716,7 +752,6 @@ extern "C" __global__ void RG_NAME(rg)()
 			if (depth == 0)
 			{
 				WriteToDenoiserBuffers(pixel_idx, mat.base_color, Ns);
-				WriteToDebugBuffer(pixel_idx, mat.base_color, Ng, hit_record.uv, mesh.material_idx);
 			}
 
 			radiance += throughput * mat.emissive;

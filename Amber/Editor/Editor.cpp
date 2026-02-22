@@ -78,8 +78,14 @@ namespace amber
 	void Editor::Run()
 	{
 		g_Input.Tick();
-		if (gui_enabled) camera.Enable(scene_focused);
-		else camera.Enable(true);
+		if (gui_enabled) 
+		{
+			camera.Enable(scene_focused);
+		}
+		else 
+		{
+			camera.Enable(true);
+		}
 
 		Float dt = ImGui::GetIO().DeltaTime;
 		camera.Update(dt);
@@ -122,7 +128,10 @@ namespace amber
 	void Editor::OnWindowEvent(WindowEventData const& data)
 	{
 		g_Input.OnWindowEvent(data);
-		if (gui_enabled) ImGui_ImplSDL2_ProcessEvent(data.event);
+		if (gui_enabled) 
+		{
+			ImGui_ImplSDL2_ProcessEvent(data.event);
+		}
 	}
 
 	void Editor::SetStyle()
@@ -275,7 +284,10 @@ namespace amber
 
 	void Editor::SceneWindow()
 	{
-		if (!visibility_flags[Visibility_Scene]) return;
+		if (!visibility_flags[Visibility_Scene]) 
+		{
+			return;
+		}
 		ImGui::Begin(ICON_FA_GLOBE" Scene", nullptr, ImGuiWindowFlags_MenuBar);
 
 		if (ImGui::BeginMenuBar())
@@ -327,26 +339,35 @@ namespace amber
 			ImGui::Text("Backend: %s", GetBackendName(path_tracer.GetBackend()).c_str());
 
 			Uint tri_count = path_tracer.GetTriangleCount();
-			if (tri_count > 0) ImGui::Text("Triangles: %u", tri_count);
+			if (tri_count > 0) 
+			{
+				ImGui::Text("Triangles: %u", tri_count);
+			}
 
 			if (path_tracer.SupportsAccumulation())
 			{
 				Bool acc = path_tracer.GetAccumulate();
 				if (ImGui::Checkbox("Accumulate", &acc))
+				{
 					path_tracer.SetAccumulate(acc);
+				}
 			}
 
 			if (path_tracer.GetSampleCount() > 0)
 			{
 				Int samples = path_tracer.GetSampleCount();
 				if (ImGui::SliderInt("Samples Per Pixel", &samples, 1, 128))
+				{
 					path_tracer.SetSampleCount(samples);
+				}
 			}
 
 			{
 				Int depth = path_tracer.GetDepthCount();
 				if (ImGui::SliderInt("Max Depth", &depth, 1, path_tracer.GetMaxDepth()))
+				{
 					path_tracer.SetDepthCount(depth);
+				}
 			}
 		}
 
@@ -359,7 +380,9 @@ namespace amber
 		{
 			Vector3 camera_eye = camera.GetPosition();
 			if (ImGui::InputFloat3("Position", &camera_eye.x))
+			{
 				camera.SetPosition(camera_eye);
+			}
 
 			Vector3 look_dir = camera.GetLookDir();
 			ImGui::Text("Look Dir: (%.2f, %.2f, %.2f)", look_dir.x, look_dir.y, look_dir.z);
@@ -390,6 +413,11 @@ namespace amber
 			}
 		}
 
+		if (path_tracer.HasPostProcessing() && ImGui::CollapsingHeader(ICON_FA_FILM" Post Processing"))
+		{
+			path_tracer.PostProcessingGUI();
+		}
+
 		ImGui::End();
 	}
 
@@ -408,7 +436,9 @@ namespace amber
 			ImGui::SetNextItemWidth(-1);
 			ImGui::InputText("##ScreenshotName", ss_name, sizeof(ss_name) - 1);
 			if (ImGui::Button(ICON_FA_CAMERA" Take Screenshot", ImVec2(-1, 0)))
+			{
 				path_tracer.WriteFramebuffer(ss_name);
+			}
 		}
 
 		if (path_tracer.HasBVHDebug() && ImGui::CollapsingHeader("BVH", ImGuiTreeNodeFlags_DefaultOpen))
@@ -435,7 +465,9 @@ namespace amber
 
 		Float render_time = path_tracer.GetRenderTime();
 		if (render_time > 0.0f)
+		{
 			ImGui::Text("Render time: %.2f ms", render_time);
+		}
 
 		auto const& fb = path_tracer.GetFramebuffer();
 		ImGui::Text("Resolution:  %llu x %llu",
@@ -444,24 +476,36 @@ namespace amber
 
 		Uint tri_count = path_tracer.GetTriangleCount();
 		if (tri_count > 0)
+		{
 			ImGui::Text("Triangles:   %u", tri_count);
+		}
 
 		ImGui::Separator();
 
 		Uint64 mem = path_tracer.GetMemoryUsage();
 		if (mem > 0)
+		{
 			ImGui::Text("Memory:      %.2f MB", mem / (1024.0 * 1024.0));
+		}
 		else
+		{
 			ImGui::TextDisabled("Memory:      N/A");
+		}
 
 		ImGui::End();
 	}
 
 	void Editor::ConsoleWindow()
 	{
-		if (!visibility_flags[Visibility_Console]) return;
+		if (!visibility_flags[Visibility_Console])
+		{
+			return;
+		}
 
-		if (editor_sink) editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Console]);
+		if (editor_sink) 
+		{
+			editor_sink->Draw(ICON_FA_COMMENT" Log", &visibility_flags[Visibility_Console]);
+		}
 		editor_console->Draw(ICON_FA_TERMINAL" Console", &visibility_flags[Visibility_Console]);
 	}
 

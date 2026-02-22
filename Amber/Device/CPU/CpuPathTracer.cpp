@@ -125,7 +125,10 @@ namespace amber
 		Uint32 directional_light_count = 0;
 		for (Light const& l : lights)
 		{
-			if (l.type == LightType::Directional) ++directional_light_count;
+			if (l.type == LightType::Directional) 
+			{
+				++directional_light_count;
+			}
 		}
 
 		if (directional_light_count == 0)
@@ -187,55 +190,53 @@ namespace amber
 						{
 							Float ndc_x = (2.0f * (x + 0.5f) / width - 1.0f) * aspect * tan_half_fov;
 							Float ndc_y = (1.0f - 2.0f * (y + 0.5f) / height) * tan_half_fov;
-
 							Uint32 rng = PcgHash(x + PcgHash(y + PcgHash(frame_index)));
 
 							Ray ray(origin, (W + U * ndc_x + V * ndc_y).Normalized());
-
-						if (bvh_heatmap_enabled)
-						{
-							Uint32 count = 0;
-							if (bvh_heatmap_mode == 0)
+							if (bvh_heatmap_enabled)
 							{
-								count = CountTraversalSteps(tlas.bvh, ray);
-							}
-							else if (bvh_heatmap_mode == 1)
-							{
-								count = CountPrimTests(tlas.bvh, ray);
-							}
-							else
-							{
-								HitInfo hit{};
-								Ray r = ray;
-								Bool found = Intersect(tlas, r, hit);
-								Float t = found ? (hit.t / 100.0f) : 1.0f;
-								t = std::min(t, 1.0f);
-								Vector3 color(t * t, t * (1.0f - t) * 2.0f, (1.0f - t) * (1.0f - t));
-								if (bvh_heatmap_blend)
+								Uint32 count = 0;
+								if (bvh_heatmap_mode == 0)
 								{
-									accumulation_buffer(y, x) += Vector3(color.x, color.y, color.z);
-									framebuffer(y, x) = ToDisplay(accumulation_buffer(y, x) / Float(frame_index + 1));
+									count = CountTraversalSteps(tlas.bvh, ray);
+								}
+								else if (bvh_heatmap_mode == 1)
+								{
+									count = CountPrimTests(tlas.bvh, ray);
 								}
 								else
 								{
-									framebuffer(y, x) = RGBA8(
-										static_cast<Uint8>(std::min(color.x * 255.0f, 255.0f)),
-										static_cast<Uint8>(std::min(color.y * 255.0f, 255.0f)),
-										static_cast<Uint8>(std::min(color.z * 255.0f, 255.0f)),
-										255);
+									HitInfo hit{};
+									Ray r = ray;
+									Bool found = Intersect(tlas, r, hit);
+									Float t = found ? (hit.t / 100.0f) : 1.0f;
+									t = std::min(t, 1.0f);
+									Vector3 color(t * t, t * (1.0f - t) * 2.0f, (1.0f - t) * (1.0f - t));
+									if (bvh_heatmap_blend)
+									{
+										accumulation_buffer(y, x) += Vector3(color.x, color.y, color.z);
+										framebuffer(y, x) = ToDisplay(accumulation_buffer(y, x) / Float(frame_index + 1), exposure, tonemap_mode);
+									}
+									else
+									{
+										framebuffer(y, x) = RGBA8(
+											static_cast<Uint8>(std::min(color.x * 255.0f, 255.0f)),
+											static_cast<Uint8>(std::min(color.y * 255.0f, 255.0f)),
+											static_cast<Uint8>(std::min(color.z * 255.0f, 255.0f)),
+											255);
+									}
+									continue;
 								}
+
+								Float t = std::min(static_cast<Float>(count) / static_cast<Float>(bvh_heatmap_max_steps), 1.0f);
+								Vector3 color(t * t, t * (1.0f - t) * 2.0f, (1.0f - t) * (1.0f - t));
+								framebuffer(y, x) = RGBA8(
+									static_cast<Uint8>(std::min(color.x * 255.0f, 255.0f)),
+									static_cast<Uint8>(std::min(color.y * 255.0f, 255.0f)),
+									static_cast<Uint8>(std::min(color.z * 255.0f, 255.0f)),
+									255);
 								continue;
 							}
-
-							Float  t = std::min(static_cast<Float>(count) / static_cast<Float>(bvh_heatmap_max_steps), 1.0f);
-							Vector3 color(t * t, t * (1.0f - t) * 2.0f, (1.0f - t) * (1.0f - t));
-							framebuffer(y, x) = RGBA8(
-								static_cast<Uint8>(std::min(color.x * 255.0f, 255.0f)),
-								static_cast<Uint8>(std::min(color.y * 255.0f, 255.0f)),
-								static_cast<Uint8>(std::min(color.z * 255.0f, 255.0f)),
-								255);
-							continue;
-						}
 							Vector3 throughput(1.0f, 1.0f, 1.0f);
 							Vector3 radiance(0.0f, 0.0f, 0.0f);
 
@@ -308,7 +309,7 @@ namespace amber
 							}
 
 							accumulation_buffer(y, x) += radiance;
-							framebuffer(y, x) = ToDisplay(accumulation_buffer(y, x) / Float(frame_index + 1));
+							framebuffer(y, x) = ToDisplay(accumulation_buffer(y, x) / Float(frame_index + 1), exposure, tonemap_mode);
 						}
 					}
 				}));
@@ -398,6 +399,15 @@ namespace amber
 			frame_index = 0;
 			accumulation_buffer.Clear(Vector3(0.0f, 0.0f, 0.0f));
 		}
+	}
+
+	void CpuPathTracer::PostProcessingGUI()
+	{
+		static Char const* tonemap_modes[] = { "None", "Reinhard" };
+		if (ImGui::Combo("Tonemap", &tonemap_mode, tonemap_modes, IM_ARRAYSIZE(tonemap_modes)))
+			frame_index = 0;
+		if (ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f))
+			frame_index = 0;
 	}
 
 	void CpuPathTracer::BVHDebugGUI()
