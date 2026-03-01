@@ -92,12 +92,25 @@ namespace amber
 		textures.reserve(scene->textures.size());
 		for (Image const& texture : scene->textures)
 		{
+<<<<<<< HEAD
+=======
+			if (texture.GetWidth() == 0 || texture.GetHeight() == 0)
+			{
+				textures.push_back(nullptr);
+				continue;
+			}
+
+>>>>>>> bvh-benchmark
 			auto metal_texture = std::make_unique<metal::Texture2D>(
 				device->GetDevice(),
 				texture.GetWidth(),
 				texture.GetHeight(),
 				MTLPixelFormatRGBA8Unorm,
+<<<<<<< HEAD
 				true); 
+=======
+				true);
+>>>>>>> bvh-benchmark
 			metal_texture->Update(texture.GetData(), texture.GetWidth() * 4);
 			textures.push_back(std::move(metal_texture));
 		}
@@ -155,6 +168,58 @@ namespace amber
 			gpu_light.direction = Vector4(0.0f, -1.0f, 0.1f, 0.0f);
 			gpu_light.position = Vector4(-1000.0f * gpu_light.direction.x, -1000.0f * gpu_light.direction.y, -1000.0f * gpu_light.direction.z, 1.0f);
 		}
+<<<<<<< HEAD
+=======
+
+		// Register emissive mesh geometries as area lights
+		{
+			Uint32 gpu_mesh_idx = 0;
+			for (Uint64 mesh_idx = 0; mesh_idx < scene->meshes.size(); ++mesh_idx)
+			{
+				Mesh const& mesh = scene->meshes[mesh_idx];
+				for (Uint32 geom_idx = 0; geom_idx < mesh.geometries.size(); ++geom_idx, ++gpu_mesh_idx)
+				{
+					Uint32 mat_idx = mesh.material_ids[geom_idx];
+					Material const& mat = scene->materials[mat_idx];
+					bool is_emissive = mat.emissive_color.x > 0.0f || mat.emissive_color.y > 0.0f
+					                || mat.emissive_color.z > 0.0f || mat.emissive_tex_id >= 0;
+					if (!is_emissive)
+						continue;
+
+					Geometry const& geom = mesh.geometries[geom_idx];
+
+					for (Uint64 inst_idx = 0; inst_idx < scene->instances.size(); ++inst_idx)
+					{
+						Instance const& inst = scene->instances[inst_idx];
+						if (inst.mesh_id != gpu_mesh_idx)
+							continue;
+
+						// Compute total surface area in world space
+						Float total_area = 0.0f;
+						for (Vector3u const& tri : geom.indices)
+						{
+							Vector3 p0 = Vector3::Transform(geom.vertices[tri.x], inst.transform);
+							Vector3 p1 = Vector3::Transform(geom.vertices[tri.y], inst.transform);
+							Vector3 p2 = Vector3::Transform(geom.vertices[tri.z], inst.transform);
+							Vector3 e1 = p1 - p0;
+							Vector3 e2 = p2 - p0;
+							total_area += 0.5f * Vector3::Cross(e1, e2).Length();
+						}
+						if (total_area < 1e-8f)
+							continue;
+
+						LightGPU& area_light = lights.emplace_back();
+						area_light.type = LightGPUType_Area;
+						area_light.mesh_idx = gpu_mesh_idx;
+						area_light.instance_idx = static_cast<Uint32>(inst_idx);
+						area_light.triangle_count = static_cast<Uint32>(geom.indices.size());
+						area_light.direction = Vector4(0.0f, 0.0f, 0.0f, total_area);
+						area_light.color = Vector4(mat.emissive_color.x, mat.emissive_color.y, mat.emissive_color.z, 1.0f);
+					}
+				}
+			}
+		}
+>>>>>>> bvh-benchmark
 		light_list_buffer = std::make_unique<metal::Buffer>(device->GetDevice(), lights.size() * sizeof(LightGPU));
 		light_list_buffer->Update(lights.data(), lights.size() * sizeof(LightGPU));
 
@@ -254,10 +319,18 @@ namespace amber
 		debug_texture  = std::make_unique<metal::Texture2D>(device->GetDevice(), width, height, MTLPixelFormatRGBA32Float);
         
         std::string const pipeline_path = std::string(AMBER_PATH) + "/Device/Metal/PathTracing.metal";
+<<<<<<< HEAD
 		pathtracer_pipeline = metal::ComputePipeline::CreateFromFile(
 			device->GetDevice(),
             pipeline_path.c_str(),
 			"pathtrace_kernel");
+=======
+		pathtracer_pipeline = metal::ComputePipeline::CreateFromFileWithIntersectionFunctions(
+			device->GetDevice(),
+            pipeline_path.c_str(),
+			"pathtrace_kernel",
+			{"alpha_test_intersection", "alpha_test_shadow_intersection"});
+>>>>>>> bvh-benchmark
 
 		if (!pathtracer_pipeline)
 		{
@@ -323,8 +396,24 @@ namespace amber
 		{
 			scene_resources->textures[i] = textures[i]->GetTexture().gpuResourceID;
 		}
+<<<<<<< HEAD
 
 		AMBER_INFO_LOG("Created Metal 3 argument buffer for bindless rendering with %zu textures", texture_count);
+=======
+		AMBER_INFO_LOG("Created Metal 3 argument buffer for bindless rendering with %zu textures", texture_count);
+
+		if (pathtracer_pipeline)
+		{
+			if (id<MTLIntersectionFunctionTable> ift = pathtracer_pipeline->GetIntersectionFunctionTable(0))
+			{
+				[ift setBuffer:scene_argument_buffer->GetBuffer() offset:0 atIndex:0];
+			}
+			if (id<MTLIntersectionFunctionTable> shadow_ift = pathtracer_pipeline->GetIntersectionFunctionTable(1))
+			{
+				[shadow_ift setBuffer:scene_argument_buffer->GetBuffer() offset:0 atIndex:0];
+			}
+		}
+>>>>>>> bvh-benchmark
 	}
 
 	MetalPathTracer::~MetalPathTracer()
@@ -381,6 +470,18 @@ namespace amber
 		[encoder setBuffer:params_buffer.GetBuffer() offset:0 atIndex:0];
 		[encoder setBuffer:scene_argument_buffer->GetBuffer() offset:0 atIndex:1];
 
+<<<<<<< HEAD
+=======
+		if (pathtracer_pipeline->GetIntersectionFunctionTable(0))
+		{
+			[encoder setIntersectionFunctionTable:pathtracer_pipeline->GetIntersectionFunctionTable(0) atBufferIndex:3];
+		}
+		if (pathtracer_pipeline->GetIntersectionFunctionTable(1))
+		{
+			[encoder setIntersectionFunctionTable:pathtracer_pipeline->GetIntersectionFunctionTable(1) atBufferIndex:4];
+		}
+
+>>>>>>> bvh-benchmark
 		[encoder setTexture:accum_texture->GetTexture()  atIndex:0];
 		[encoder setTexture:sky_texture->GetTexture()    atIndex:1];
 		[encoder setTexture:debug_texture->GetTexture()  atIndex:2];
@@ -511,4 +612,88 @@ namespace amber
 		ImGui::Combo("Tonemap", &tonemap_mode, tonemap_modes, IM_ARRAYSIZE(tonemap_modes));
 		ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
 	}
+<<<<<<< HEAD
+=======
+
+	void MetalPathTracer::LightEditorGUI()
+	{
+		static Char const* light_type_names[] = { "Directional", "Point", "Spot", "Area", "Environmental" };
+
+		struct LightEditorState { Vector3 color; Float intensity; };
+		static std::vector<LightEditorState> editor_states;
+		if (editor_states.size() != lights.size())
+		{
+			editor_states.resize(lights.size());
+			for (Uint32 i = 0; i < lights.size(); ++i)
+			{
+				Vector3 c(lights[i].color.x, lights[i].color.y, lights[i].color.z);
+				Float intensity = std::max({ c.x, c.y, c.z });
+				editor_states[i].intensity = intensity > 0.0f ? intensity : 1.0f;
+				editor_states[i].color     = intensity > 0.0f ? c / intensity : Vector3(1.0f, 1.0f, 1.0f);
+			}
+		}
+
+		Bool changed = false;
+		for (Uint32 i = 0; i < lights.size(); ++i)
+		{
+			LightGPU& light = lights[i];
+			LightEditorState& state = editor_states[i];
+			ImGui::PushID(i);
+			ImGui::BeginChild(("##light" + std::to_string(i)).c_str(), ImVec2(0, 150), true, ImGuiWindowFlags_NoScrollbar);
+			ImGui::Columns(2, nullptr, false);
+
+			ImGui::Text("Light %u", i);
+			ImGui::NextColumn();
+			ImGui::Text("%s", light_type_names[light.type]);
+			ImGui::NextColumn();
+
+			ImGui::Text("Color");
+			ImGui::NextColumn();
+			if (ImGui::ColorEdit3("##Color", &state.color.x))
+			{
+				light.color = Vector4(state.color.x * state.intensity, state.color.y * state.intensity, state.color.z * state.intensity, 1.0f);
+				changed = true;
+			}
+			ImGui::NextColumn();
+
+			ImGui::Text("Intensity");
+			ImGui::NextColumn();
+			if (ImGui::DragFloat("##Intensity", &state.intensity, 0.1f, 0.0f, 10000.0f, "%.2f"))
+			{
+				light.color = Vector4(state.color.x * state.intensity, state.color.y * state.intensity, state.color.z * state.intensity, 1.0f);
+				changed = true;
+			}
+			ImGui::NextColumn();
+
+			if (light.type == LightGPUType_Directional)
+			{
+				ImGui::Text("Direction");
+				ImGui::NextColumn();
+				changed |= ImGui::InputFloat3("##Dir", &light.direction.x);
+			}
+			else if (light.type == LightGPUType_Point)
+			{
+				ImGui::Text("Position");
+				ImGui::NextColumn();
+				changed |= ImGui::InputFloat3("##Pos", &light.position.x);
+			}
+			else if (light.type == LightGPUType_Area)
+			{
+				ImGui::Text("Total Area");
+				ImGui::NextColumn();
+				ImGui::Text("%.4f", light.direction.w);
+			}
+
+			ImGui::Columns(1);
+			ImGui::EndChild();
+			ImGui::PopID();
+		}
+
+		if (changed)
+		{
+			light_list_buffer->Update(lights.data(), lights.size() * sizeof(LightGPU));
+			frame_index = 0;
+		}
+	}
+>>>>>>> bvh-benchmark
 }

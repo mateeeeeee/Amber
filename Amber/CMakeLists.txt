@@ -55,6 +55,14 @@ if(NOT APPLE)
     endif()
 endif()
 
+<<<<<<< HEAD
+=======
+if(AMBER_HAS_OPTIX)
+    set(AMBER_BACKEND "OptiX")
+endif()
+message(STATUS "Building with ${AMBER_BACKEND} backend")
+
+>>>>>>> bvh-benchmark
 
 set(CORE_FILES
     Core/Types.h
@@ -218,7 +226,11 @@ set(PLATFORM_FILES
     Platform/Input.h
 )
 
+<<<<<<< HEAD
 if(NOT APPLE)
+=======
+if(AMBER_HAS_OPTIX)
+>>>>>>> bvh-benchmark
     set(CUDA_KERNEL_FILES
         Device/OptiX/Kernels/PostProcessing.cu
         Device/OptiX/Kernels/Math.cuh
@@ -257,6 +269,7 @@ set(MISC_FILES
 set_source_files_properties(${MISC_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 
+<<<<<<< HEAD
 add_executable(Amber ${MAIN_FILES} ${MATH_FILES} ${DEVICE_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${EXTERNAL_FILES} ${PLATFORM_FILES} ${MISC_FILES})
 set_target_properties(Amber PROPERTIES OUTPUT_NAME Amber)
 
@@ -265,11 +278,42 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} 
 source_group(TREE ${CMAKE_SOURCE_DIR}/External PREFIX "External" FILES ${EXTERNAL_FILES})
 
 if(NOT APPLE)
+=======
+set(AMBER_LIB_SOURCES
+    ${MATH_FILES}
+    ${DEVICE_BACKEND_FILES}
+    ${OPTIX_KERNEL_FILES}
+    ${CUDA_KERNEL_FILES}
+    ${CORE_FILES}
+    ${UTILITY_FILES}
+    ${SCENE_FILES}
+    ${EDITOR_FILES}
+    ${EXTERNAL_FILES}
+    ${PLATFORM_FILES}
+)
+
+add_library(AmberLib STATIC ${AMBER_LIB_SOURCES})
+
+target_include_directories(AmberLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(AmberLib PUBLIC ${CMAKE_SOURCE_DIR}/External)
+target_include_directories(AmberLib PUBLIC ${CMAKE_SOURCE_DIR}/External/spdlog/include)
+target_include_directories(AmberLib PUBLIC ${CMAKE_SOURCE_DIR}/External/pbrtParser)
+
+target_compile_definitions(AmberLib PUBLIC SPDLOG_USE_STD_FORMAT)
+target_compile_definitions(AmberLib PUBLIC AMBER_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+
+if(AMBER_HAS_OPTIX)
+    set_target_properties(AmberLib PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+endif()
+
+if(AMBER_HAS_OPTIX)
+>>>>>>> bvh-benchmark
     foreach(file ${OPTIX_KERNEL_FILES})
         set_source_files_properties(${file} PROPERTIES HEADER_FILE_ONLY TRUE)
     endforeach()
 endif()
 
+<<<<<<< HEAD
 target_include_directories(Amber PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External)
 target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/spdlog/include)
@@ -277,6 +321,8 @@ target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/pbrtParser
 
 target_compile_definitions(Amber PRIVATE SPDLOG_USE_STD_FORMAT)
 
+=======
+>>>>>>> bvh-benchmark
 if(APPLE)
     enable_language(OBJCXX)
     set_source_files_properties(
@@ -286,30 +332,48 @@ if(APPLE)
         COMPILE_FLAGS "-x objective-c++ -fobjc-arc"
     )
 
+<<<<<<< HEAD
     target_link_libraries(Amber PRIVATE
+=======
+    target_link_libraries(AmberLib PUBLIC
+>>>>>>> bvh-benchmark
         "-framework Metal"
         "-framework Foundation"
         "-framework QuartzCore"
     )
 
+<<<<<<< HEAD
     target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/SDL2/include)
     target_compile_definitions(Amber PRIVATE SDL_VIDEO_DRIVER_COCOA)
 
     set(SDL2_FRAMEWORK_PATH "${CMAKE_SOURCE_DIR}/External/SDL2/lib/SDL2.framework")
     if(EXISTS ${SDL2_FRAMEWORK_PATH})
         target_link_libraries(Amber PRIVATE ${SDL2_FRAMEWORK_PATH})
+=======
+    target_include_directories(AmberLib PUBLIC ${CMAKE_SOURCE_DIR}/External/SDL2/include)
+    target_compile_definitions(AmberLib PUBLIC SDL_VIDEO_DRIVER_COCOA)
+
+    set(SDL2_FRAMEWORK_PATH "${CMAKE_SOURCE_DIR}/External/SDL2/lib/SDL2.framework")
+    if(EXISTS ${SDL2_FRAMEWORK_PATH})
+        target_link_libraries(AmberLib PUBLIC ${SDL2_FRAMEWORK_PATH})
+>>>>>>> bvh-benchmark
         message(STATUS "Using bundled SDL2.framework from External/SDL2/lib")
     else()
         # Fallback: try to find system SDL2
         find_package(SDL2 QUIET)
         if(SDL2_FOUND)
+<<<<<<< HEAD
             target_link_libraries(Amber PRIVATE SDL2::SDL2)
+=======
+            target_link_libraries(AmberLib PUBLIC SDL2::SDL2)
+>>>>>>> bvh-benchmark
             message(STATUS "Using system SDL2")
         else()
             message(FATAL_ERROR "SDL2.framework not found at ${SDL2_FRAMEWORK_PATH}. Please add SDL2.framework to External/SDL2/lib or install via 'brew install sdl2'")
         endif()
     endif()
 elseif(AMBER_HAS_OPTIX)
+<<<<<<< HEAD
     target_include_directories(Amber PRIVATE ${CUDA_INCLUDE_DIRS})
     target_include_directories(Amber PRIVATE ${SDL2_INCLUDE_DIRS})
     target_include_directories(Amber PRIVATE ${CMAKE_SOURCE_DIR}/External/SDL2/include)
@@ -329,6 +393,27 @@ if(MSVC)
     set(DISABLED_WARNINGS /wd4996)
     target_compile_options(Amber
         PRIVATE
+=======
+    target_include_directories(AmberLib PUBLIC ${CUDA_INCLUDE_DIRS})
+    target_include_directories(AmberLib PUBLIC ${SDL2_INCLUDE_DIRS})
+    target_include_directories(AmberLib PUBLIC ${CMAKE_SOURCE_DIR}/External/SDL2/include)
+    target_include_directories(AmberLib PUBLIC ${OPTIX_INSTALL_DIR}/include)
+
+    target_link_libraries(AmberLib PUBLIC  ${CUDA_LIBRARIES})
+    target_link_libraries(AmberLib PUBLIC  ${NVRTC_LIB})
+    target_link_libraries(AmberLib PUBLIC CUDA::cudart CUDA::cuda_driver)
+    target_link_libraries(AmberLib PUBLIC ${CMAKE_SOURCE_DIR}/External/SDL2/lib/SDL2.lib)
+else()
+    target_include_directories(AmberLib PUBLIC ${CMAKE_SOURCE_DIR}/External/SDL2/include)
+endif()
+
+target_link_libraries(AmberLib PUBLIC pbrtParser)
+
+if(MSVC)
+    set(DISABLED_WARNINGS /wd4996)
+    target_compile_options(AmberLib
+        PUBLIC
+>>>>>>> bvh-benchmark
         $<$<COMPILE_LANGUAGE:CXX>:
             ${DISABLED_WARNINGS}
             /Zc:preprocessor
@@ -339,7 +424,10 @@ if(MSVC)
     )
 elseif(APPLE OR UNIX)
     set(ALL_SOURCE_FILES
+<<<<<<< HEAD
         ${MAIN_FILES}
+=======
+>>>>>>> bvh-benchmark
         ${CORE_FILES}
         ${UTILITY_FILES}
         ${SCENE_FILES}
@@ -353,6 +441,7 @@ elseif(APPLE OR UNIX)
     )
 endif()
 
+<<<<<<< HEAD
 set(AMBER_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Amber PRIVATE AMBER_PATH="${AMBER_PATH}")
 
@@ -376,6 +465,45 @@ if(WIN32)
     target_compile_definitions(Amber PRIVATE NOMINMAX)
 endif()
 
+=======
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(AmberLib PUBLIC AMBER_DEBUG=1)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(AmberLib PUBLIC AMBER_RELEASE=1)
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    target_compile_definitions(AmberLib PUBLIC AMBER_RELWITHDEBINFO=1)
+elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    target_compile_definitions(AmberLib PUBLIC AMBER_MINSIZEREL=1)
+endif()
+
+if(AMBER_HAS_OPTIX)
+    target_compile_definitions(AmberLib PUBLIC AMBER_OPTIX_FOUND=1)
+    target_compile_definitions(AmberLib PUBLIC CUDA_PATH="${CUDA_TOOLKIT_ROOT_DIR}")
+    target_compile_definitions(AmberLib PUBLIC OPTIX_PATH="${OPTIX_INSTALL_DIR}")
+endif()
+
+if(WIN32)
+    target_compile_definitions(AmberLib PUBLIC NOMINMAX)
+endif()
+
+add_executable(Amber ${MAIN_FILES} ${MISC_FILES})
+set_target_properties(Amber PROPERTIES OUTPUT_NAME Amber)
+target_link_libraries(Amber PRIVATE AmberLib)
+
+if(MSVC)
+    # Force-includes propagate from AmberLib via PUBLIC
+elseif(APPLE OR UNIX)
+    set_source_files_properties(${MAIN_FILES}
+        PROPERTIES
+        COMPILE_FLAGS "-include ${CMAKE_CURRENT_SOURCE_DIR}/Core/Types.h -include ${CMAKE_CURRENT_SOURCE_DIR}/Core/Macros.h -include ${CMAKE_CURRENT_SOURCE_DIR}/Math/MathTypes.h"
+    )
+endif()
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MAIN_FILES} ${MATH_FILES} ${DEVICE_BACKEND_FILES} ${OPTIX_KERNEL_FILES} ${CUDA_KERNEL_FILES} ${CORE_FILES} ${UTILITY_FILES} ${RENDERER_FILES} ${SCENE_FILES} ${EDITOR_FILES} ${PLATFORM_FILES} ${MISC_FILES})
+source_group(TREE ${CMAKE_SOURCE_DIR}/External PREFIX "External" FILES ${EXTERNAL_FILES})
+
+>>>>>>> bvh-benchmark
 install(TARGETS Amber DESTINATION bin)
 
 if(WIN32)

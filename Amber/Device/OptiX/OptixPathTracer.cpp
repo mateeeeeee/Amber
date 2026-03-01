@@ -324,6 +324,59 @@ namespace amber
 			optix_light.direction = make_float3(0.0f, -1.0f, 0.1f);
 			optix_light.position = make_float3(-1000.0f * optix_light.direction.x, -1000.0f * optix_light.direction.y, -1000.0f * optix_light.direction.z);
 		}
+<<<<<<< HEAD
+=======
+
+		// Build instance transforms buffer indexed by inst.mesh_id (== optixGetInstanceId())
+		std::vector<float> inst_transform_data(gpu_meshes.size() * 12, 0.0f);
+		for (Instance const& inst : scene->instances)
+		{
+			if (inst.mesh_id < (Uint64)gpu_meshes.size())
+			{
+				auto m = inst.transform.Transpose();
+				memcpy(inst_transform_data.data() + inst.mesh_id * 12, &m, 12 * sizeof(float));
+			}
+		}
+		instance_transforms_buffer = CreateBuffer(inst_transform_data);
+
+		// Add area lights for emissive mesh geometries
+		Uint32 gpu_mesh_idx = 0;
+		for (Uint32 mi = 0; mi < (Uint32)scene->meshes.size(); ++mi)
+		{
+			Mesh const& mesh = scene->meshes[mi];
+			for (Uint32 gi = 0; gi < (Uint32)mesh.geometries.size(); ++gi, ++gpu_mesh_idx)
+			{
+				Geometry const& geom = mesh.geometries[gi];
+				Material const& mat  = scene->materials[mesh.material_ids[gi]];
+				bool is_emissive = mat.emissive_color.x > 0.0f || mat.emissive_color.y > 0.0f || mat.emissive_color.z > 0.0f;
+				if (!is_emissive) continue;
+
+				for (Instance const& inst : scene->instances)
+				{
+					if (inst.mesh_id != gpu_mesh_idx) continue;
+
+					float total_area = 0.0f;
+					for (Vector3u const& tri : geom.indices)
+					{
+						Vector3 p0 = Vector3::Transform(geom.vertices[tri.x], inst.transform);
+						Vector3 p1 = Vector3::Transform(geom.vertices[tri.y], inst.transform);
+						Vector3 p2 = Vector3::Transform(geom.vertices[tri.z], inst.transform);
+						Vector3 e1 = p1 - p0, e2 = p2 - p0;
+						total_area += Vector3::Cross(e1, e2).Length() * 0.5f;
+					}
+
+					LightGPU& area_light = lights.emplace_back();
+					area_light.type          = LightGPUType_Area;
+					area_light.mesh_idx      = gpu_mesh_idx;
+					area_light.instance_idx  = gpu_mesh_idx;
+					area_light.triangle_count = static_cast<Uint32>(geom.indices.size());
+					area_light.total_area    = total_area;
+					area_light.color         = make_float3(mat.emissive_color.x, mat.emissive_color.y, mat.emissive_color.z);
+				}
+			}
+		}
+
+>>>>>>> bvh-benchmark
 		light_list_buffer = CreateBuffer(lights);
 
 		CompileOptions comp_opts{};
@@ -388,6 +441,10 @@ namespace amber
 		params.meshes = mesh_list_buffer->GetDevicePtr();
 		params.lights = light_list_buffer->GetDevicePtr();
 		params.light_count = light_list_buffer->GetSize() / sizeof(LightGPU);
+<<<<<<< HEAD
+=======
+		params.instance_transforms = instance_transforms_buffer->GetDevicePtr();
+>>>>>>> bvh-benchmark
 		params.denoiser_albedo = denoiser_albedo.GetDevicePtr();
 		params.denoiser_normals = denoiser_normals.GetDevicePtr();
 		params.sky = sky_texture->GetHandle();

@@ -191,6 +191,94 @@ namespace amber::metal
 		}
 	}
 
+<<<<<<< HEAD
+=======
+	ComputePipeline::ComputePipeline(id<MTLDevice> device, Char const* shader_source, Char const* function_name,
+	                                  std::vector<Char const*> const& isect_fn_names)
+	{
+		NSError* error = nil;
+
+		NSString* source_string = [NSString stringWithUTF8String:shader_source];
+		MTLCompileOptions* options = [[MTLCompileOptions alloc] init];
+
+		id<MTLLibrary> library = [device newLibraryWithSource:source_string options:options error:&error];
+		[options release];
+
+		if (!library)
+		{
+			if (error)
+				AMBER_ERROR_LOG("Failed to compile Metal shader: %s", [[error localizedDescription] UTF8String]);
+			return;
+		}
+
+		// Collect intersection function objects
+		std::vector<id<MTLFunction>> isect_fn_objects;
+		NSMutableArray* linked_fns_array = [NSMutableArray array];
+		for (Char const* fn_name : isect_fn_names)
+		{
+			id<MTLFunction> fn = [library newFunctionWithName:[NSString stringWithUTF8String:fn_name]];
+			if (fn)
+			{
+				[linked_fns_array addObject:fn];
+				isect_fn_objects.push_back(fn);
+			}
+			else
+			{
+				AMBER_WARN_LOG("Intersection function not found in shader: %s", fn_name);
+				isect_fn_objects.push_back(nil);
+			}
+		}
+
+		NSString* function_string = [NSString stringWithUTF8String:function_name];
+		id<MTLFunction> kernel_fn = [library newFunctionWithName:function_string];
+		if (!kernel_fn)
+		{
+			AMBER_ERROR_LOG("Failed to find Metal function: %s", function_name);
+			for (id<MTLFunction> fn : isect_fn_objects) if (fn) [fn release];
+			[library release];
+			return;
+		}
+
+		MTLLinkedFunctions* linked = [[MTLLinkedFunctions alloc] init];
+		linked.functions = linked_fns_array;
+
+		MTLComputePipelineDescriptor* desc = [[MTLComputePipelineDescriptor alloc] init];
+		desc.computeFunction = kernel_fn;
+		desc.linkedFunctions = linked;
+
+		pipeline_state = [device newComputePipelineStateWithDescriptor:desc options:MTLPipelineOptionNone reflection:nil error:&error];
+		[kernel_fn release];
+		[linked release];
+		[desc release];
+
+		if (!pipeline_state)
+		{
+			if (error)
+				AMBER_ERROR_LOG("Failed to create compute pipeline: %s", [[error localizedDescription] UTF8String]);
+			for (id<MTLFunction> fn : isect_fn_objects) if (fn) [fn release];
+			[library release];
+			return;
+		}
+
+		for (Uint32 i = 0; i < isect_fn_objects.size(); ++i)
+		{
+			MTLIntersectionFunctionTableDescriptor* ift_desc = [[MTLIntersectionFunctionTableDescriptor alloc] init];
+			ift_desc.functionCount = 1;
+			id<MTLIntersectionFunctionTable> table = [pipeline_state newIntersectionFunctionTableWithDescriptor:ift_desc];
+			[ift_desc release];
+			if (isect_fn_objects[i] != nil)
+			{
+				id<MTLFunctionHandle> handle = [pipeline_state functionHandleWithFunction:isect_fn_objects[i]];
+				[table setFunction:handle atIndex:0];
+			}
+			intersection_function_tables.push_back(table);
+		}
+
+		for (id<MTLFunction> fn : isect_fn_objects) if (fn) [fn release];
+		[library release];
+	}
+
+>>>>>>> bvh-benchmark
 	std::unique_ptr<ComputePipeline> ComputePipeline::CreateFromFile(id<MTLDevice> device, Char const* file_path, Char const* function_name)
 	{
 		std::ifstream file(file_path);
@@ -225,8 +313,55 @@ namespace amber::metal
 		return std::make_unique<ComputePipeline>(device, shader_source.c_str(), function_name);
 	}
 
+<<<<<<< HEAD
 	ComputePipeline::~ComputePipeline()
 	{
+=======
+	std::unique_ptr<ComputePipeline> ComputePipeline::CreateFromFileWithIntersectionFunctions(
+	    id<MTLDevice> device, Char const* file_path, Char const* function_name,
+	    std::vector<Char const*> const& isect_fn_names)
+	{
+		std::ifstream file(file_path);
+		if (!file.is_open())
+		{
+			AMBER_ERROR_LOG("Failed to open Metal shader file: %s", file_path);
+			return nullptr;
+		}
+
+		std::string shader_source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		file.close();
+
+		size_t include_pos = shader_source.find("#include \"MetalDeviceHostCommon.h\"");
+		if (include_pos != std::string::npos)
+		{
+			std::string header_path = std::string(AMBER_PATH) + "/Device/Metal/MetalDeviceHostCommon.h";
+			std::ifstream header_file(header_path);
+			if (header_file.is_open())
+			{
+				std::string header_content((std::istreambuf_iterator<char>(header_file)), std::istreambuf_iterator<char>());
+				header_file.close();
+				shader_source.replace(include_pos, strlen("#include \"MetalDeviceHostCommon.h\""), header_content);
+			}
+			else
+			{
+				AMBER_ERROR_LOG("Failed to open header file: %s", header_path.c_str());
+				return nullptr;
+			}
+		}
+
+		return std::make_unique<ComputePipeline>(device, shader_source.c_str(), function_name, isect_fn_names);
+	}
+
+	ComputePipeline::~ComputePipeline()
+	{
+		for (id<MTLIntersectionFunctionTable> ift : intersection_function_tables)
+		{
+			if (ift) 
+			{
+				[ift release];
+			}
+		}
+>>>>>>> bvh-benchmark
 		if (pipeline_state)
 		{
 			[pipeline_state release];

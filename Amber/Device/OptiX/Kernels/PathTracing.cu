@@ -90,6 +90,11 @@ struct EvaluatedMaterial
 	Float Ax;
 	Float Ay;
 	Float Eta;
+<<<<<<< HEAD
+=======
+	Float alpha;
+	Float alpha_cutoff;
+>>>>>>> bvh-benchmark
 };
 
 __device__ __forceinline__ Float Pow2(Float x)
@@ -433,11 +438,21 @@ __device__ __forceinline__ EvaluatedMaterial EvaluateMaterial(MaterialGPU const&
 {
 	EvaluatedMaterial eval;
 	eval.base_color = material.base_color;
+<<<<<<< HEAD
+=======
+	eval.alpha = 1.0f;
+>>>>>>> bvh-benchmark
 	if (material.diffuse_tex_id >= 0)
 	{
 		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], uv.x, uv.y);
 		eval.base_color = eval.base_color * MakeFloat3(sampled.x, sampled.y, sampled.z);
+<<<<<<< HEAD
 	}
+=======
+		eval.alpha = sampled.w;
+	}
+	eval.alpha_cutoff = material.alpha_cutoff;
+>>>>>>> bvh-benchmark
 
 	eval.emissive = material.emissive_color;
 	if (material.emissive_tex_id >= 0)
@@ -472,6 +487,27 @@ __device__ __forceinline__ EvaluatedMaterial EvaluateMaterial(MaterialGPU const&
 	return eval;
 }
 
+<<<<<<< HEAD
+=======
+__device__ __forceinline__ Float3 TransformVertex(Float const matrix[12], Float3 const& position)
+{
+	Float3 transformed;
+	transformed.x = matrix[0] * position.x + matrix[1] * position.y + matrix[2] * position.z + matrix[3];
+	transformed.y = matrix[4] * position.x + matrix[5] * position.y + matrix[6] * position.z + matrix[7];
+	transformed.z = matrix[8] * position.x + matrix[9] * position.y + matrix[10] * position.z + matrix[11];
+	return transformed;
+}
+
+__device__ __forceinline__ Float3 TransformNormal(Float const matrix[12], Float3 const& normal)
+{
+	Float3 transformed;
+	transformed.x = matrix[0] * normal.x + matrix[1] * normal.y + matrix[2] * normal.z;
+	transformed.y = matrix[4] * normal.x + matrix[5] * normal.y + matrix[6] * normal.z;
+	transformed.z = matrix[8] * normal.x + matrix[9] * normal.y + matrix[10] * normal.z;
+	return normalize(transformed);
+}
+
+>>>>>>> bvh-benchmark
 __device__ __forceinline__ Float3 SampleDirectLight(
 	EvaluatedMaterial const& mat,
 	Float3 hit_point,
@@ -524,6 +560,55 @@ __device__ __forceinline__ Float3 SampleDirectLight(
 			}
 		}
 	}
+<<<<<<< HEAD
+=======
+	else if (light.type == LightGPUType_Area)
+	{
+		MeshGPU area_mesh = params.meshes[light.mesh_idx];
+		Uint32 tri_idx = (Uint32)(prng.RandomFloat() * Float(light.triangle_count));
+		tri_idx = min(tri_idx, light.triangle_count - 1u);
+
+		Uint3* mesh_indices = params.indices + area_mesh.indices_offset;
+		Uint3 tri = mesh_indices[tri_idx];
+		Float3* mesh_verts = params.vertices + area_mesh.positions_offset;
+		Float3 lp0 = mesh_verts[tri.x];
+		Float3 lp1 = mesh_verts[tri.y];
+		Float3 lp2 = mesh_verts[tri.z];
+
+		Float const* transform = params.instance_transforms + light.mesh_idx * 12;
+		lp0 = TransformVertex(transform, lp0);
+		lp1 = TransformVertex(transform, lp1);
+		lp2 = TransformVertex(transform, lp2);
+
+		Float sqrt_r1 = sqrt(prng.RandomFloat());
+		Float r2 = prng.RandomFloat();
+		Float u = 1.0f - sqrt_r1;
+		Float v = r2 * sqrt_r1;
+		Float3 light_point = lp0 * u + lp1 * v + lp2 * (1.0f - u - v);
+
+		Float3 to_light = light_point - hit_point;
+		Float dist2 = dot(to_light, to_light);
+		Float dist = sqrt(dist2);
+		Float3 L_world = to_light / dist;
+		Float3 L = WorldToTangent(L_world, T, B, N);
+
+		if (L.z > EPSILON)
+		{
+			Float3 light_ng = normalize(cross(lp1 - lp0, lp2 - lp0));
+			Float cos_theta_light = fabs(dot(-L_world, light_ng));
+			if (cos_theta_light > EPSILON)
+			{
+				if (!TraceOcclusion(params.traversable, hit_point + N * EPSILON, L_world, EPSILON, dist - EPSILON))
+				{
+					Float area_pdf = dist2 / (light.total_area * cos_theta_light * Float(params.light_count));
+					BxDFEval bsdf_eval = EvaluateBSDF(mat, V, L);
+					Float mis_weight = PowerHeuristic(1, area_pdf, 1, bsdf_eval.PDF);
+					radiance = bsdf_eval.BxDF * L.z * light.color * mis_weight / area_pdf;
+				}
+			}
+		}
+	}
+>>>>>>> bvh-benchmark
 
 	return radiance;
 }
@@ -533,6 +618,10 @@ struct HitVertex
 	Float3 P;
 	Float3 Ng;
 	Float3 Ns;
+<<<<<<< HEAD
+=======
+	Float3 T;
+>>>>>>> bvh-benchmark
 	Float2 texcoord;
 };
 
@@ -555,7 +644,11 @@ __device__ __forceinline__ HitVertex LoadHitVertex(MeshGPU const& mesh, Uint32 p
 
 	Float3 edge1 = pos1 - pos0;
 	Float3 edge2 = pos2 - pos0;
+<<<<<<< HEAD
 	vtx.Ng = normalize(cross(edge1, edge2));
+=======
+	vtx.Ng = normalize(cross(edge2, edge1));
+>>>>>>> bvh-benchmark
 
 	Float3* mesh_normals = params.normals + mesh.normals_offset;
 	Float3 nor0 = mesh_normals[i0];
@@ -573,6 +666,7 @@ __device__ __forceinline__ HitVertex LoadHitVertex(MeshGPU const& mesh, Uint32 p
 	vtx.texcoord = uv0 * w + uv1 * barycentrics.x + uv2 * barycentrics.y;
 	vtx.texcoord.y = 1.0f - vtx.texcoord.y;
 
+<<<<<<< HEAD
 	return vtx;
 }
 
@@ -594,6 +688,27 @@ __device__ __forceinline__ Float3 TransformNormal(Float const matrix[12], Float3
 	return normalize(transformed);
 }
 
+=======
+	Float2 delta_uv1 = uv1 - uv0;
+	Float2 delta_uv2 = uv2 - uv0;
+	Float denom = delta_uv1.x * delta_uv2.y - delta_uv2.x * delta_uv1.y;
+	if (fabs(denom) > 1e-6f)
+	{
+		Float inv_denom = 1.0f / denom;
+		vtx.T = normalize((edge1 * delta_uv2.y - edge2 * delta_uv1.y) * inv_denom);
+	}
+	else
+	{
+		Float3 c1 = cross(vtx.Ns, MakeFloat3(0.0f, 0.0f, 1.0f));
+		Float3 c2 = cross(vtx.Ns, MakeFloat3(0.0f, 1.0f, 0.0f));
+		vtx.T = normalize(dot(c1, c1) > dot(c2, c2) ? c1 : c2);
+	}
+	vtx.T = normalize(vtx.T - vtx.Ns * dot(vtx.T, vtx.Ns));
+
+	return vtx;
+}
+
+>>>>>>> bvh-benchmark
 __device__ __forceinline__ void WriteToDenoiserBuffers(Uint32 idx, Float3 const& albedo, Float3 const& normal)
 {
 	if (params.denoiser_albedo != NULL)
@@ -702,6 +817,10 @@ extern "C" __global__ void RG_NAME(rg)()
 			params.cam_w);
 
 		Float3 throughput = MakeFloat3(1.0f);
+<<<<<<< HEAD
+=======
+		Float  prev_bsdf_pdf = 0.0f;
+>>>>>>> bvh-benchmark
 
 		for (Uint32 depth = 0; depth < params.max_depth; ++depth)
 		{
@@ -744,6 +863,20 @@ extern "C" __global__ void RG_NAME(rg)()
 				Ng = -Ng;
 			}
 
+<<<<<<< HEAD
+=======
+			// Apply normal map
+			if (material_gpu.normal_tex_id >= 0)
+			{
+				Float3 T_world = normalize(hit_record.T - Ns * dot(hit_record.T, Ns));
+				Float3 B_world = cross(Ns, T_world);
+				Float4 norm_sample = tex2D<Float4>(params.textures[material_gpu.normal_tex_id], hit_record.uv.x, hit_record.uv.y);
+				Float3 n_tangent = normalize(MakeFloat3(norm_sample.x * 2.0f - 1.0f, norm_sample.y * 2.0f - 1.0f, norm_sample.z * 2.0f - 1.0f));
+				Ns = normalize(n_tangent.x * T_world + n_tangent.y * B_world + n_tangent.z * Ns);
+				if (dot(Ns, Ng) < 0.0f) Ns = -Ns;
+			}
+
+>>>>>>> bvh-benchmark
 			Float3 T, B;
 			BuildONB(Ns, T, B);
 
@@ -754,7 +887,39 @@ extern "C" __global__ void RG_NAME(rg)()
 				WriteToDenoiserBuffers(pixel_idx, mat.base_color, Ns);
 			}
 
+<<<<<<< HEAD
 			radiance += throughput * mat.emissive;
+=======
+			// Emissive contribution with MIS
+			if (mat.emissive.x > 0.0f || mat.emissive.y > 0.0f || mat.emissive.z > 0.0f)
+			{
+				if (depth == 0 || prev_bsdf_pdf <= 0.0f)
+				{
+					radiance += throughput * mat.emissive;
+				}
+				else
+				{
+					Float light_pdf = 0.0f;
+					for (Uint32 li = 0; li < params.light_count; ++li)
+					{
+						LightGPU const& alight = params.lights[li];
+						if (alight.type == LightGPUType_Area && (Uint32)hit_record.instance_idx == alight.instance_idx)
+						{
+							Float cos_theta = fabs(dot(-ray_direction, hit_record.Ng));
+							if (cos_theta > EPSILON && alight.total_area > EPSILON)
+							{
+								Float t = hit_record.t;
+								light_pdf = t * t / (alight.total_area * cos_theta * Float(params.light_count));
+							}
+							break;
+						}
+					}
+					Float mis_weight = (light_pdf > EPSILON) ? PowerHeuristic(1, prev_bsdf_pdf, 1, light_pdf) : 1.0f;
+					radiance += throughput * mat.emissive * mis_weight;
+				}
+			}
+
+>>>>>>> bvh-benchmark
 			radiance += throughput * SampleDirectLight(mat, hit_point, w_o, T, B, Ns, prng);
 
 			Float3 V = WorldToTangent(w_o, T, B, Ns);
@@ -766,6 +931,11 @@ extern "C" __global__ void RG_NAME(rg)()
 				break;
 			}
 
+<<<<<<< HEAD
+=======
+			prev_bsdf_pdf = bsdf_sample.PDF;
+
+>>>>>>> bvh-benchmark
 			Float3 w_i = TangentToWorld(bsdf_sample.L, T, B, Ns);
 			throughput = throughput * bsdf_sample.BxDF * fabs(bsdf_sample.L.z) / bsdf_sample.PDF;
 
@@ -845,6 +1015,10 @@ extern "C" __global__ void CH_NAME(ch)()
 	hit_record->P = TransformVertex(object_to_world, vtx.P);
 	hit_record->Ng = TransformNormal(object_to_world, vtx.Ng);
 	hit_record->Ns = TransformNormal(object_to_world, vtx.Ns);
+<<<<<<< HEAD
+=======
+	hit_record->T  = TransformNormal(object_to_world, vtx.T);
+>>>>>>> bvh-benchmark
 	hit_record->uv = vtx.texcoord;
 	hit_record->barycentrics = barycentrics;
 	hit_record->primitive_idx = primitive_idx;

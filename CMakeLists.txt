@@ -5,7 +5,10 @@ if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
     set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "Minimum CMake policy version" FORCE)
 endif()
 
+<<<<<<< HEAD
 # Set configuration types BEFORE project()
+=======
+>>>>>>> bvh-benchmark
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel" CACHE STRING "Available configuration types" FORCE)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -19,7 +22,11 @@ if(APPLE)
     set(AMBER_BACKEND "Metal" CACHE STRING "Graphics backend: Metal")
     project(Amber LANGUAGES CXX OBJCXX)
 else()
+<<<<<<< HEAD
     set(AMBER_BACKEND "OptiX" CACHE STRING "Graphics backend: OptiX")
+=======
+    set(AMBER_BACKEND "CPU" CACHE STRING "Graphics backend (OptiX if found, else CPU)")
+>>>>>>> bvh-benchmark
 
     if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
       set(CMAKE_CUDA_ARCHITECTURES 75)
@@ -33,15 +40,21 @@ else()
     project(Amber LANGUAGES CUDA CXX)
 endif()
 
+<<<<<<< HEAD
 message(STATUS "Building with ${AMBER_BACKEND} backend")
 
+=======
+>>>>>>> bvh-benchmark
 if(NOT APPLE)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+<<<<<<< HEAD
 # Don't redefine CMAKE_CONFIGURATION_TYPES here
+=======
+>>>>>>> bvh-benchmark
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
     message("Multi-configuration generator detected")
 else()
@@ -55,7 +68,10 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 elseif(APPLE OR UNIX)
+<<<<<<< HEAD
     # Enable debug symbols for all build types
+=======
+>>>>>>> bvh-benchmark
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
     set(CMAKE_OBJCXX_FLAGS_DEBUG "${CMAKE_OBJCXX_FLAGS_DEBUG} -g -O0")
@@ -74,5 +90,9 @@ add_subdirectory(External/pbrtParser EXCLUDE_FROM_ALL)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(Amber)
+<<<<<<< HEAD
+=======
+add_subdirectory(BVHBenchmark)
+>>>>>>> bvh-benchmark
 
 add_dependencies(Amber pbrtParser)

@@ -11,7 +11,11 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/Amber",
+<<<<<<< HEAD
             "args": ["--config-file", "sponza.json"],
+=======
+            "args": ["--config-file", "sanmiguel.json"],
+>>>>>>> bvh-benchmark
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [

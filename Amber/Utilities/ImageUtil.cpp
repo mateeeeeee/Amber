@@ -23,7 +23,11 @@ namespace amber
 	}
 
 
+<<<<<<< HEAD
 	Image::Image(Char const* file, Bool srgb) : srgb(srgb), hdr(false)
+=======
+	Image::Image(Char const* file, Bool srgb) : srgb(srgb), hdr(false), width(0), height(0), channels(0)
+>>>>>>> bvh-benchmark
 	{
 		if (stbi_is_hdr(file))
 		{

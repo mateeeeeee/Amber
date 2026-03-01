@@ -92,6 +92,10 @@ namespace amber
 		std::unique_ptr<optix::Buffer> normals_buffer;
 		std::unique_ptr<optix::Buffer> uvs_buffer;
 		std::unique_ptr<optix::Buffer> indices_buffer;
+<<<<<<< HEAD
+=======
+		std::unique_ptr<optix::Buffer> instance_transforms_buffer;
+>>>>>>> bvh-benchmark
 		std::vector<LightGPU> lights;
 
 		Bool	denoise = false;

@@ -9,6 +9,10 @@
 Notes/
 
 *.obj
+<<<<<<< HEAD
+=======
+!Amber/Resources/Models/**/*.obj
+>>>>>>> bvh-benchmark
 # User-specific files
 *.rsuser
 *.suo
@@ -17,10 +21,15 @@ Notes/
 *.sln.docstates
 
 todolist.txt
+<<<<<<< HEAD
 Amber/Resources/Models/SanMiguel/
 Amber/Resources/Models/Toyshop_TeddyGI/
 Amber/Resources/Models/living_room/
 Amber/Resources/Models/salle_de_bain/
+=======
+#Amber/Resources/Models/SanMiguel/
+Amber/Resources/Models/Toyshop_TeddyGI/
+>>>>>>> bvh-benchmark
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
