@@ -4,16 +4,11 @@
 
 namespace amber
 {
-<<<<<<< HEAD
-	constexpr Float PI = 3.14159265358979323846f;
-	constexpr Float TWO_PI = 2.0f * PI;
-=======
 	constexpr Float PI      = 3.14159265358979323846f;
 	constexpr Float TWO_PI  = 2.0f * PI;
 	constexpr Float HALF_PI = 0.5f * PI;
 	constexpr Float INV_PI  = 0.31830988618379067154f;
 	constexpr Float INV_TWO_PI = 0.15915494309189533577f;
->>>>>>> bvh-benchmark
 
 	inline Float DegreesToRadians(Float degrees)
 	{

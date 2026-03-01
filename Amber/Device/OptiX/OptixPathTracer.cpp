@@ -324,8 +324,6 @@ namespace amber
 			optix_light.direction = make_float3(0.0f, -1.0f, 0.1f);
 			optix_light.position = make_float3(-1000.0f * optix_light.direction.x, -1000.0f * optix_light.direction.y, -1000.0f * optix_light.direction.z);
 		}
-<<<<<<< HEAD
-=======
 
 		// Build instance transforms buffer indexed by inst.mesh_id (== optixGetInstanceId())
 		std::vector<float> inst_transform_data(gpu_meshes.size() * 12, 0.0f);
@@ -376,7 +374,6 @@ namespace amber
 			}
 		}
 
->>>>>>> bvh-benchmark
 		light_list_buffer = CreateBuffer(lights);
 
 		CompileOptions comp_opts{};
@@ -441,10 +438,7 @@ namespace amber
 		params.meshes = mesh_list_buffer->GetDevicePtr();
 		params.lights = light_list_buffer->GetDevicePtr();
 		params.light_count = light_list_buffer->GetSize() / sizeof(LightGPU);
-<<<<<<< HEAD
-=======
 		params.instance_transforms = instance_transforms_buffer->GetDevicePtr();
->>>>>>> bvh-benchmark
 		params.denoiser_albedo = denoiser_albedo.GetDevicePtr();
 		params.denoiser_normals = denoiser_normals.GetDevicePtr();
 		params.sky = sky_texture->GetHandle();

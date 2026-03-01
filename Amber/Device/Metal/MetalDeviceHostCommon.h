@@ -86,17 +86,10 @@ namespace amber
 	struct alignas(16) LightGPU
 	{
 		Uint32		type;
-<<<<<<< HEAD
-		Float		padding0;
-		Float		padding1;
-		Float		padding2;
+		Uint32		mesh_idx;
+		Uint32		instance_idx;
+		Uint32		triangle_count;
 		Float4		direction;
-=======
-		Uint32		mesh_idx;       
-		Uint32		instance_idx;   
-		Uint32		triangle_count; 
-		Float4		direction;      
->>>>>>> bvh-benchmark
 		Float4		position;
 		Float4		color;
 	};
@@ -158,11 +151,7 @@ namespace amber
 #define CONSTANT_PTR(x) Uint64
 #endif
 
-<<<<<<< HEAD
-#define MAX_TEXTURES 256
-=======
 #define MAX_TEXTURES 512
->>>>>>> bvh-benchmark
 
 	struct SceneResources
 	{

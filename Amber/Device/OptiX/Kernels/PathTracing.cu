@@ -90,11 +90,8 @@ struct EvaluatedMaterial
 	Float Ax;
 	Float Ay;
 	Float Eta;
-<<<<<<< HEAD
-=======
 	Float alpha;
 	Float alpha_cutoff;
->>>>>>> bvh-benchmark
 };
 
 __device__ __forceinline__ Float Pow2(Float x)
@@ -438,21 +435,14 @@ __device__ __forceinline__ EvaluatedMaterial EvaluateMaterial(MaterialGPU const&
 {
 	EvaluatedMaterial eval;
 	eval.base_color = material.base_color;
-<<<<<<< HEAD
-=======
 	eval.alpha = 1.0f;
->>>>>>> bvh-benchmark
 	if (material.diffuse_tex_id >= 0)
 	{
 		Float4 sampled = tex2D<Float4>(params.textures[material.diffuse_tex_id], uv.x, uv.y);
 		eval.base_color = eval.base_color * MakeFloat3(sampled.x, sampled.y, sampled.z);
-<<<<<<< HEAD
-	}
-=======
 		eval.alpha = sampled.w;
 	}
 	eval.alpha_cutoff = material.alpha_cutoff;
->>>>>>> bvh-benchmark
 
 	eval.emissive = material.emissive_color;
 	if (material.emissive_tex_id >= 0)
@@ -487,8 +477,6 @@ __device__ __forceinline__ EvaluatedMaterial EvaluateMaterial(MaterialGPU const&
 	return eval;
 }
 
-<<<<<<< HEAD
-=======
 __device__ __forceinline__ Float3 TransformVertex(Float const matrix[12], Float3 const& position)
 {
 	Float3 transformed;
@@ -507,7 +495,6 @@ __device__ __forceinline__ Float3 TransformNormal(Float const matrix[12], Float3
 	return normalize(transformed);
 }
 
->>>>>>> bvh-benchmark
 __device__ __forceinline__ Float3 SampleDirectLight(
 	EvaluatedMaterial const& mat,
 	Float3 hit_point,
@@ -560,8 +547,6 @@ __device__ __forceinline__ Float3 SampleDirectLight(
 			}
 		}
 	}
-<<<<<<< HEAD
-=======
 	else if (light.type == LightGPUType_Area)
 	{
 		MeshGPU area_mesh = params.meshes[light.mesh_idx];
@@ -608,7 +593,6 @@ __device__ __forceinline__ Float3 SampleDirectLight(
 			}
 		}
 	}
->>>>>>> bvh-benchmark
 
 	return radiance;
 }
@@ -618,10 +602,7 @@ struct HitVertex
 	Float3 P;
 	Float3 Ng;
 	Float3 Ns;
-<<<<<<< HEAD
-=======
 	Float3 T;
->>>>>>> bvh-benchmark
 	Float2 texcoord;
 };
 
@@ -644,11 +625,7 @@ __device__ __forceinline__ HitVertex LoadHitVertex(MeshGPU const& mesh, Uint32 p
 
 	Float3 edge1 = pos1 - pos0;
 	Float3 edge2 = pos2 - pos0;
-<<<<<<< HEAD
-	vtx.Ng = normalize(cross(edge1, edge2));
-=======
 	vtx.Ng = normalize(cross(edge2, edge1));
->>>>>>> bvh-benchmark
 
 	Float3* mesh_normals = params.normals + mesh.normals_offset;
 	Float3 nor0 = mesh_normals[i0];
@@ -666,29 +643,6 @@ __device__ __forceinline__ HitVertex LoadHitVertex(MeshGPU const& mesh, Uint32 p
 	vtx.texcoord = uv0 * w + uv1 * barycentrics.x + uv2 * barycentrics.y;
 	vtx.texcoord.y = 1.0f - vtx.texcoord.y;
 
-<<<<<<< HEAD
-	return vtx;
-}
-
-__device__ __forceinline__ Float3 TransformVertex(Float const matrix[12], Float3 const& position)
-{
-	Float3 transformed;
-	transformed.x = matrix[0] * position.x + matrix[1] * position.y + matrix[2] * position.z + matrix[3];
-	transformed.y = matrix[4] * position.x + matrix[5] * position.y + matrix[6] * position.z + matrix[7];
-	transformed.z = matrix[8] * position.x + matrix[9] * position.y + matrix[10] * position.z + matrix[11];
-	return transformed;
-}
-
-__device__ __forceinline__ Float3 TransformNormal(Float const matrix[12], Float3 const& normal)
-{
-	Float3 transformed;
-	transformed.x = matrix[0] * normal.x + matrix[1] * normal.y + matrix[2] * normal.z;
-	transformed.y = matrix[4] * normal.x + matrix[5] * normal.y + matrix[6] * normal.z;
-	transformed.z = matrix[8] * normal.x + matrix[9] * normal.y + matrix[10] * normal.z;
-	return normalize(transformed);
-}
-
-=======
 	Float2 delta_uv1 = uv1 - uv0;
 	Float2 delta_uv2 = uv2 - uv0;
 	Float denom = delta_uv1.x * delta_uv2.y - delta_uv2.x * delta_uv1.y;
@@ -708,7 +662,6 @@ __device__ __forceinline__ Float3 TransformNormal(Float const matrix[12], Float3
 	return vtx;
 }
 
->>>>>>> bvh-benchmark
 __device__ __forceinline__ void WriteToDenoiserBuffers(Uint32 idx, Float3 const& albedo, Float3 const& normal)
 {
 	if (params.denoiser_albedo != NULL)
@@ -817,10 +770,7 @@ extern "C" __global__ void RG_NAME(rg)()
 			params.cam_w);
 
 		Float3 throughput = MakeFloat3(1.0f);
-<<<<<<< HEAD
-=======
 		Float  prev_bsdf_pdf = 0.0f;
->>>>>>> bvh-benchmark
 
 		for (Uint32 depth = 0; depth < params.max_depth; ++depth)
 		{
@@ -863,8 +813,6 @@ extern "C" __global__ void RG_NAME(rg)()
 				Ng = -Ng;
 			}
 
-<<<<<<< HEAD
-=======
 			// Apply normal map
 			if (material_gpu.normal_tex_id >= 0)
 			{
@@ -876,7 +824,6 @@ extern "C" __global__ void RG_NAME(rg)()
 				if (dot(Ns, Ng) < 0.0f) Ns = -Ns;
 			}
 
->>>>>>> bvh-benchmark
 			Float3 T, B;
 			BuildONB(Ns, T, B);
 
@@ -887,9 +834,6 @@ extern "C" __global__ void RG_NAME(rg)()
 				WriteToDenoiserBuffers(pixel_idx, mat.base_color, Ns);
 			}
 
-<<<<<<< HEAD
-			radiance += throughput * mat.emissive;
-=======
 			// Emissive contribution with MIS
 			if (mat.emissive.x > 0.0f || mat.emissive.y > 0.0f || mat.emissive.z > 0.0f)
 			{
@@ -919,7 +863,6 @@ extern "C" __global__ void RG_NAME(rg)()
 				}
 			}
 
->>>>>>> bvh-benchmark
 			radiance += throughput * SampleDirectLight(mat, hit_point, w_o, T, B, Ns, prng);
 
 			Float3 V = WorldToTangent(w_o, T, B, Ns);
@@ -931,11 +874,8 @@ extern "C" __global__ void RG_NAME(rg)()
 				break;
 			}
 
-<<<<<<< HEAD
-=======
 			prev_bsdf_pdf = bsdf_sample.PDF;
 
->>>>>>> bvh-benchmark
 			Float3 w_i = TangentToWorld(bsdf_sample.L, T, B, Ns);
 			throughput = throughput * bsdf_sample.BxDF * fabs(bsdf_sample.L.z) / bsdf_sample.PDF;
 
@@ -1015,10 +955,7 @@ extern "C" __global__ void CH_NAME(ch)()
 	hit_record->P = TransformVertex(object_to_world, vtx.P);
 	hit_record->Ng = TransformNormal(object_to_world, vtx.Ng);
 	hit_record->Ns = TransformNormal(object_to_world, vtx.Ns);
-<<<<<<< HEAD
-=======
 	hit_record->T  = TransformNormal(object_to_world, vtx.T);
->>>>>>> bvh-benchmark
 	hit_record->uv = vtx.texcoord;
 	hit_record->barycentrics = barycentrics;
 	hit_record->primitive_idx = primitive_idx;

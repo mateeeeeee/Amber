@@ -76,11 +76,8 @@ struct EvaluatedMaterial
     float Ax;
     float Ay;
     float Eta;
-<<<<<<< HEAD
-=======
     float alpha;
     float alpha_cutoff;
->>>>>>> bvh-benchmark
 };
 
 float Pow2(float x)
@@ -459,14 +456,6 @@ EvaluatedMaterial EvaluateMaterial(
     bool hitFromInside)
 {
     EvaluatedMaterial eval;
-<<<<<<< HEAD
-    eval.base_color = material.base_color.rgb;
-    if (material.diffuse_tex_id >= 0)
-    {
-        constexpr sampler tex_sampler(filter::linear, address::repeat);
-        float3 tex_color = scene.textures[material.diffuse_tex_id].sample(tex_sampler, uv).rgb;
-        eval.base_color *= tex_color;
-=======
     eval.base_color  = material.base_color.rgb;
     eval.alpha       = material.base_color.a;
     eval.alpha_cutoff = material.alpha_cutoff;
@@ -476,7 +465,6 @@ EvaluatedMaterial EvaluateMaterial(
         float4 tex_color = scene.textures[material.diffuse_tex_id].sample(tex_sampler, uv);
         eval.base_color *= tex_color.rgb;
         eval.alpha      *= tex_color.a;
->>>>>>> bvh-benchmark
     }
 
     eval.emissive = material.emissive_color.rgb;
@@ -519,8 +507,6 @@ EvaluatedMaterial EvaluateMaterial(
     return eval;
 }
 
-<<<<<<< HEAD
-=======
 float3 TransformNormal(constant InstanceData& inst, float3 normal)
 {
     float3 transformed;
@@ -623,7 +609,7 @@ bool IsOccluded(
     return result.type != intersection_type::none;
 }
 
->>>>>>> bvh-benchmark
+
 float3 SampleDirectLight(
     EvaluatedMaterial mat,
     float3 hit_point,
@@ -634,12 +620,8 @@ float3 SampleDirectLight(
     thread PRNG& prng,
     constant RenderParams& params,
     constant SceneResources& scene,
-<<<<<<< HEAD
-    instance_acceleration_structure accel_structure)
-=======
     instance_acceleration_structure accel_structure,
     intersection_function_table<triangle_data, instancing> shadow_ift)
->>>>>>> bvh-benchmark
 {
     if (params.light_count == 0)
         return float3(0.0f);
@@ -659,21 +641,7 @@ float3 SampleDirectLight(
 
         if (L.z > 0.0f)
         {
-<<<<<<< HEAD
-            ray shadow_ray;
-            shadow_ray.origin = hit_point + N * EPSILON;
-            shadow_ray.direction = L_world;
-            shadow_ray.min_distance = EPSILON;
-            shadow_ray.max_distance = INFINITY;
-
-            intersector<triangle_data, instancing> shadow_intersect;
-            shadow_intersect.accept_any_intersection(true);
-            shadow_intersect.assume_geometry_type(geometry_type::triangle);
-            auto shadow_result = shadow_intersect.intersect(shadow_ray, accel_structure);
-            if (shadow_result.type == intersection_type::none)
-=======
             if (!IsOccluded(hit_point + N * EPSILON, L_world, INFINITY, accel_structure, shadow_ift))
->>>>>>> bvh-benchmark
             {
                 BxDFEval bsdf_eval = EvaluateBSDF(mat, V, L);
                 radiance = bsdf_eval.BxDF * L.z * light.color.rgb * float(params.light_count);
@@ -689,22 +657,7 @@ float3 SampleDirectLight(
         float3 L = WorldToTangent(L_world, T, B, N);
         if (L.z > 0.0f)
         {
-<<<<<<< HEAD
-            ray shadow_ray;
-            shadow_ray.origin = hit_point + N * EPSILON;
-            shadow_ray.direction = L_world;
-            shadow_ray.min_distance = EPSILON;
-            shadow_ray.max_distance = dist - EPSILON;
-
-            intersector<triangle_data, instancing> shadow_intersect;
-            shadow_intersect.accept_any_intersection(true);
-            shadow_intersect.assume_geometry_type(geometry_type::triangle);
-
-            auto shadow_result = shadow_intersect.intersect(shadow_ray, accel_structure);
-            if (shadow_result.type == intersection_type::none)
-=======
             if (!IsOccluded(hit_point + N * EPSILON, L_world, dist - EPSILON, accel_structure, shadow_ift))
->>>>>>> bvh-benchmark
             {
                 float attenuation = 1.0f / (dist * dist);
                 BxDFEval bsdf_eval = EvaluateBSDF(mat, V, L);
@@ -712,18 +665,6 @@ float3 SampleDirectLight(
             }
         }
     }
-<<<<<<< HEAD
-    return radiance;
-}
-
-float3 TransformNormal(constant InstanceData& inst, float3 normal)
-{
-    float3 transformed;
-    transformed.x = inst.transform_row0.x * normal.x + inst.transform_row0.y * normal.y + inst.transform_row0.z * normal.z;
-    transformed.y = inst.transform_row1.x * normal.x + inst.transform_row1.y * normal.y + inst.transform_row1.z * normal.z;
-    transformed.z = inst.transform_row2.x * normal.x + inst.transform_row2.y * normal.y + inst.transform_row2.z * normal.z;
-    return normalize(transformed);
-=======
     else if (light.type == LightGPUType_Area)
     {
         uint tri_count = light.triangle_count;
@@ -776,7 +717,6 @@ float3 TransformNormal(constant InstanceData& inst, float3 normal)
         }
     }
     return radiance;
->>>>>>> bvh-benchmark
 }
 
 struct HitVertex
@@ -784,10 +724,7 @@ struct HitVertex
     float3 P;
     float3 Ng;
     float3 Ns;
-<<<<<<< HEAD
-=======
     float3 T;
->>>>>>> bvh-benchmark
     float2 texcoord;
 };
 
@@ -830,8 +767,6 @@ HitVertex LoadHitVertex(
     vtx.texcoord = uv0 * w + uv1 * barycentrics.x + uv2 * barycentrics.y;
     vtx.texcoord.y = 1.0f - vtx.texcoord.y;
 
-<<<<<<< HEAD
-=======
     // Compute per-triangle tangent from position and UV edges (reuse edge1/edge2 from above)
     float2 duv1  = uv1 - uv0;
     float2 duv2  = uv2 - uv0;
@@ -848,7 +783,7 @@ HitVertex LoadHitVertex(
     }
     vtx.T = normalize(T - dot(T, vtx.Ns) * vtx.Ns); // Gram-Schmidt
 
->>>>>>> bvh-benchmark
+
     return vtx;
 }
 
@@ -857,11 +792,8 @@ kernel void pathtrace_kernel(
     constant RenderParams& params [[buffer(0)]],
     constant SceneResources& scene [[buffer(1)]],
     instance_acceleration_structure accel_structure [[buffer(2)]],
-<<<<<<< HEAD
-=======
     intersection_function_table<triangle_data, instancing> ift [[buffer(3)]],
     intersection_function_table<triangle_data, instancing> shadow_ift [[buffer(4)]],
->>>>>>> bvh-benchmark
     texture2d<float, access::read_write> accum   [[texture(0)]],
     texture2d<float>                     sky      [[texture(1)]],
     texture2d<float, access::write>      debug    [[texture(2)]])
@@ -897,11 +829,7 @@ kernel void pathtrace_kernel(
         isect.accept_any_intersection(false);
         isect.assume_geometry_type(geometry_type::triangle);
 
-<<<<<<< HEAD
-        auto intersection = isect.intersect(ray_query, accel_structure);
-=======
         auto intersection = isect.intersect(ray_query, accel_structure, ift);
->>>>>>> bvh-benchmark
 
         float3 debug_value = float3(0.0f);
         if (intersection.type != intersection_type::none)
@@ -960,10 +888,7 @@ kernel void pathtrace_kernel(
             params.cam_w.xyz);
 
         float3 throughput = float3(1.0f);
-<<<<<<< HEAD
-=======
         float prev_bsdf_pdf = 0.0f;
->>>>>>> bvh-benchmark
         for (uint depth = 0; depth < params.max_depth; ++depth)
         {
             ray ray_query;
@@ -976,11 +901,7 @@ kernel void pathtrace_kernel(
             intersect.accept_any_intersection(false);
             intersect.assume_geometry_type(geometry_type::triangle);
 
-<<<<<<< HEAD
-            auto intersection = intersect.intersect(ray_query, accel_structure);
-=======
             auto intersection = intersect.intersect(ray_query, accel_structure, ift);
->>>>>>> bvh-benchmark
             if (intersection.type == intersection_type::none)
             {
                 float2 sky_uv = float2(
@@ -1002,10 +923,7 @@ kernel void pathtrace_kernel(
 
             vtx.Ns = TransformNormal(instance, vtx.Ns);
             vtx.Ng = TransformNormal(instance, vtx.Ng);
-<<<<<<< HEAD
-=======
             vtx.T  = TransformNormal(instance, vtx.T);
->>>>>>> bvh-benchmark
             float3 hit_point = ro + rd * intersection.distance;
             float3 w_o = -rd;
 
@@ -1019,8 +937,6 @@ kernel void pathtrace_kernel(
                 Ng = -Ng;
             }
 
-<<<<<<< HEAD
-=======
             if (material_gpu.normal_tex_id >= 0)
             {
                 float3 Ts = normalize(vtx.T - dot(vtx.T, Ns) * Ns);
@@ -1031,17 +947,12 @@ kernel void pathtrace_kernel(
                 Ns = normalize(n_ts.x * Ts + n_ts.y * Bs + n_ts.z * Ns);
             }
 
->>>>>>> bvh-benchmark
+
             float3 T, B;
             BuildONB(Ns, T, B);
 
             EvaluatedMaterial mat = EvaluateMaterial(material_gpu, vtx.texcoord, scene, hitFromInside);
 
-<<<<<<< HEAD
-            radiance += throughput * mat.emissive;
-
-            radiance += throughput * SampleDirectLight(mat, hit_point, w_o, T, B, Ns, sample_prng, params, scene, accel_structure);
-=======
             // Emissive contribution with MIS against area lights
             if (any(mat.emissive > 0.0f))
             {
@@ -1073,7 +984,6 @@ kernel void pathtrace_kernel(
             }
 
             radiance += throughput * SampleDirectLight(mat, hit_point, w_o, T, B, Ns, sample_prng, params, scene, accel_structure, shadow_ift);
->>>>>>> bvh-benchmark
 
             float3 V = WorldToTangent(w_o, T, B, Ns);
             BSDFComponent sampledComponent;
@@ -1083,11 +993,8 @@ kernel void pathtrace_kernel(
                 break;
             }
 
-<<<<<<< HEAD
-=======
             prev_bsdf_pdf = bsdf_sample.PDF;
 
->>>>>>> bvh-benchmark
             float3 w_i = TangentToWorld(bsdf_sample.L, T, B, Ns);
 
             throughput *= bsdf_sample.BxDF * abs(bsdf_sample.L.z) / bsdf_sample.PDF;

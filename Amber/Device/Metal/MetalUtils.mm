@@ -191,8 +191,6 @@ namespace amber::metal
 		}
 	}
 
-<<<<<<< HEAD
-=======
 	ComputePipeline::ComputePipeline(id<MTLDevice> device, Char const* shader_source, Char const* function_name,
 	                                  std::vector<Char const*> const& isect_fn_names)
 	{
@@ -278,7 +276,6 @@ namespace amber::metal
 		[library release];
 	}
 
->>>>>>> bvh-benchmark
 	std::unique_ptr<ComputePipeline> ComputePipeline::CreateFromFile(id<MTLDevice> device, Char const* file_path, Char const* function_name)
 	{
 		std::ifstream file(file_path);
@@ -313,10 +310,6 @@ namespace amber::metal
 		return std::make_unique<ComputePipeline>(device, shader_source.c_str(), function_name);
 	}
 
-<<<<<<< HEAD
-	ComputePipeline::~ComputePipeline()
-	{
-=======
 	std::unique_ptr<ComputePipeline> ComputePipeline::CreateFromFileWithIntersectionFunctions(
 	    id<MTLDevice> device, Char const* file_path, Char const* function_name,
 	    std::vector<Char const*> const& isect_fn_names)
@@ -361,7 +354,6 @@ namespace amber::metal
 				[ift release];
 			}
 		}
->>>>>>> bvh-benchmark
 		if (pipeline_state)
 		{
 			[pipeline_state release];

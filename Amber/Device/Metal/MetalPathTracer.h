@@ -58,12 +58,9 @@ namespace amber
 		Bool HasPostProcessing() const override { return true; }
 		void PostProcessingGUI() override;
 
-<<<<<<< HEAD
-=======
 		Bool HasLightEditor() const override { return true; }
 		void LightEditorGUI() override;
 
->>>>>>> bvh-benchmark
 	private:
 		Uint32 width;
 		Uint32 height;

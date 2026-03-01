@@ -92,25 +92,18 @@ namespace amber
 		textures.reserve(scene->textures.size());
 		for (Image const& texture : scene->textures)
 		{
-<<<<<<< HEAD
-=======
 			if (texture.GetWidth() == 0 || texture.GetHeight() == 0)
 			{
 				textures.push_back(nullptr);
 				continue;
 			}
 
->>>>>>> bvh-benchmark
 			auto metal_texture = std::make_unique<metal::Texture2D>(
 				device->GetDevice(),
 				texture.GetWidth(),
 				texture.GetHeight(),
 				MTLPixelFormatRGBA8Unorm,
-<<<<<<< HEAD
-				true); 
-=======
 				true);
->>>>>>> bvh-benchmark
 			metal_texture->Update(texture.GetData(), texture.GetWidth() * 4);
 			textures.push_back(std::move(metal_texture));
 		}
@@ -168,8 +161,6 @@ namespace amber
 			gpu_light.direction = Vector4(0.0f, -1.0f, 0.1f, 0.0f);
 			gpu_light.position = Vector4(-1000.0f * gpu_light.direction.x, -1000.0f * gpu_light.direction.y, -1000.0f * gpu_light.direction.z, 1.0f);
 		}
-<<<<<<< HEAD
-=======
 
 		// Register emissive mesh geometries as area lights
 		{
@@ -219,7 +210,6 @@ namespace amber
 				}
 			}
 		}
->>>>>>> bvh-benchmark
 		light_list_buffer = std::make_unique<metal::Buffer>(device->GetDevice(), lights.size() * sizeof(LightGPU));
 		light_list_buffer->Update(lights.data(), lights.size() * sizeof(LightGPU));
 
@@ -319,18 +309,11 @@ namespace amber
 		debug_texture  = std::make_unique<metal::Texture2D>(device->GetDevice(), width, height, MTLPixelFormatRGBA32Float);
         
         std::string const pipeline_path = std::string(AMBER_PATH) + "/Device/Metal/PathTracing.metal";
-<<<<<<< HEAD
-		pathtracer_pipeline = metal::ComputePipeline::CreateFromFile(
-			device->GetDevice(),
-            pipeline_path.c_str(),
-			"pathtrace_kernel");
-=======
 		pathtracer_pipeline = metal::ComputePipeline::CreateFromFileWithIntersectionFunctions(
 			device->GetDevice(),
             pipeline_path.c_str(),
 			"pathtrace_kernel",
 			{"alpha_test_intersection", "alpha_test_shadow_intersection"});
->>>>>>> bvh-benchmark
 
 		if (!pathtracer_pipeline)
 		{
@@ -396,10 +379,6 @@ namespace amber
 		{
 			scene_resources->textures[i] = textures[i]->GetTexture().gpuResourceID;
 		}
-<<<<<<< HEAD
-
-		AMBER_INFO_LOG("Created Metal 3 argument buffer for bindless rendering with %zu textures", texture_count);
-=======
 		AMBER_INFO_LOG("Created Metal 3 argument buffer for bindless rendering with %zu textures", texture_count);
 
 		if (pathtracer_pipeline)
@@ -413,7 +392,6 @@ namespace amber
 				[shadow_ift setBuffer:scene_argument_buffer->GetBuffer() offset:0 atIndex:0];
 			}
 		}
->>>>>>> bvh-benchmark
 	}
 
 	MetalPathTracer::~MetalPathTracer()
@@ -470,8 +448,6 @@ namespace amber
 		[encoder setBuffer:params_buffer.GetBuffer() offset:0 atIndex:0];
 		[encoder setBuffer:scene_argument_buffer->GetBuffer() offset:0 atIndex:1];
 
-<<<<<<< HEAD
-=======
 		if (pathtracer_pipeline->GetIntersectionFunctionTable(0))
 		{
 			[encoder setIntersectionFunctionTable:pathtracer_pipeline->GetIntersectionFunctionTable(0) atBufferIndex:3];
@@ -481,7 +457,6 @@ namespace amber
 			[encoder setIntersectionFunctionTable:pathtracer_pipeline->GetIntersectionFunctionTable(1) atBufferIndex:4];
 		}
 
->>>>>>> bvh-benchmark
 		[encoder setTexture:accum_texture->GetTexture()  atIndex:0];
 		[encoder setTexture:sky_texture->GetTexture()    atIndex:1];
 		[encoder setTexture:debug_texture->GetTexture()  atIndex:2];
@@ -612,8 +587,6 @@ namespace amber
 		ImGui::Combo("Tonemap", &tonemap_mode, tonemap_modes, IM_ARRAYSIZE(tonemap_modes));
 		ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
 	}
-<<<<<<< HEAD
-=======
 
 	void MetalPathTracer::LightEditorGUI()
 	{
@@ -695,5 +668,4 @@ namespace amber
 			frame_index = 0;
 		}
 	}
->>>>>>> bvh-benchmark
 }

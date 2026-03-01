@@ -73,13 +73,10 @@ namespace amber
 	struct LightGPU
 	{
 		Uint32		type;
-<<<<<<< HEAD
-=======
 		Uint32		mesh_idx;
 		Uint32		instance_idx;
 		Uint32		triangle_count;
 		Float		total_area;
->>>>>>> bvh-benchmark
 		Float3		direction;
 		Float3		position;
 		Float3		color;
@@ -111,10 +108,7 @@ namespace amber
 		float3*					denoiser_albedo;
 		float3*					denoiser_normals;
 		cudaTextureObject_t		sky;
-<<<<<<< HEAD
-=======
 		Float*					instance_transforms;
->>>>>>> bvh-benchmark
 #else
 		CUdeviceptr				vertices;
 		CUdeviceptr				normals;
@@ -127,10 +121,7 @@ namespace amber
 		CUdeviceptr				denoiser_albedo;
 		CUdeviceptr				denoiser_normals;
 		CUdeviceptr				sky;
-<<<<<<< HEAD
-=======
 		CUdeviceptr				instance_transforms;
->>>>>>> bvh-benchmark
 #endif
 		Uint32					light_count;
 	};
@@ -140,10 +131,7 @@ namespace amber
 		Float3		 P;
 		Float3		 Ns;
 		Float3		 Ng;
-<<<<<<< HEAD
-=======
 		Float3		 T;
->>>>>>> bvh-benchmark
 		Float2       uv;
 		Float2       barycentrics;
 		Float		 t;

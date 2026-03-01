@@ -1,8 +1,5 @@
 #define CGLTF_IMPLEMENTATION
-<<<<<<< HEAD
-=======
 #include <algorithm>
->>>>>>> bvh-benchmark
 #include <unordered_map>
 #include "Scene.h"
 #include "Core/Log.h"
@@ -387,8 +384,6 @@ namespace amber
 			}
 
 			std::string obj_base_dir = std::string(scene_file.substr(0, scene_file.rfind('/')));
-<<<<<<< HEAD
-=======
 
 		auto FixPath = [&](std::string const& path) -> std::string
 		{
@@ -396,7 +391,6 @@ namespace amber
 			std::replace(fixed.begin(), fixed.end(), '\\', '/');
 			return obj_base_dir + "/" + fixed;
 		};
->>>>>>> bvh-benchmark
 			tinyobj::attrib_t const& attrib = reader.GetAttrib();
 			std::vector<tinyobj::shape_t> const& shapes = reader.GetShapes();
 			std::vector<tinyobj::material_t> const& materials = reader.GetMaterials();
@@ -465,9 +459,6 @@ namespace amber
 				material.clearcoat_gloss = 1.0f - m.clearcoat_roughness;
 				material.anisotropy = m.anisotropy;
 
-<<<<<<< HEAD
-				if (!m.diffuse_texname.empty()) 
-=======
 				// Traditional Phong MTL mirror heuristic: high Ks + near-black Kd + no PBR Pm
 				// -> remap to metallic so the BSDF produces mirror reflections
 				Bool const is_mirror_like = m.metallic == 0.0f &&
@@ -482,17 +473,11 @@ namespace amber
 				}
 
 				if (!m.diffuse_texname.empty())
->>>>>>> bvh-benchmark
 				{
 					if (!texture_ids.contains(m.diffuse_texname))
 					{
 						texture_ids[m.diffuse_texname] = obj_scene->textures.size();
-<<<<<<< HEAD
-						std::string texture_path = obj_base_dir + "/" + m.diffuse_texname;
-						obj_scene->textures.emplace_back(texture_path.c_str(), true);
-=======
 						obj_scene->textures.emplace_back(FixPath(m.diffuse_texname).c_str(), true);
->>>>>>> bvh-benchmark
 					}
 					const Int32 id = texture_ids[m.diffuse_texname];
 					material.diffuse_tex_id = id;
@@ -502,12 +487,7 @@ namespace amber
 					if (!texture_ids.contains(m.normal_texname))
 					{
 						texture_ids[m.normal_texname] = obj_scene->textures.size();
-<<<<<<< HEAD
-						std::string texture_path = obj_base_dir + "/" + m.normal_texname;
-						obj_scene->textures.emplace_back(texture_path.c_str(), false);
-=======
 						obj_scene->textures.emplace_back(FixPath(m.normal_texname).c_str(), false);
->>>>>>> bvh-benchmark
 					}
 					const Int32 id = texture_ids[m.normal_texname];
 					material.normal_tex_id = id;
@@ -517,12 +497,7 @@ namespace amber
 					if (!texture_ids.contains(m.emissive_texname))
 					{
 						texture_ids[m.emissive_texname] = obj_scene->textures.size();
-<<<<<<< HEAD
-						std::string texture_path = obj_base_dir + "/" + m.emissive_texname;
-						obj_scene->textures.emplace_back(texture_path.c_str(), false);
-=======
 						obj_scene->textures.emplace_back(FixPath(m.emissive_texname).c_str(), false);
->>>>>>> bvh-benchmark
 					}
 					const Int32 id = texture_ids[m.emissive_texname];
 					material.emissive_tex_id = id;
@@ -552,6 +527,12 @@ namespace amber
 			}
 
 			std::string gltf_base_dir = std::string(scene_file.substr(0, scene_file.rfind('/')));
+			auto FixPath = [&](std::string const& path) -> std::string
+			{
+				std::string fixed = path;
+				std::replace(fixed.begin(), fixed.end(), '\\', '/');
+				return gltf_base_dir + "/" + fixed;
+			};
 			std::unique_ptr<Scene> gltf_scene = std::make_unique<Scene>();
 
 			std::unordered_map<std::string, Int32> texture_ids;
@@ -627,7 +608,7 @@ namespace amber
 					if (!texture_ids.contains(image->uri))
 					{
 						texture_ids[image->uri] = gltf_scene->textures.size();
-						std::string texture_path = gltf_base_dir + "/" + image->uri;
+						std::string texture_path = FixPath(image->uri);
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
 					const Int32 id = texture_ids[image->uri];
@@ -640,7 +621,7 @@ namespace amber
 					if (!texture_ids.contains(image->uri))
 					{
 						texture_ids[image->uri] = gltf_scene->textures.size();
-						std::string texture_path = gltf_base_dir + "/" + image->uri;
+						std::string texture_path = FixPath(image->uri);
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
 					const Int32 id = texture_ids[image->uri];
@@ -653,7 +634,7 @@ namespace amber
 					if (!texture_ids.contains(image->uri))
 					{
 						texture_ids[image->uri] = gltf_scene->textures.size();
-						std::string texture_path = gltf_base_dir + "/" + image->uri;
+						std::string texture_path = FixPath(image->uri);
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
 					const Int32 id = texture_ids[image->uri];
@@ -666,7 +647,7 @@ namespace amber
 					if (!texture_ids.contains(image->uri))
 					{
 						texture_ids[image->uri] = gltf_scene->textures.size();
-						std::string texture_path = gltf_base_dir + "/" + image->uri;
+						std::string texture_path = FixPath(image->uri);
 						gltf_scene->textures.emplace_back(texture_path.c_str(), true);
 					}
 					const Int32 id = texture_ids[image->uri];

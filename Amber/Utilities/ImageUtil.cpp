@@ -23,11 +23,7 @@ namespace amber
 	}
 
 
-<<<<<<< HEAD
-	Image::Image(Char const* file, Bool srgb) : srgb(srgb), hdr(false)
-=======
 	Image::Image(Char const* file, Bool srgb) : srgb(srgb), hdr(false), width(0), height(0), channels(0)
->>>>>>> bvh-benchmark
 	{
 		if (stbi_is_hdr(file))
 		{
@@ -53,5 +49,6 @@ namespace amber
 			stbi_image_free(image_data);
 			stbi_set_flip_vertically_on_load(0);
 		}
+		AMBER_ASSERT_MSG(width > 0 && height > 0, "Image loaded with zero width or height");
 	}
 }

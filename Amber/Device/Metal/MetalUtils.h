@@ -10,10 +10,7 @@
 @protocol MTLComputePipelineState;
 @protocol MTLAccelerationStructure;
 @protocol MTLAccelerationStructureCommandEncoder;
-<<<<<<< HEAD
-=======
 @protocol MTLIntersectionFunctionTable;
->>>>>>> bvh-benchmark
 
 namespace amber::metal
 {
@@ -101,15 +98,6 @@ namespace amber::metal
 	{
 	public:
 		ComputePipeline(id<MTLDevice> device, Char const* shader_source, Char const* function_name);
-<<<<<<< HEAD
-		static std::unique_ptr<ComputePipeline> CreateFromFile(id<MTLDevice> device, Char const* file_path, Char const* function_name);
-		~ComputePipeline();
-
-		id<MTLComputePipelineState> GetPipelineState() const { return pipeline_state; }
-
-	private:
-		id<MTLComputePipelineState> pipeline_state;
-=======
 		ComputePipeline(id<MTLDevice> device, Char const* shader_source, Char const* function_name,
 		                std::vector<Char const*> const& isect_fn_names);
 		static std::unique_ptr<ComputePipeline> CreateFromFile(id<MTLDevice> device, Char const* file_path, Char const* function_name);
@@ -129,7 +117,6 @@ namespace amber::metal
 	private:
 		id<MTLComputePipelineState> pipeline_state = nil;
 		std::vector<id<MTLIntersectionFunctionTable>> intersection_function_tables;
->>>>>>> bvh-benchmark
 	};
 
 	class AccelerationStructure

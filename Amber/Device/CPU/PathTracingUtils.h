@@ -2,10 +2,7 @@
 #include "Sampler.h"
 #include "TLAS.h"
 #include "Scene/Light.h"
-<<<<<<< HEAD
-=======
 #include "Math/MathCommon.h"
->>>>>>> bvh-benchmark
 #include <cmath>
 #include <vector>
 
@@ -31,11 +28,7 @@ namespace amber
 		Vector3 bitangent = Vector3::Cross(normal, tangent);
 
 		Float r   = std::sqrt(r1);
-<<<<<<< HEAD
-		Float phi = 2.0f * M_PI * r2;
-=======
 		Float phi = 2.0f * amber::PI * r2;
->>>>>>> bvh-benchmark
 		Float x   = r * std::cos(phi);
 		Float y   = r * std::sin(phi);
 		Float z   = std::sqrt(std::max(0.0f, 1.0f - r1));
@@ -49,13 +42,8 @@ namespace amber
 		{
 			return Vector3(25.0f / 255.0f, 25.0f / 255.0f, 25.0f / 255.0f);
 		}
-<<<<<<< HEAD
-		Float u = (1.0f + std::atan2(dir.x, -dir.z) * M_1_PI) * 0.5f;
-		Float v = /*1.0f -*/ std::acos(dir.y) * M_1_PI;
-=======
 		Float u = (1.0f + std::atan2(dir.x, -dir.z) * amber::INV_PI) * 0.5f;
 		Float v = /*1.0f -*/ std::acos(dir.y) * amber::INV_PI;
->>>>>>> bvh-benchmark
 		return BilinearClamp.Sample<Vector3>(env, Vector2(u, v));
 	}
 
